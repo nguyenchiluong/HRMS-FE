@@ -6,6 +6,10 @@ import Dashboard from '@/pages/Dashboard';
 import Employees from '@/pages/Employees';
 import AddEmployee from '@/pages/AddEmployee';
 import EmployeeIDs from './pages/employeeProfileManagement/pages/EmployeeIDs';
+import PersonalInfo from './pages/employeeProfileManagement/pages/PersonalInfo';
+import Education from './pages/employeeProfileManagement/pages/Education';
+import Financial from './pages/employeeProfileManagement/pages/Financial';
+import JobDetails from './pages/employeeProfileManagement/pages/JobDetails';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -32,16 +36,17 @@ function App() {
         {/* ==================== Employee Profile Management Routes ==================== */}
         {/* Employee Routes (Self-Profile Management) */}
         <Route path="/profile" element={<EmployeeIDs />} />
-        <Route path="/profile/personal-info" />
+        <Route path="/profile/personal-info" element={<PersonalInfo />} />
         <Route path="/profile/personal-info/edit" />
         <Route path="/profile/personal-info/contact" />
         <Route path="/profile/personal-info/emergency" />
         <Route path="/profile/personal-info/family" />
-        <Route path="/profile/education" />
-        <Route path="/profile/financial" />
-        <Route path="/profile/ids" />
+        <Route path="/profile/education" element={<Education />} />
+        <Route path="/profile/financial" element={<Financial />} />
+        <Route path="/profile/ids" element={<EmployeeIDs />} />
         <Route path="/profile/ids/request-update" />
         <Route path="/profile/change-requests" />
+        <Route path="/profile/job-details" element={<JobDetails />} />
 
         {/* Admin Routes */}
         <Route path="/admin/employees" />

@@ -1,4 +1,5 @@
-import { Eye } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 interface InfoRow {
   label: string;
@@ -12,7 +13,7 @@ const basicInfo: InfoRow[] = [
 ];
 
 const nationalID: InfoRow[] = [
-  { label: "Identification #", value: "XXXXXXXXXXXX", hasVisibilityToggle: true },
+  { label: "Identification #", value: "715900132", hasVisibilityToggle: true },
   { label: "Issued Date", value: "22/04/2021" },
   { label: "Expiration Date", value: "25/09/2028" },
   {
@@ -30,16 +31,28 @@ const taxID: InfoRow[] = [
 ];
 
 function InfoRowComponent({ label, value, hasVisibilityToggle }: InfoRow) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  const maskValue = (val: string) => {
+    return "•".repeat(val.length);
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-2 sm:gap-[45px] px-2.5 py-1.5">
       <div className="w-full sm:w-[240px] text-[17px] font-medium flex-shrink-0">
         {label}
       </div>
       <div className="flex items-center gap-3 text-hrms-text-secondary text-[17px]">
-        <span>{value}</span>
+        <span className="font-mono">
+          {hasVisibilityToggle && !isVisible ? maskValue(value) : value}
+        </span>
         {hasVisibilityToggle && (
-          <button className="text-hrms-text-muted hover:text-hrms-primary">
-            <Eye className="w-6 h-6" />
+          <button 
+            onClick={() => setIsVisible(!isVisible)}
+            className="text-hrms-text-muted hover:text-hrms-primary transition-colors"
+            aria-label={isVisible ? "Hide value" : "Show value"}
+          >
+            {isVisible ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
           </button>
         )}
       </div>

@@ -1,19 +1,23 @@
 import { cn } from "@/lib/utils";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface MenuItem {
   label: string;
-  active: boolean;
+  path: string;
 }
 
 const menuItems: MenuItem[] = [
-  { label: "Personal Information", active: true },
-  { label: "Job Details", active: false },
-  { label: "Time Requests", active: false },
-  { label: "Activities", active: false },
-  { label: "Bonus", active: false },
+  { label: "Personal Information", path: "/profile/personal-info" },
+  { label: "Job Details", path: "/profile/job-details" },
+  { label: "Time Requests", path: "/requests" },
+  { label: "Activities", path: "/my-activities" },
+  { label: "Bonus", path: "/credits" },
 ];
 
 export default function EmployeeSidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
     <aside className="w-full lg:w-[335px] bg-white lg:h-screen overflow-y-auto flex-shrink-0">
       <div className="relative h-[77px] bg-hrms-primary">
@@ -52,19 +56,23 @@ export default function EmployeeSidebar() {
         </div>
 
         <nav className="flex flex-col gap-0">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              className={cn(
-                "w-full px-5 py-2.5 text-left rounded-[10px] text-[17px] font-medium transition-colors",
-                item.active
-                  ? "bg-hrms-bg-light text-hrms-primary font-semibold"
-                  : "text-hrms-primary font-medium hover:bg-hrms-bg-light/50"
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
+          {menuItems.map((item, index) => {
+            const isActive = location.pathname.startsWith(item.path);
+            return (
+              <button
+                key={index}
+                onClick={() => navigate(item.path)}
+                className={cn(
+                  "w-full px-5 py-2.5 text-left rounded-[10px] text-[17px] font-medium transition-colors",
+                  isActive
+                    ? "bg-hrms-bg-light text-hrms-primary font-semibold"
+                    : "text-hrms-primary font-medium hover:bg-hrms-bg-light/50"
+                )}
+              >
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
       </div>
     </aside>
