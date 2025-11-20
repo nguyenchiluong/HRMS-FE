@@ -5,6 +5,7 @@ import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Employees from '@/pages/Employees';
 import AddEmployee from '@/pages/AddEmployee';
+import EmployeeIDs from './pages/employeeProfileManagement/pages/EmployeeIDs';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -15,7 +16,7 @@ function App() {
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <Router>
+    <Router basename="/HRMS-FE">
       <Routes>
         {/* ==================== Authentication & Onboarding Routes ==================== */}
         {/* Public Routes */}
@@ -26,11 +27,22 @@ function App() {
 
         {/* Protected Routes */}
         <Route path="/logout" />
-        <Route path="/profile/me" />
-        <Route path="/profile/me/edit" />
         <Route path="/change-password" />
 
         {/* ==================== Employee Profile Management Routes ==================== */}
+        {/* Employee Routes (Self-Profile Management) */}
+        <Route path="/profile" element={<EmployeeIDs />} />
+        <Route path="/profile/personal-info" />
+        <Route path="/profile/personal-info/edit" />
+        <Route path="/profile/personal-info/contact" />
+        <Route path="/profile/personal-info/emergency" />
+        <Route path="/profile/personal-info/family" />
+        <Route path="/profile/education" />
+        <Route path="/profile/financial" />
+        <Route path="/profile/ids" />
+        <Route path="/profile/ids/request-update" />
+        <Route path="/profile/change-requests" />
+
         {/* Admin Routes */}
         <Route path="/admin/employees" />
         <Route path="/admin/employees/new" />
