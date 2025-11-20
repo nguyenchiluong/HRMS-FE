@@ -1,0 +1,72 @@
+/** Standalone styles for Index page - can be copied to other projects */
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Sora:wght@400;500;600&family=Reem+Kufi+Ink:wght@700&display=swap");
+
+/* Base setup */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', -apple-system, Roboto, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* HRMS Custom Colors - Extracted from global.css */
+:root {
+  --hrms-primary: 222 59% 36%;
+  --hrms-primary-light: 210 51% 58%;
+  --hrms-bg-light: 211 58% 92%;
+  --hrms-bg-page: 0 0% 77% / 0.25;
+  --hrms-text-primary: 0 0% 0%;
+  --hrms-text-secondary: 220 4% 45%;
+  --hrms-text-muted: 0 0% 59%;
+  --hrms-yellow: 45 100% 53%;
+  --hrms-red: 0 100% 50%;
+  
+  /* Standard theme colors used by UI components */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --primary: 222 59% 36%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222 59% 36%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --border: 214.3 31.8% 91.4%;
+  --ring: 222 59% 36%;
+  --radius: 0.5rem;
+}
+
+/* HRMS Color Utilities - Only what Index page needs */
+.bg-hrms-bg-page {
+  background-color: hsla(var(--hrms-bg-page));
+}
+
+.bg-hrms-bg-light {
+  background-color: hsl(var(--hrms-bg-light));
+}
+
+.text-hrms-primary {
+  color: hsl(var(--hrms-primary));
+}
+
+.text-hrms-text-primary {
+  color: hsl(var(--hrms-text-primary));
+}
+
+.text-hrms-text-secondary {
+  color: hsl(var(--hrms-text-secondary));
+}
+
+.text-hrms-text-muted {
+  color: hsl(var(--hrms-text-muted));
+}
+
+/* Word breaking for long text */
+p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

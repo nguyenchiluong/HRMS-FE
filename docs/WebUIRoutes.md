@@ -21,13 +21,26 @@
 | Route | Screen Name | Description | User Role |
 |-------|-------------|-------------|-----------|
 | `/logout` | Logout Handler | Logout and redirect to login | Any |
-| `/profile/me` | My Profile View | Employee views own complete profile | Any |
-| `/profile/me/edit` | Edit My Profile | Employee edits allowed profile sections | Employee |
 | `/change-password` | Change Password | User changes own password | Any |
 
 ---
 
 ## 2. Employee Profile Management Routes
+
+### Employee Routes (Self-Profile Management)
+| Route | Screen Name | Description | User Role |
+|-------|-------------|-------------|-----------|
+| `/profile` | My Profile View | Employee views own complete profile with sidebar navigation | Employee |
+| `/profile/personal-info` | Personal Information Tab | View/edit personal info with 4 sub-tabs | Employee |
+| `/profile/personal-info/basic` | Basic Information Sub-tab | Edit basic personal details | Employee |
+| `/profile/personal-info/contact` | Contact Information Sub-tab | Edit contact details (address, phone) | Employee |
+| `/profile/personal-info/emergency` | Emergency Contact Sub-tab | Edit emergency contact information | Employee |
+| `/profile/personal-info/family` | Family Information Sub-tab | Add/edit/remove family member rows | Employee |
+| `/profile/education` | Education Tab | View/edit education records (add/edit/remove rows) | Employee |
+| `/profile/financial` | Financial Information Tab | View/edit bank account details | Employee |
+| `/profile/ids` | IDs Tab | View ID information (Tax ID, ID Card, Passport) | Employee |
+| `/profile/ids/request-update` | Request IDs Update | Submit request to update sensitive ID information | Employee |
+| `/profile/change-requests` | My Change Requests History | View history of profile update requests (IDs tab) | Employee |
 
 ### Admin Routes
 | Route | Screen Name | Description | User Role |
@@ -242,6 +255,15 @@
 ```
 - Dashboard
 - My Profile
+  - Personal Information
+    - Basic Information
+    - Contact Information
+    - Emergency Contact
+    - Family Information
+  - Education
+  - Financial Information
+  - IDs
+  - Change Requests History
 - Requests
   - New Request
   - My Requests
@@ -334,8 +356,8 @@
 
 | Category | Route Count |
 |----------|-------------|
-| Authentication & Onboarding | 8 |
-| Employee Profile Management | 11 |
+| Authentication & Onboarding | 6 |
+| Employee Profile Management | 22 |
 | Employee Requests Management | 15 |
 | Campaigns & Activities | 23 |
 | Bonus & Credits | 18 |
@@ -343,7 +365,7 @@
 | Admin & Session Management | 5 |
 | Dashboards | 4 |
 | Error & Utility | 7 |
-| **Total** | **98 routes** |
+| **Total** | **107 routes** |
 
 ---
 
