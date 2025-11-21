@@ -32,7 +32,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     Add Employee
                   </Button>
                 </Link>
-                <Link to="/create-campaign">
+                <Link to="/campaigns/new">
                   <Button variant="ghost" size="sm">
                     <Plus className="mr-2 h-4 w-4" />
                     Create Campaign
