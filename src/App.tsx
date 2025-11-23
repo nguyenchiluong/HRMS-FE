@@ -6,6 +6,7 @@ import Dashboard from '@/pages/Dashboard';
 import Employees from '@/pages/Employees';
 import AddEmployee from '@/pages/AddEmployee';
 import CreateCampaign from '@/pages/CreateCampaign';
+import ToastProvider from '@/components/ToastProvider';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -17,6 +18,7 @@ function App() {
 
   return (
     <Router basename="/HRMS-FE">
+      <ToastProvider />
       <Routes>
         {/* ==================== Authentication & Onboarding Routes ==================== */}
         {/* Public Routes */}

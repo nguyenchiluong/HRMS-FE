@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Loader2, Activity, TrendingUp, Calendar } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const ACTIVITY_TYPES = [
   {
@@ -52,10 +53,21 @@ export default function CreateCampaign() {
       try {
         await createMutation.mutateAsync(values);
         // Success handling - could show toast or navigate
-        alert('Campaign created successfully!');
-        navigate('/campaigns');
+        toast.success('Campaign created successfully!', {
+          duration: 3000,
+          position: 'top-right',
+        });
+        
+        // Navigate sau khi hiển thị toast
+        setTimeout(() => {
+          navigate('/campaigns');
+        }, 1000);
       } catch (error) {
         console.error('Failed to create campaign:', error);
+
+        toast.error('Failed to create campaign. Please try again.', {
+          duration: 5000,
+        });
       }
     }
   });
