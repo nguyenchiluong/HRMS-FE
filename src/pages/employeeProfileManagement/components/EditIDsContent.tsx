@@ -173,8 +173,6 @@ const initialValues: FormValues = {
 export default function EditIDsContent() {
   const fileUrlsRef = useRef<Map<File, string>>(new Map());
   const navigate = useNavigate();
-  const maxFileSize = 10 * 1024 * 1024; // 10MB
-
   const handleSubmit = (values: FormValues) => {
     console.log("Form submitted:", values);
     // Handle form submission here
@@ -206,7 +204,7 @@ export default function EditIDsContent() {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ setFieldValue, setFieldError, errors, touched, values }: FormikProps<FormValues>) => (
+          {({ setFieldValue, errors, touched, values }: FormikProps<FormValues>) => (
             <Form className="pb-4">
               <div className="flex flex-col gap-2.5 pb-[30px] mb-2.5">
                 <FormFieldRow
