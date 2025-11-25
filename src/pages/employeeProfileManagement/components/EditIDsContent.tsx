@@ -293,7 +293,17 @@ export default function EditIDsContent() {
                     type="file"
                     multiple
                     onChange={(event) => {
-                      setFieldValue("attachments", event.currentTarget.files);
+                      const newFiles = event.currentTarget.files;
+                      if (newFiles && newFiles.length > 0) {
+                        const dt = new DataTransfer();
+                        // Add existing files
+                        if (values.attachments) {
+                          Array.from(values.attachments).forEach((file) => dt.items.add(file));
+                        }
+                        // Add new files
+                        Array.from(newFiles).forEach((file) => dt.items.add(file));
+                        setFieldValue("attachments", dt.files);
+                      }
                     }}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     accept="*/*"
