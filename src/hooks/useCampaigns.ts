@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createCampaign, getCampaigns } from '@/services/campaignService';
+import { createCampaign, getCampaigns} from '@/services/campaignService';
 import type { CampaignFormData } from '@/types/campaign';
 
 export const useCampaigns = () => {
@@ -20,3 +20,4 @@ export const useCreateCampaign = () => {
     },
   });
 };
+

@@ -32,5 +32,15 @@ export const campaignSchema = Yup.object({
   
   activityType: Yup.string()
     .oneOf(['walking', 'running', 'cycling'], 'Please select an activity type')
-    .required('Activity type is required')
+    .required('Activity type is required'),
+  
+  imageFile: Yup.mixed<File>()
+    .test('fileSize', 'File size is too large', (value) => {
+      if (!value) return true; // Optional field
+      return value.size <= 5 * 1024 * 1024; // 5MB max
+    })
+    .test('fileType', 'Unsupported file format', (value) => {
+      if (!value) return true;
+      return ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(value.type);
+    })
 });

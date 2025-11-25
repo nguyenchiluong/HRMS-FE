@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/useStore';
-import { LogOut, Users, Home, UserPlus, Plus } from 'lucide-react';
+import { LogOut, Users, Home, UserPlus, Plus} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Layout({ children }: { children: React.ReactNode }) {

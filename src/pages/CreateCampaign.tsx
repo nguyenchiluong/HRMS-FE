@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Loader2, Activity, TrendingUp, Calendar } from 'lucide-react';
+import { ArrowLeft, Loader2, Activity, TrendingUp, Calendar, Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useState, useRef } from 'react';
 
 const ACTIVITY_TYPES = [
   {
@@ -37,20 +38,27 @@ const ACTIVITY_TYPES = [
 export default function CreateCampaign() {
   const navigate = useNavigate();
   const createMutation = useCreateCampaign();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   const formik = useFormik<CampaignFormData>({
     initialValues: {
       name: '',
       description: '',
-      startDate: '',
+      startDate: new Date().toISOString().split('T')[0],
       startTime: '09:00',
       endDate: '',
       endTime: '17:00',
-      activityType: '' as any
+      activityType: '' as any,
+      imageFile: undefined,
     },
     validationSchema: campaignSchema,
     onSubmit: async (values) => {
       try {
+        // TODO: Implement image upload to backend
+        // Hiện tại chỉ gửi text data, bỏ qua imageFile
+        const { imageFile, ...campaignData } = values;
+
         await createMutation.mutateAsync(values);
         // Success handling - could show toast or navigate
         toast.success('Campaign created successfully!', {
@@ -71,6 +79,30 @@ export default function CreateCampaign() {
       }
     }
   });
+
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      formik.setFieldValue('imageFile', file);
+      
+      // Tạo preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Hàm xóa ảnh đã chọn
+  const removeImage = () => {
+    formik.setFieldValue('imageFile', undefined);
+    setPreviewUrl('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
 
   const isFormValid = formik.isValid && formik.dirty;
 
@@ -93,6 +125,68 @@ export default function CreateCampaign() {
       </div>
 
       <form onSubmit={formik.handleSubmit} className="space-y-6">
+        {/* Campaign Image Upload */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Campaign Image
+            </CardTitle>
+            <CardDescription>
+              Upload an image for your campaign (optional)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {previewUrl ? (
+                <div className="relative">
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className="w-full h-64 object-cover rounded-lg border"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8"
+                    onClick={removeImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div 
+                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium text-foreground mb-2">
+                    Upload Campaign Image
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    PNG, JPG, WEBP up to 5MB
+                  </p>
+                </div>
+              )}
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+              
+              {formik.touched.imageFile && formik.errors.imageFile && (
+                <p className="text-sm text-destructive">{formik.errors.imageFile}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
         {/* Basic Information */}
         <Card>
           <CardHeader>
