@@ -3,6 +3,7 @@ import { Formik, Form, Field, ErrorMessage, useField } from "formik";
 import type { FormikProps } from "formik";
 import * as Yup from "yup";
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
@@ -129,11 +130,6 @@ const validationSchema = Yup.object({
   taxIdNumber: Yup.string()
     .required("Tax ID number is required"),
   comment: Yup.string(),
-  attachments: Yup.mixed<FileList>()
-    .required("Attachments are required")
-    .test("file-count", "At least one file is required", (value: FileList | null | undefined): boolean => {
-      return !!(value && value.length > 0);
-    }),
 });
 
 const nationalityOptions = [
@@ -157,7 +153,7 @@ const nationalityOptions = [
 const initialValues: FormValues = {
   legalFullName: "Nguyen Tuan Kiet",
   nationality: "Vietnam",
-  nationalIdNumber: "XXXXXXXXXXXX",
+  nationalIdNumber: "715900132",
   nationalIdIssuedDate: "2021-04-22",
   nationalIdExpirationDate: "2028-09-25",
   nationalIdIssuedBy: "Director General of The Police Department",
@@ -169,11 +165,15 @@ const initialValues: FormValues = {
 
 export default function EditIDsContent() {
   const fileUrlsRef = useRef<Map<File, string>>(new Map());
+  const navigate = useNavigate();
 
   const handleSubmit = (values: FormValues) => {
     console.log("Form submitted:", values);
     // Handle form submission here
     // You can add API call or other logic
+
+    // Navigate back to the previous page after successful submission
+    navigate(-1);
   };
 
   // Cleanup object URLs on unmount
@@ -410,6 +410,7 @@ export default function EditIDsContent() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => navigate(-1)}
                   className="px-8 lg:px-12 py-3 lg:py-[15px] bg-hrms-bg-light rounded-[25px] text-hrms-text-primary text-base lg:text-xl font-medium hover:bg-hrms-bg-light/80 transition-colors w-full sm:w-auto"
                 >
                   Cancel
