@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface InfoRow {
   label: string;
@@ -61,6 +62,9 @@ function InfoRowComponent({ label, value, hasVisibilityToggle }: InfoRow) {
 }
 
 export default function IDsContent() {
+  const editPageUrl = "/profile/edit";
+  const navigate = useNavigate();
+
   return (
     <div className="bg-white rounded-[25px] p-6 lg:p-[45px] flex flex-col gap-2.5">
       <h2 className="text-[25px] font-semibold mb-2.5">Your IDs</h2>
@@ -92,7 +96,9 @@ export default function IDsContent() {
         ))}
       </div>
 
-      <button className="w-[168px] h-[60px] bg-hrms-bg-light rounded-[25px] text-black text-xl font-medium hover:bg-hrms-bg-light/80 transition-colors">
+      <button className="w-[168px] h-[60px] bg-hrms-bg-light rounded-[25px] text-black text-xl font-medium hover:bg-hrms-bg-light/80 transition-colors"
+        onClick={() => navigate(editPageUrl)}
+      >
         EDIT
       </button>
     </div>
