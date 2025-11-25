@@ -301,16 +301,17 @@ export default function EditIDsContent() {
                     type="file"
                     multiple
                     onChange={(event) => {
-                      const files = event.currentTarget.files;
-                      if (files) {
-                        const maxSize = maxFileSize; // 10MB
-                        const oversized = Array.from(files).some(file => file.size > maxSize);
-                        if (oversized) {
-                          setFieldError("attachments", "Each file must be less than 10MB");
-                          return;
+                      const newFiles = event.currentTarget.files;
+                      if (newFiles && newFiles.length > 0) {
+                        const dt = new DataTransfer();
+                        // Add existing files
+                        if (values.attachments) {
+                          Array.from(values.attachments).forEach((file) => dt.items.add(file));
                         }
+                        // Add new files
+                        Array.from(newFiles).forEach((file) => dt.items.add(file));
+                        setFieldValue("attachments", dt.files);
                       }
-                      setFieldValue("attachments", files);
                     }}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     accept="*/*"
