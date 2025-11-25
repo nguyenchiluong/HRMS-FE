@@ -7,6 +7,7 @@ import Employees from '@/pages/Employees';
 import AddEmployee from '@/pages/AddEmployee';
 import CreateCampaign from '@/pages/CreateCampaign';
 import ToastProvider from '@/components/ToastProvider';
+import CampaignsPage from '@/pages/CampaignsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -72,7 +73,13 @@ function App() {
 
         {/* ==================== Employee Activities & Campaigns Management Routes ==================== */}
         {/* Manager/Admin Routes (Campaign Management) */}
-        <Route path="/campaigns" />
+        <Route path="/campaigns" element={
+          <ProtectedRoute>
+            <Layout>
+              <CampaignsPage />
+            </Layout>
+          </ProtectedRoute>
+        }/>
         <Route path="/campaigns/new" element={
           <ProtectedRoute>
             <Layout>

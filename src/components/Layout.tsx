@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/useStore';
-import { LogOut, Users, Home, UserPlus, Plus} from 'lucide-react';
+import { LogOut, Users, Home, UserPlus, Plus, Trophy} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -36,6 +36,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Button variant="ghost" size="sm">
                     <Plus className="mr-2 h-4 w-4" />
                     Create Campaign
+                  </Button>
+                </Link>
+                <Link to="/campaigns">
+                  <Button variant="ghost" size="sm">
+                    <Trophy className="mr-2 h-4 w-4" />
+                    Campaigns
                   </Button>
                 </Link>
               </div>
