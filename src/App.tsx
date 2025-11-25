@@ -5,6 +5,7 @@ import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Employees from '@/pages/Employees';
 import AddEmployee from '@/pages/AddEmployee';
+import ViewEmployeeList from '@/pages/ViewEmployeeList';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -32,7 +33,7 @@ function App() {
 
         {/* ==================== Employee Profile Management Routes ==================== */}
         {/* Admin Routes */}
-        <Route path="/admin/employees" />
+        <Route path="/admin/employees" element={<ViewEmployeeList/>}/>
         <Route path="/admin/employees/new" />
         <Route path="/admin/employees/bulk" />
         <Route path="/admin/employees/:id" />
