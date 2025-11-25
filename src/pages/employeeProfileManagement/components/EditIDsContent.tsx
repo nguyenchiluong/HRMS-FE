@@ -117,7 +117,7 @@ const validationSchema = Yup.object({
   nationalIdIssuedDate: Yup.string()
     .required("Issued date is required"),
   nationalIdExpirationDate: Yup.string()
-    .required("Expiration date is required")
+    .required("Expiration date must be after issued date")
     .test("is-after-issued", "Expiration date must be after issued date", function(this: Yup.TestContext, value: string) {
       const { nationalIdIssuedDate } = this.parent;
       if (!value || !nationalIdIssuedDate) return true;
@@ -130,6 +130,13 @@ const validationSchema = Yup.object({
   taxIdNumber: Yup.string()
     .required("Tax ID number is required"),
   comment: Yup.string(),
+  attachments: Yup.mixed()
+    .required("Attachments are required")
+    .test("fileSize", "Each file must be less than 10MB", (value) => {
+      if (!value) return true;
+      const files = Array.from(value as FileList);
+      return files.every(file => file.size <= 10 * 1024 * 1024);
+    }),
 });
 
 const nationalityOptions = [
@@ -166,6 +173,7 @@ const initialValues: FormValues = {
 export default function EditIDsContent() {
   const fileUrlsRef = useRef<Map<File, string>>(new Map());
   const navigate = useNavigate();
+  const maxFileSize = 10 * 1024 * 1024; // 10MB
 
   const handleSubmit = (values: FormValues) => {
     console.log("Form submitted:", values);
@@ -198,7 +206,7 @@ export default function EditIDsContent() {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ setFieldValue, errors, touched, values }: FormikProps<FormValues>) => (
+          {({ setFieldValue, setFieldError, errors, touched, values }: FormikProps<FormValues>) => (
             <Form className="pb-4">
               <div className="flex flex-col gap-2.5 pb-[30px] mb-2.5">
                 <FormFieldRow
@@ -293,7 +301,16 @@ export default function EditIDsContent() {
                     type="file"
                     multiple
                     onChange={(event) => {
-                      setFieldValue("attachments", event.currentTarget.files);
+                      const files = event.currentTarget.files;
+                      if (files) {
+                        const maxSize = maxFileSize; // 10MB
+                        const oversized = Array.from(files).some(file => file.size > maxSize);
+                        if (oversized) {
+                          setFieldError("attachments", "Each file must be less than 10MB");
+                          return;
+                        }
+                      }
+                      setFieldValue("attachments", files);
                     }}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     accept="*/*"
