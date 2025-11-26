@@ -8,6 +8,11 @@ import AddEmployee from '@/pages/AddEmployee';
 import CreateCampaign from '@/pages/CreateCampaign';
 import ToastProvider from '@/components/ToastProvider';
 import CampaignsPage from '@/pages/CampaignsPage';
+import EmployeeIDs from './pages/employeeProfileManagement/pages/EmployeeIDs';
+import PersonalInfo from './pages/employeeProfileManagement/pages/PersonalInfo';
+import Education from './pages/employeeProfileManagement/pages/Education';
+import Financial from './pages/employeeProfileManagement/pages/Financial';
+import JobDetails from './pages/employeeProfileManagement/pages/JobDetails';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -18,7 +23,7 @@ function App() {
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <Router basename="/HRMS-FE">
+    <Router>
       <ToastProvider />
       <Routes>
         {/* ==================== Authentication & Onboarding Routes ==================== */}
@@ -30,11 +35,23 @@ function App() {
 
         {/* Protected Routes */}
         <Route path="/logout" />
-        <Route path="/profile/me" />
-        <Route path="/profile/me/edit" />
         <Route path="/change-password" />
 
         {/* ==================== Employee Profile Management Routes ==================== */}
+        {/* Employee Routes (Self-Profile Management) */}
+        <Route path="/profile" element={<EmployeeIDs />} />
+        <Route path="/profile/personal-info" element={<PersonalInfo />} />
+        <Route path="/profile/personal-info/edit" />
+        <Route path="/profile/personal-info/contact" />
+        <Route path="/profile/personal-info/emergency" />
+        <Route path="/profile/personal-info/family" />
+        <Route path="/profile/education" element={<Education />} />
+        <Route path="/profile/financial" element={<Financial />} />
+        <Route path="/profile/ids" element={<EmployeeIDs />} />
+        <Route path="/profile/ids/request-update" />
+        <Route path="/profile/change-requests" />
+        <Route path="/profile/job-details" element={<JobDetails />} />
+
         {/* Admin Routes */}
         <Route path="/admin/employees" />
         <Route path="/admin/employees/new" />
