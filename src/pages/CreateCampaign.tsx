@@ -57,7 +57,7 @@ export default function CreateCampaign() {
       try {
         // TODO: Implement image upload to backend
         // Hiện tại chỉ gửi text data, bỏ qua imageFile
-        const { imageFile, ...campaignData } = values;
+        //const { imageFile, ...campaignData } = values;
 
         await createMutation.mutateAsync(values);
         // Success handling - could show toast or navigate
