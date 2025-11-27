@@ -1,10 +1,8 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CampaignList from "@/components/campaigns/CampaignList";
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function CampaignsPage() {
   const navigate = useNavigate();

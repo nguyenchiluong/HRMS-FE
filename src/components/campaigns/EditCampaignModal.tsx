@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { Campaign } from "@/types/campaign";
 
 interface EditCampaignModalProps {

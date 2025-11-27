@@ -3,9 +3,9 @@ import { createCampaign, getCampaigns, updateCampaign } from '@/services/campaig
 import type { CampaignFormData, Campaign } from '@/types/campaign';
 
 export const useCampaigns = () => {
-  return useQuery({
+  return useQuery<Campaign[]>({
     queryKey: ['campaigns'],
-    queryFn: getCampaigns,
+    queryFn: () => getCampaigns(),
   });
 };
 
