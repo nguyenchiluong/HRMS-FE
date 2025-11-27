@@ -5,6 +5,8 @@ import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Employees from '@/pages/Employees';
 import AddEmployee from '@/pages/AddEmployee';
+import CreateCampaign from '@/pages/CreateCampaign';
+import ToastProvider from '@/components/ToastProvider';
 import EmployeeIDs from './pages/employeeProfileManagement/pages/EmployeeIDs';
 import PersonalInfo from './pages/employeeProfileManagement/pages/PersonalInfo';
 import Education from './pages/employeeProfileManagement/pages/Education';
@@ -20,7 +22,8 @@ function App() {
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <Router basename="/HRMS-FE">
+    <Router>
+      <ToastProvider />
       <Routes>
         {/* ==================== Authentication & Onboarding Routes ==================== */}
         {/* Public Routes */}
@@ -87,7 +90,13 @@ function App() {
         {/* ==================== Employee Activities & Campaigns Management Routes ==================== */}
         {/* Manager/Admin Routes (Campaign Management) */}
         <Route path="/campaigns" />
-        <Route path="/campaigns/new" />
+        <Route path="/campaigns/new" element={
+          <ProtectedRoute>
+            <Layout>
+              <CreateCampaign />
+            </Layout>
+          </ProtectedRoute>
+        } />
         <Route path="/campaigns/:id" />
         <Route path="/campaigns/:id/edit" />
         <Route path="/campaigns/:id/publish" />
