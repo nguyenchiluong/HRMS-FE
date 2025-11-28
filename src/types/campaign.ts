@@ -14,4 +14,13 @@ export interface Campaign extends CampaignFormData {
   createdAt: string;
   status: 'draft' | 'active' | 'completed';
   imageUrl?: string;
+  primaryMetric?: string;
+}
+
+export interface CampaignListItem extends Campaign {
+  primaryMetric: string;
+  participants: number;
+  totalDistance: number;
+  pendingSubmissions: number;
+  image: string;
 }

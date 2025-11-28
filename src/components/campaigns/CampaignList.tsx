@@ -5,7 +5,7 @@ import { Edit2, Eye, Trophy, Plus, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import EditCampaignModal from "./EditCampaignModal";
-import type { Campaign } from "@/types/campaign";
+import type { Campaign, CampaignListItem } from "@/types/campaign";
 
 interface CampaignListProps {
   campaigns: Campaign[];
@@ -57,6 +57,14 @@ const getStatusDisplay = (status: string) => {
   }
 };
 
+/*export interface CampaignListItem extends Campaign {
+  primaryMetric: string;
+  participants: number;
+  totalDistance: number;
+  pendingSubmissions: number;
+  image: string;
+}*/
+
 export default function CampaignList({ 
   campaigns, 
   onCreateCampaign, 
@@ -66,15 +74,15 @@ export default function CampaignList({
 }: CampaignListProps) {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-
+  
   // BÂY GIỜ getPrimaryMetric ĐÃ ĐƯỢC ĐỊNH NGHĨA TRƯỚC KHI SỬ DỤNG
-  const enhancedCampaigns = campaigns.map((campaign, index) => ({
+  const enhancedCampaigns: CampaignListItem[] = campaigns.map((campaign, index) => ({
     ...campaign,
     primaryMetric: getPrimaryMetric(campaign.activityType),
     participants: Math.floor(Math.random() * 50) + 10,
     totalDistance: Math.floor(Math.random() * 3000) + 500,
     pendingSubmissions: Math.floor(Math.random() * 10),
-    image: MOCK_IMAGES[index % MOCK_IMAGES.length]
+    image: campaign.imageUrl || MOCK_IMAGES[index % MOCK_IMAGES.length]
   }));
 
   const filteredCampaigns = enhancedCampaigns.filter(campaign =>
