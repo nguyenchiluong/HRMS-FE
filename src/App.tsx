@@ -10,6 +10,7 @@ import PersonalInfo from './pages/employeeProfileManagement/pages/PersonalInfo';
 import Education from './pages/employeeProfileManagement/pages/Education';
 import Financial from './pages/employeeProfileManagement/pages/Financial';
 import JobDetails from './pages/employeeProfileManagement/pages/JobDetails';
+import EmployeeEditIDs from './pages/employeeProfileManagement/pages/EmployeeEditID';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -36,6 +37,7 @@ function App() {
         {/* ==================== Employee Profile Management Routes ==================== */}
         {/* Employee Routes (Self-Profile Management) */}
         <Route path="/profile" element={<EmployeeIDs />} />
+        <Route path="/profile/edit" element={<EmployeeEditIDs />} />
         <Route path="/profile/personal-info" element={<PersonalInfo />} />
         <Route path="/profile/personal-info/edit" />
         <Route path="/profile/personal-info/contact" />
