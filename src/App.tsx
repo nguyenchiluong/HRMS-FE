@@ -5,7 +5,7 @@ import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Employees from '@/pages/Employees';
 import AddEmployee from '@/pages/AddEmployee';
-import ViewEmployeeList from '@/pages/ViewEmployeeList';
+import ViewEmployeeList from '@/pages/ViewEmployeeList/pages/ViewEmployeeList';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
