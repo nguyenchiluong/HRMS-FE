@@ -10,7 +10,7 @@ const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
 // Employee Management (Legacy)
-const Employees = lazy(() => import('@/pages/admin/Employees'));
+const Employees = lazy(() => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList')); // Path UPDATED
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
