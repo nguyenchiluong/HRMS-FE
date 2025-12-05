@@ -1,5 +1,5 @@
 import { useFilterStore } from "../store/filterStore";
-// TODO import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export default function TimeTypeDropdown() {
   const {
@@ -17,9 +17,13 @@ export default function TimeTypeDropdown() {
     <div className="relative">
       <button
         onClick={toggleTimeType}
-        className="my-4 px-4 py-2 border rounded hover:bg-gray-100 text-left w-48"
+        className="my-4 px-4 py-2 border shadow rounded hover:bg-gray-100 text-left w-48"
       >
-        {selectedTimeType || "Time Type"}
+        
+        <span className="flex justify-between">
+          {selectedTimeType || "Time Type"} 
+          <ChevronDown/>
+        </span>
       </button>
 
       {timeTypeOpen && (

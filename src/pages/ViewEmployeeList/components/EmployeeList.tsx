@@ -55,7 +55,7 @@ export default function List() {
       </div>
 
       {/* List */}
-      <table className='w-full table-fixed text-left'>
+      <table className='w-full text-left'>
         <thead className='bg-[#E3EDF9] text-black font-bold'>
           <tr>
             <th className="p-2">Employee ID</th>
@@ -73,7 +73,7 @@ export default function List() {
             <tr key={emp.id} className="even:bg-[#E3EDF9] odd:bg-white">
               <td className="p-2">{emp.id}</td>
               <td className="p-2">{emp.fullName}</td>
-              <td className="p-2">{emp.email}</td>
+              <td className="p-2">{emp.email.replace(/(.{2}).+(@.+)/, "$1****$2")}</td>
               <td className="p-2">{emp.position}</td>
               <td className="p-2">{emp.jobLevel}</td>
               <td className="p-2">{emp.department}</td>

@@ -1,6 +1,5 @@
-import { useFilterStore } from "../store/filterStore";
-//TODO 
-// import { ChevronDown } from "lucide-react";
+import { useFilterStore } from "../store/filterStore"; 
+import { ChevronDown } from "lucide-react";
 
 export default function DepartmentDropdown() {
   const { selectedDepartment, setDepartment, departmentOpen, toggleDepartment, getDepartments, setPage } = useFilterStore();
@@ -10,9 +9,12 @@ export default function DepartmentDropdown() {
     <div className="relative">
       <button
         onClick={toggleDepartment}
-        className="my-4 px-4 py-2 border rounded hover:bg-gray-100 text-left w-48"
+        className="my-4 px-4 py-2 border shadow rounded hover:bg-gray-100 text-left w-48"
       >
-        {selectedDepartment || "Department"}  
+        <span className="flex justify-between">
+          {selectedDepartment || "Department"}  
+          <ChevronDown/>
+        </span>
       </button>
 
       {departmentOpen && (

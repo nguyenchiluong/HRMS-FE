@@ -1,5 +1,5 @@
 import { useFilterStore } from "../store/filterStore";
-// TODO import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export default function JobLevelDropdown() {
   const {
@@ -17,9 +17,13 @@ export default function JobLevelDropdown() {
     <div className="relative">
       <button
         onClick={toggleJobLevel}
-        className="my-4 px-4 py-2 border rounded hover:bg-gray-100 text-left w-48"
+        className="my-4 px-4 py-2 border shadow rounded hover:bg-gray-100 text-left w-48"
       >
-        {selectedJobLevel || "Job Level"}
+
+        <span className="flex justify-between">
+          {selectedJobLevel || "JobLevel"}  
+          <ChevronDown/>
+        </span>
       </button>
 
       {jobLevelOpen && (

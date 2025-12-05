@@ -6,7 +6,7 @@ export default function ClearFilters() {
   return (
     <button
       onClick={clearFilters}
-      className="px-4 py-2 mt-4 border rounded hover:bg-gray-100"
+      className="px-4 py-2 mt-4 border shadow rounded hover:bg-gray-100"
     >
       Clear
     </button>

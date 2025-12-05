@@ -1,6 +1,5 @@
 import { useFilterStore } from "../store/filterStore";
-// TODO
-// import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export default function EmploymentTypeDropdown() {
   const {
@@ -18,9 +17,12 @@ export default function EmploymentTypeDropdown() {
     <div className="relative">
       <button
         onClick={toggleEmploymentType}
-        className="my-4 px-4 py-2 border rounded hover:bg-gray-100 text-left w-48"
+        className="my-4 px-4 py-2 border shadow rounded hover:bg-gray-100 text-left w-48"
       >
-        {selectedEmploymentType || "Employment Type"}
+        <span className="flex justify-between">
+          {selectedEmploymentType || "Employment Type"} 
+          <ChevronDown/>
+        </span>
       </button>
 
       {employmentTypeOpen && (

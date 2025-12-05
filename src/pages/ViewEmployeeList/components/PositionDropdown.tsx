@@ -1,5 +1,5 @@
 import { useFilterStore } from "../store/filterStore";
-// TODO import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export default function PositionDropdown() {
   const { selectedPosition, setPosition, positionOpen, togglePosition, getPositions, setPage } = useFilterStore();
@@ -9,9 +9,12 @@ export default function PositionDropdown() {
     <div className="relative">
       <button
         onClick={togglePosition}
-        className="my-4 px-4 py-2 border rounded hover:bg-gray-100 text-left w-48"
+        className="my-4 px-4 py-2 border shadow rounded hover:bg-gray-100 text-left w-48"
       >
-        {selectedPosition || "Position"}  
+        <span className="flex justify-between">
+          {selectedPosition || "Position"}
+          <ChevronDown/>
+        </span>  
       </button>
 
       {positionOpen && (
