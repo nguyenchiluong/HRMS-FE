@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom';
-import { useAuthStore } from '@/store/useStore';
-import { LogOut, Users, Home, UserPlus, Plus} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/store/useStore';
+import { Home, LogOut, Plus, Trophy, UserPlus, Users } from 'lucide-react';
+import { Link, Outlet } from 'react-router-dom';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout() {
   const { user, logout } = useAuthStore();
 
   return (
@@ -38,6 +38,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     Create Campaign
                   </Button>
                 </Link>
+                <Link to="/campaigns">
+                  <Button variant="ghost" size="sm">
+                    <Trophy className="mr-2 h-4 w-4" />
+                    Campaigns
+                  </Button>
+                </Link>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -57,7 +63,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </nav>
-      <main className="container mx-auto px-4 py-8">{children}</main>
+      <main className="container mx-auto px-4 py-8">
+        <Outlet />
+      </main>
     </div>
   );
 }
