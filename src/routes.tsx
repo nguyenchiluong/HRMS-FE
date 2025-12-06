@@ -10,7 +10,9 @@ const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
 // Employee Management (Legacy)
-const Employees = lazy(() => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList')); // Path UPDATED
+const Employees = lazy(
+  () => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList'),
+); // Path UPDATED
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
@@ -32,6 +34,8 @@ const Financial = lazy(
 const JobDetails = lazy(
   () => import('./pages/employeeProfileManagement/pages/JobDetails'),
 );
+const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
+const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 
 const routes: RouteObject[] = [
   // =================================================================
@@ -219,32 +223,37 @@ const routes: RouteObject[] = [
               { index: true, element: <Placeholder title="Activities List" /> },
             ],
           },
-        ],
-      },
-
-      // D. Shared Protected Routes (Campaigns, etc.)
-      {
-        path: '/campaigns',
-        children: [
-          { index: true, element: <Placeholder title="Campaigns List" /> },
-          { path: 'new', element: <Placeholder title="New Campaign" /> },
           {
-            path: ':id',
+            path: '/campaigns',
             children: [
-              { index: true, element: <Placeholder title="Campaign Detail" /> },
-              { path: 'edit', element: <Placeholder title="Edit Campaign" /> },
+              { index: true, element: <CampaignsPage /> },
+              { path: 'new', element: <CreateCampaign /> },
               {
-                path: 'registrations',
-                element: <Placeholder title="Campaign Registrations" />,
-              },
-              {
-                path: 'leaderboard',
-                element: <Placeholder title="Leaderboard" />,
+                path: ':id',
+                children: [
+                  {
+                    index: true,
+                    element: <Placeholder title="Campaign Detail" />,
+                  },
+                  {
+                    path: 'edit',
+                    element: <Placeholder title="Edit Campaign" />,
+                  },
+                  {
+                    path: 'registrations',
+                    element: <Placeholder title="Campaign Registrations" />,
+                  },
+                  {
+                    path: 'leaderboard',
+                    element: <Placeholder title="Leaderboard" />,
+                  },
+                ],
               },
             ],
           },
         ],
       },
+
       { path: '/settings', element: <Placeholder title="Settings" /> },
       { path: '/help', element: <Placeholder title="Help Center" /> },
       {
