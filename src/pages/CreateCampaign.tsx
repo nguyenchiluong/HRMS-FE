@@ -82,7 +82,7 @@ export default function CreateCampaign() {
 
         // Navigate sau khi hiển thị toast
         setTimeout(() => {
-          navigate('/campaigns');
+          navigate('/admin/campaigns');
         }, 1000);
       } catch (error) {
         console.error('Failed to create campaign:', error);

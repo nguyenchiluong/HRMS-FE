@@ -26,7 +26,7 @@ export default function AdminLayout() {
                     Employees
                   </Button>
                 </Link>
-                <Link to="/campaigns">
+                <Link to="/admin/campaigns">
                   <Button variant="ghost" size="sm">
                     <Trophy className="mr-2 h-4 w-4" />
                     Campaigns
