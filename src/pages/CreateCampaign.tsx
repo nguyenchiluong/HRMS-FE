@@ -1,15 +1,29 @@
-import { useNavigate } from 'react-router-dom';
-import { useFormik } from 'formik';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useCreateCampaign } from '@/hooks/useCampaigns';
 import { campaignSchema } from '@/schemas/campaignSchema';
 import type { CampaignFormData } from '@/types/campaign';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Loader2, Activity, TrendingUp, Calendar, Upload, X } from 'lucide-react';
+import { useFormik } from 'formik';
+import {
+  Activity,
+  ArrowLeft,
+  Calendar,
+  Loader2,
+  TrendingUp,
+  Upload,
+  X,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ACTIVITY_TYPES = [
   {
@@ -17,22 +31,22 @@ const ACTIVITY_TYPES = [
     name: 'Walking',
     icon: Activity,
     description: 'Step counting and walking activities',
-    color: 'text-green-500'
+    color: 'text-green-500',
   },
   {
     id: 'running' as const,
-    name: 'Running', 
+    name: 'Running',
     icon: TrendingUp,
     description: 'Running and jogging activities',
-    color: 'text-blue-500'
+    color: 'text-blue-500',
   },
   {
     id: 'cycling' as const,
     name: 'Cycling',
     icon: Activity,
     description: 'Cycling and biking activities',
-    color: 'text-purple-500'
-  }
+    color: 'text-purple-500',
+  },
 ];
 
 export default function CreateCampaign() {
@@ -57,7 +71,7 @@ export default function CreateCampaign() {
       try {
         // TODO: Implement image upload to backend
         // Hiện tại chỉ gửi text data, bỏ qua imageFile
-       // const { imageFile, ...campaignData } = values;
+        // const { imageFile, ...campaignData } = values;
 
         await createMutation.mutateAsync(values);
         // Success handling - could show toast or navigate
@@ -65,7 +79,7 @@ export default function CreateCampaign() {
           duration: 3000,
           position: 'top-right',
         });
-        
+
         // Navigate sau khi hiển thị toast
         setTimeout(() => {
           navigate('/campaigns');
@@ -77,14 +91,14 @@ export default function CreateCampaign() {
           duration: 5000,
         });
       }
-    }
+    },
   });
 
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       formik.setFieldValue('imageFile', file);
-      
+
       // Tạo preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -103,24 +117,27 @@ export default function CreateCampaign() {
     }
   };
 
-
   const isFormValid = formik.isValid && formik.dirty;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => navigate(-1)}
           className="rounded-full"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Create New Campaign</h1>
-          <p className="text-muted-foreground">Set up a new employee activity campaign</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            Create New Campaign
+          </h1>
+          <p className="text-muted-foreground">
+            Set up a new employee activity campaign
+          </p>
         </div>
       </div>
 
@@ -140,39 +157,39 @@ export default function CreateCampaign() {
             <div className="space-y-4">
               {previewUrl ? (
                 <div className="relative">
-                  <img 
-                    src={previewUrl} 
-                    alt="Preview" 
-                    className="w-full h-64 object-cover rounded-lg border"
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="h-64 w-full rounded-lg border object-cover"
                   />
                   <Button
                     type="button"
                     variant="destructive"
                     size="icon"
-                    className="absolute top-2 right-2 h-8 w-8"
+                    className="absolute right-2 top-2 h-8 w-8"
                     onClick={removeImage}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
-                <div 
-                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                <div
+                  className="cursor-pointer rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center transition-colors hover:border-muted-foreground/50"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-medium text-foreground mb-2">
+                  <Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <p className="mb-2 text-lg font-medium text-foreground">
                     Upload Campaign Image
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="mt-2 text-xs text-muted-foreground">
                     PNG, JPG, WEBP up to 5MB
                   </p>
                 </div>
               )}
-              
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -180,9 +197,11 @@ export default function CreateCampaign() {
                 onChange={handleImageChange}
                 className="hidden"
               />
-              
+
               {formik.touched.imageFile && formik.errors.imageFile && (
-                <p className="text-sm text-destructive">{formik.errors.imageFile}</p>
+                <p className="text-sm text-destructive">
+                  {formik.errors.imageFile}
+                </p>
               )}
             </div>
           </CardContent>
@@ -211,7 +230,11 @@ export default function CreateCampaign() {
                 value={formik.values.name}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={formik.touched.name && formik.errors.name ? 'border-destructive' : ''}
+                className={
+                  formik.touched.name && formik.errors.name
+                    ? 'border-destructive'
+                    : ''
+                }
               />
               {formik.touched.name && formik.errors.name && (
                 <p className="text-sm text-destructive">{formik.errors.name}</p>
@@ -230,10 +253,16 @@ export default function CreateCampaign() {
                 value={formik.values.description}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={formik.touched.description && formik.errors.description ? 'border-destructive' : ''}
+                className={
+                  formik.touched.description && formik.errors.description
+                    ? 'border-destructive'
+                    : ''
+                }
               />
               {formik.touched.description && formik.errors.description && (
-                <p className="text-sm text-destructive">{formik.errors.description}</p>
+                <p className="text-sm text-destructive">
+                  {formik.errors.description}
+                </p>
               )}
               <p className="text-xs text-muted-foreground">
                 {formik.values.description.length}/1000 characters
@@ -254,7 +283,7 @@ export default function CreateCampaign() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="startDate" className="text-sm font-medium">
                   Start Date *
@@ -266,10 +295,16 @@ export default function CreateCampaign() {
                   value={formik.values.startDate}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  className={formik.touched.startDate && formik.errors.startDate ? 'border-destructive' : ''}
+                  className={
+                    formik.touched.startDate && formik.errors.startDate
+                      ? 'border-destructive'
+                      : ''
+                  }
                 />
                 {formik.touched.startDate && formik.errors.startDate && (
-                  <p className="text-sm text-destructive">{formik.errors.startDate}</p>
+                  <p className="text-sm text-destructive">
+                    {formik.errors.startDate}
+                  </p>
                 )}
               </div>
 
@@ -298,10 +333,16 @@ export default function CreateCampaign() {
                   value={formik.values.endDate}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  className={formik.touched.endDate && formik.errors.endDate ? 'border-destructive' : ''}
+                  className={
+                    formik.touched.endDate && formik.errors.endDate
+                      ? 'border-destructive'
+                      : ''
+                  }
                 />
                 {formik.touched.endDate && formik.errors.endDate && (
-                  <p className="text-sm text-destructive">{formik.errors.endDate}</p>
+                  <p className="text-sm text-destructive">
+                    {formik.errors.endDate}
+                  </p>
                 )}
               </div>
 
@@ -331,22 +372,24 @@ export default function CreateCampaign() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {ACTIVITY_TYPES.map((activity) => {
                 const Icon = activity.icon;
                 const isSelected = formik.values.activityType === activity.id;
-                
+
                 return (
                   <div
                     key={activity.id}
-                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
                       isSelected
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
                     }`}
-                    onClick={() => formik.setFieldValue('activityType', activity.id)}
+                    onClick={() =>
+                      formik.setFieldValue('activityType', activity.id)
+                    }
                   >
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="mb-2 flex items-center gap-3">
                       <Icon className={`h-5 w-5 ${activity.color}`} />
                       <span className="font-semibold text-foreground">
                         {activity.name}
@@ -356,7 +399,7 @@ export default function CreateCampaign() {
                       {activity.description}
                     </p>
                     {isSelected && (
-                      <div className="mt-2 text-xs text-primary font-medium">
+                      <div className="mt-2 text-xs font-medium text-primary">
                         ✓ Selected
                       </div>
                     )}
@@ -365,7 +408,9 @@ export default function CreateCampaign() {
               })}
             </div>
             {formik.touched.activityType && formik.errors.activityType && (
-              <p className="text-sm text-destructive mt-2">{formik.errors.activityType}</p>
+              <p className="mt-2 text-sm text-destructive">
+                {formik.errors.activityType}
+              </p>
             )}
           </CardContent>
         </Card>
