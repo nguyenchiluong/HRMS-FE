@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/useStore';
-import { Home, LogOut, Plus, Trophy, UserPlus, Users } from 'lucide-react';
+import { Home, LogOut, Trophy, Users } from 'lucide-react';
 import { Link, Outlet } from 'react-router-dom';
 
 export default function AdminLayout() {
@@ -24,18 +24,6 @@ export default function AdminLayout() {
                   <Button variant="ghost" size="sm">
                     <Users className="mr-2 h-4 w-4" />
                     Employees
-                  </Button>
-                </Link>
-                <Link to="/add-employee">
-                  <Button variant="ghost" size="sm">
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Add Employee
-                  </Button>
-                </Link>
-                <Link to="/campaigns/new">
-                  <Button variant="ghost" size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Campaign
                   </Button>
                 </Link>
                 <Link to="/campaigns">

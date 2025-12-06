@@ -1,32 +1,32 @@
-import { useNavigate } from 'react-router-dom';
-import CampaignList from "@/components/campaigns/CampaignList";
-import { useCampaigns } from '@/hooks/useCampaigns';
+import CampaignList from '@/components/campaigns/CampaignList';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCampaigns } from '@/hooks/useCampaigns';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function CampaignsPage() {
   const navigate = useNavigate();
   const { data: campaigns, isLoading, error } = useCampaigns();
 
   const handleCreateCampaign = () => {
-    navigate('/campaigns/new');
+    navigate('/admin/campaigns/new');
   };
 
   const handleViewCampaign = (campaign: any) => {
-    navigate(`/campaigns/${campaign.id}`);
+    navigate(`/admin/campaigns/${campaign.id}`);
   };
 
   const handleViewFinalRankings = (campaign: any) => {
-    navigate(`/campaigns/${campaign.id}/results`);
+    navigate(`/admin/campaigns/${campaign.id}/results`);
   };
 
   const handleViewApprovals = () => {
-    navigate('/campaigns/approvals');
+    navigate('/admin/campaigns/approvals');
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-64">
+      <div className="flex min-h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -40,7 +40,7 @@ export default function CampaignsPage() {
             <p className="text-lg font-medium text-destructive">
               Failed to load campaigns
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="mt-2 text-sm text-muted-foreground">
               Please try again later
             </p>
           </div>

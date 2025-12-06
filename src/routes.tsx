@@ -224,7 +224,7 @@ const routes: RouteObject[] = [
             ],
           },
           {
-            path: '/campaigns',
+            path: 'campaigns',
             children: [
               { index: true, element: <CampaignsPage /> },
               { path: 'new', element: <CreateCampaign /> },
