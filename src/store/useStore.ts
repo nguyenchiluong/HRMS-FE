@@ -20,13 +20,6 @@ export interface Employee {
   status: 'active' | 'inactive';
 }
 
-interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  login: (user: User) => void;
-  logout: () => void;
-}
-
 interface EmployeeState {
   employees: Employee[];
   addEmployee: (employee: Employee) => void;
@@ -34,20 +27,6 @@ interface EmployeeState {
   deleteEmployee: (id: string) => void;
   getEmployeeById: (id: string) => Employee | undefined;
 }
-
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isAuthenticated: false,
-      login: (user) => set({ user, isAuthenticated: true }),
-      logout: () => set({ user: null, isAuthenticated: false }),
-    }),
-    {
-      name: 'auth-storage',
-    }
-  )
-);
 
 export const useEmployeeStore = create<EmployeeState>()(
   persist(
@@ -89,7 +68,7 @@ export const useEmployeeStore = create<EmployeeState>()(
       updateEmployee: (id, updatedEmployee) =>
         set((state) => ({
           employees: state.employees.map((emp) =>
-            emp.id === id ? { ...emp, ...updatedEmployee } : emp
+            emp.id === id ? { ...emp, ...updatedEmployee } : emp,
           ),
         })),
       deleteEmployee: (id) =>
@@ -100,6 +79,6 @@ export const useEmployeeStore = create<EmployeeState>()(
     }),
     {
       name: 'employee-storage',
-    }
-  )
+    },
+  ),
 );

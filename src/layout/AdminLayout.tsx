@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/useStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Home, LogOut, Trophy, Users } from 'lucide-react';
 import { Link, Outlet } from 'react-router-dom';
 
