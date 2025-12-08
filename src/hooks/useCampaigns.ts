@@ -20,13 +20,16 @@ export const useCreateCampaign = () => {
   });
 };
 
-// SỬA LỖI - Đảm bảo đúng parameters
+// src/hooks/useCampaigns.ts
+
 export const useUpdateCampaign = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Partial<Campaign>) =>
-      updateCampaign(id, data),
+    mutationFn: (variables: { id: string } & Partial<Campaign>) => {
+      const { id, ...data } = variables;
+      return updateCampaign(id, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
     },
