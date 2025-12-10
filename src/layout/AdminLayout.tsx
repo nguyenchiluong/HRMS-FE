@@ -20,7 +20,7 @@ export default function AdminLayout() {
                     Dashboard
                   </Button>
                 </Link>
-                <Link to="/employees">
+                <Link to="/admin/employees">
                   <Button variant="ghost" size="sm">
                     <Users className="mr-2 h-4 w-4" />
                     Employees
