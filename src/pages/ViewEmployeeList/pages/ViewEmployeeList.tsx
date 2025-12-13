@@ -3,57 +3,35 @@
 // import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 // import { Input } from '@/components/ui/input';
 
-
 // Store
 import { useFilterStore } from '../store/filterStore';
 
-import NavigationBar from '../components/NavigationBar';
-import TitleBar from '../components/TitleBar';
-import Overview from '../components/Overview';
-import Filter from '../components/Filter';
-import SearchBar from '../components/SearchBar';
-import FilterBox from '../components/FilterBox';
 import List from '../components/EmployeeList';
-
-// Data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import Filter from '../components/Filter';
+import FilterBox from '../components/FilterBox';
+import NavigationBar from '../components/NavigationBar';
+import Overview from '../components/Overview';
+import SearchBar from '../components/SearchBar';
+import TitleBar from '../components/TitleBar';
 
 export default function ViewEmployeeList() {
   const filterOpen = useFilterStore((s) => s.filterOpen);
 
-	return (
-		<>
+  return (
+    <>
       <div>
-        <NavigationBar/>
-        <TitleBar/>
-        <Overview/>
-        <div className="p-4 w-4/5">
-          <div className="flex items-center gap-2 justify-between">
-            <SearchBar/>
-            <Filter/>
+        <NavigationBar />
+        <TitleBar />
+        <Overview />
+        <div className="w-4/5 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <SearchBar />
+            <Filter />
           </div>
-          {filterOpen && <FilterBox/>}
+          {filterOpen && <FilterBox />}
         </div>
-        <List/>
-    </div>
-		</>
-	)
-
-  };
+        <List />
+      </div>
+    </>
+  );
+}
