@@ -24,7 +24,10 @@ export const uploadImageToS3 = async (file: File): Promise<string> => {
     
     // 1. Xin Presigned URL (Dùng api của leader)
     const response = await api.get(`${STORAGE_ENDPOINT}/presigned-url`, {
-      params: { extension }
+      params: { 
+        extension: extension,
+        contentType: file.type 
+      }
     });
     
     const uploadUrl = response.data; // Axios trả về data trực tiếp
@@ -136,16 +139,24 @@ export const createCampaign = async (data: CampaignFormData): Promise<Campaign> 
   }
 };
 
-export const updateCampaign = async (id: string, data: Partial<Campaign>): Promise<Campaign> => {
+export const updateCampaign = async (
+  id: string, 
+  data: Partial<Campaign>, 
+  newImageFile?: File //Tham số update ảnh mới
+): Promise<Campaign> => {
   try {
-    // 1. Upload ảnh nếu có (Logic này thường xử lý ở UI và truyền URL xuống, 
-    // nhưng nếu UI truyền File trong data thì xử lý ở đây luôn cũng được. 
-    // Tạm thời giả định UI EditCampaignModal đã upload và gửi string URL trong data.imageUrl)
-    
-    // 2. Tạo payload chuẩn (Khớp với CreatePayload để không bị thiếu trường)
-    const payload = createPayload(data);
+    let finalImageUrl = data.imageUrl; // Mặc định dùng link ảnh hiện tại (hoặc rỗng nếu user xóa)
 
-    console.log("Updating campaign with payload:", payload); // Debug log
+    // 1. Nếu có file ảnh mới -> Upload lên S3 lấy link mới
+    if (newImageFile) {
+      console.log("Uploading new image for update...");
+      finalImageUrl = await uploadImageToS3(newImageFile);
+    }
+
+    // 2. Tạo payload (Dùng lại hàm createPayload để đảm bảo mapping chuẩn)
+    const payload = createPayload(data, finalImageUrl);
+
+    console.log("Updating campaign with payload:", payload);
 
     const response = await api.put(`${CAMPAIGN_ENDPOINT}/${id}`, payload);
 

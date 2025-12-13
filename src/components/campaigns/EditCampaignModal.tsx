@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { X, Upload, Loader2, Clock } from "lucide-react";
 import type { Campaign } from "@/types/campaign";
 import { useUpdateCampaign } from "@/hooks/useCampaigns";
-import { uploadImageToS3 } from "@/api/campaign"; // Nhớ export hàm này bên service
 import toast from "react-hot-toast";
 
 interface EditCampaignModalProps {
@@ -65,38 +64,38 @@ export default function EditCampaignModal({ campaign, onClose }: EditCampaignMod
     });
   };
 
+  // --- PHẦN SỬA ĐỔI CHÍNH Ở ĐÂY ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      let finalImageUrl = campaign.imageUrl; // Mặc định giữ ảnh cũ
+      // 1. Chuẩn bị dữ liệu text (Payload)
+      // Logic xử lý trường hợp xóa ảnh: 
+      // Nếu không có file mới (imageFile null) VÀ previewUrl rỗng -> Gửi chuỗi rỗng "" để Backend biết là xóa ảnh.
+      // Ngược lại thì gửi ảnh cũ (campaign.imageUrl).
+      // Lưu ý: Nếu có imageFile, giá trị imageUrl này sẽ bị logic trong api đè lại bằng link mới upload, nên không lo.
+      const currentImageUrl = (!imageFile && !previewUrl) ? "" : campaign.imageUrl;
 
-      // 1. Nếu người dùng chọn ảnh mới -> Upload lên S3 lấy link mới
-      if (imageFile) {
-        finalImageUrl = await uploadImageToS3(imageFile);
-      } else if (previewUrl === "") {
-        // Nếu người dùng đã xóa ảnh
-        finalImageUrl = ""; 
-      }
-
-      // 2. Chuẩn bị payload gửi về Backend
-      const payload = {
-        id: campaign.id, // ID để biết sửa ai
-        name: formData.name, // Map sang tên field backend cần
+      const campaignData: Partial<Campaign> = {
+        name: formData.name,
         description: formData.description,
         startDate: formData.startDate,
         endDate: formData.endDate,
         // Backend cần HH:mm:ss, nối thêm :00
         startTime: formData.startTime + ":00",
         endTime: formData.endTime + ":00",
-        imageUrl: finalImageUrl,
-        // Giữ nguyên các trường không sửa
-        activityType: campaign.activityType, 
+        activityType: campaign.activityType, // Giữ nguyên type
+        imageUrl: currentImageUrl, 
         status: campaign.status
       };
 
-      // 3. Gọi API Update
-      await updateMutation.mutateAsync(payload);
+      // 2. Gọi Mutation với cấu trúc { id, data, imageFile }
+      // Chúng ta không gọi uploadImageToS3 ở đây nữa, API layer sẽ tự lo
+      await updateMutation.mutateAsync({
+        id: campaign.id,
+        data: campaignData,
+        imageFile: imageFile || undefined // Gửi file nếu có
+      });
       
       toast.success("Campaign updated successfully");
       onClose();

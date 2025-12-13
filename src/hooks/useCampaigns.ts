@@ -26,9 +26,11 @@ export const useUpdateCampaign = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (variables: { id: string } & Partial<Campaign>) => {
-      const { id, ...data } = variables;
-      return updateCampaign(id, data);
+    // Định nghĩa lại kiểu dữ liệu đầu vào:
+    // Gồm 3 phần: id, data (thông tin text), và imageFile (tùy chọn)
+    mutationFn: ({ id, data, imageFile }: { id: string; data: Partial<Campaign>; imageFile?: File }) => {
+      // Gọi API updateCampaign với đủ 3 tham số
+      return updateCampaign(id, data, imageFile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
