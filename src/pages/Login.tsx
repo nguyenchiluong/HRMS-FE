@@ -44,7 +44,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-center text-3xl font-bold text-primary">
+          <CardTitle className="text-center text-5xl font-bold text-primary">
             HRMS
           </CardTitle>
           <CardDescription className="text-center">
