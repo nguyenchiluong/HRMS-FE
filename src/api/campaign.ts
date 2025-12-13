@@ -1,23 +1,83 @@
 import type { Campaign, CampaignFormData } from '@/types/campaign';
-import api from './base';
+import api from './base'; // Dùng Axios instance của Leader
 
 // Relative path since baseURL is already defined in base.ts
 const CAMPAIGN_ENDPOINT = '/api/campaigns';
+const STORAGE_ENDPOINT = '/api/storage'; // Thêm endpoint storage
+// Hardcode CloudFront URL dựa trên thông tin bạn cung cấp trước đó
+const CLOUDFRONT_URL = 'https://d30yuvccb40k7f.cloudfront.net'; 
+
+// ============================================================================
+// Helpers (Logic xử lý thời gian & Ảnh)
+// ============================================================================
+
+// Helper: Format giờ cho chuẩn Backend (HH:mm -> HH:mm:ss)
+const formatTime = (time?: string) => {
+  if (!time) return undefined;
+  return time.length === 5 ? `${time}:00` : time;
+};
+
+// Helper: Upload ảnh lên S3 (Logic cũ của bạn, nhưng dùng api của Leader để xin link)
+export const uploadImageToS3 = async (file: File): Promise<string> => {
+  try {
+    const extension = file.name.split('.').pop() || 'jpg';
+    
+    // 1. Xin Presigned URL (Dùng api của leader)
+    const response = await api.get(`${STORAGE_ENDPOINT}/presigned-url`, {
+      params: { 
+        extension: extension,
+        contentType: file.type 
+      }
+    });
+    
+    const uploadUrl = response.data; // Axios trả về data trực tiếp
+
+    // 2. Upload file lên S3
+    // LƯU Ý: Dùng fetch thuần ở đây để tránh Interceptor của Axios can thiệp vào header
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type }
+    });
+
+    if (!uploadRes.ok) throw new Error('Failed to upload image to S3');
+
+    // 3. Ghép link CloudFront
+    const urlObj = new URL(uploadUrl);
+    const fileKey = urlObj.pathname;
+    return `${CLOUDFRONT_URL}${fileKey}`;
+  } catch (error) {
+    console.error('Upload failed:', error);
+    throw error;
+  }
+};
 
 // ============================================================================
 // Data Transformations
 // ============================================================================
 
-// Frontend -> Backend (Create)
-const transformFrontendToBackend = (data: CampaignFormData) => ({
-  campaignName: data.name,
-  description: data.description,
-  campaignType: data.activityType,
-  startDate: data.startDate,
-  endDate: data.endDate,
-  status: 'draft', // Default status
-  // startTime/endTime removed per backend changes
-});
+// Frontend -> Backend (Create & Update mapping logic)
+// Chúng ta viết lại hàm này để dùng chung cho cả Create và Update để tránh sai sót
+const createPayload = (data: Partial<Campaign> | CampaignFormData, imageUrl?: string) => {
+  return {
+    // Map đúng tên trường Backend yêu cầu
+    campaignName: data.name, 
+    description: data.description,
+    campaignType: data.activityType, // Quan trọng: Leader thiếu cái này
+    
+    startDate: data.startDate,
+    endDate: data.endDate,
+    
+    // Khôi phục lại logic thời gian mà Leader đã bỏ lỡ
+    startTime: formatTime(data.startTime),
+    endTime: formatTime(data.endTime),
+    
+    // Logic ảnh
+    imageUrl: imageUrl || data.imageFile, 
+    
+    status: 'draft', // Backend sẽ tự xử lý, nhưng gửi kèm cũng không sao
+  };
+};
 
 // Backend -> Frontend (Read)
 const transformBackendToFrontend = (data: any): Campaign => ({
@@ -41,10 +101,7 @@ const transformBackendToFrontend = (data: any): Campaign => ({
 
 export const getCampaigns = async (search?: string): Promise<Campaign[]> => {
   try {
-    // Determine URL based on search presence
     const url = search ? `${CAMPAIGN_ENDPOINT}/search` : CAMPAIGN_ENDPOINT;
-
-    // Axios handles param encoding automatically
     const params = search ? { q: search } : {};
 
     const response = await api.get(url, { params });
@@ -56,38 +113,50 @@ export const getCampaigns = async (search?: string): Promise<Campaign[]> => {
     return [];
   } catch (error) {
     console.error('Error fetching campaigns:', error);
-    return []; // Return empty array on error so UI doesn't crash
+    return [];
   }
 };
 
-export const createCampaign = async (
-  data: CampaignFormData,
-): Promise<Campaign> => {
+export const createCampaign = async (data: CampaignFormData): Promise<Campaign> => {
   try {
-    const payload = transformFrontendToBackend(data);
+    let finalImageUrl = "";
 
+    // 1. Upload ảnh nếu có
+    if (data.imageFile) {
+      finalImageUrl = await uploadImageToS3(data.imageFile);
+    }
+
+    // 2. Tạo payload chuẩn
+    const payload = createPayload(data, finalImageUrl);
+
+    // 3. Gọi API
     const response = await api.post(CAMPAIGN_ENDPOINT, payload);
 
     return transformBackendToFrontend(response.data);
   } catch (error) {
     console.error('Error creating campaign:', error);
-    throw error; // Re-throw so the form component can show an error message
+    throw error;
   }
 };
 
 export const updateCampaign = async (
-  id: string,
-  data: Partial<Campaign>,
+  id: string, 
+  data: Partial<Campaign>, 
+  newImageFile?: File //Tham số update ảnh mới
 ): Promise<Campaign> => {
   try {
-    // Construct payload mapping for update
-    const payload = {
-      campaignName: data.name,
-      description: data.description,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      // Add other fields here if your backend supports updating them
-    };
+    let finalImageUrl = data.imageUrl; // Mặc định dùng link ảnh hiện tại (hoặc rỗng nếu user xóa)
+
+    // 1. Nếu có file ảnh mới -> Upload lên S3 lấy link mới
+    if (newImageFile) {
+      console.log("Uploading new image for update...");
+      finalImageUrl = await uploadImageToS3(newImageFile);
+    }
+
+    // 2. Tạo payload (Dùng lại hàm createPayload để đảm bảo mapping chuẩn)
+    const payload = createPayload(data, finalImageUrl);
+
+    console.log("Updating campaign with payload:", payload);
 
     const response = await api.put(`${CAMPAIGN_ENDPOINT}/${id}`, payload);
 
