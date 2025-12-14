@@ -37,6 +37,10 @@ const ViewEmployeeList = lazy(
   () => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList'),
 );
 
+const EmployeeOnboarding = lazy(
+  () => import('@/onboarding/pages/EmployeeOnboarding'),
+);
+
 const routes: RouteObject[] = [
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
@@ -58,6 +62,10 @@ const routes: RouteObject[] = [
         element: <Placeholder title="Onboarding" />,
       },
     ],
+  },
+  {
+    path: '/onboarding/employee',
+    element: <EmployeeOnboarding />,
   },
 
   // =================================================================
