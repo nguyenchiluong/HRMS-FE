@@ -5,7 +5,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
-import BonusCreditPage from './pages/AdminBonusSettings/BonusSettings';
 
 const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -68,6 +67,11 @@ const routes: RouteObject[] = [
         path: '/onboarding/:token',
         element: <Placeholder title="Onboarding" />,
       },
+      // Test
+      {
+        path: '/test',
+        element : <BonusSettings />
+      }
     ],
   },
   {
