@@ -10,10 +10,6 @@ import BonusCreditPage from './pages/AdminBonusSettings/BonusSettings';
 const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
-// Employee Management (Legacy)
-const Employees = lazy(
-  () => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList'),
-); // Path UPDATED
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
@@ -37,6 +33,14 @@ const JobDetails = lazy(
 );
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
+
+const ViewEmployeeList = lazy(
+  () => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList'),
+);
+
+const EmployeeOnboarding = lazy(
+  () => import('@/onboarding/pages/EmployeeOnboarding'),
+);
 
 // Bonus Management 
 
@@ -65,6 +69,10 @@ const routes: RouteObject[] = [
         element: <Placeholder title="Onboarding" />,
       },
     ],
+  },
+  {
+    path: '/onboarding/employee',
+    element: <EmployeeOnboarding />,
   },
 
   // =================================================================
@@ -163,7 +171,7 @@ const routes: RouteObject[] = [
           },
 
           // Legacy Routes
-          { path: 'employees', element: <Employees /> }, // /admin/employees
+          { path: 'employees', element: <ViewEmployeeList /> }, // /admin/employees
           { path: 'add-employee', element: <AddEmployee /> }, // /admin/add-employee
 
           // Auth Actions
