@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
+import BonusCreditPage from './pages/AdminBonusSettings/BonusSettings';
 
 const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -36,6 +37,12 @@ const JobDetails = lazy(
 );
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
+
+// Bonus Management 
+
+const BonusSettings = lazy(
+  () => import('./pages/AdminBonusSettings/BonusSettings')
+);
 
 const routes: RouteObject[] = [
   // =================================================================
@@ -251,6 +258,13 @@ const routes: RouteObject[] = [
               },
             ],
           },
+          {
+            path: 'credit',
+            children: [
+              { index: true, element: <BonusSettings /> },
+              // { path: 'new', element: <CreateCampaign /> },
+            ]
+          }
         ],
       },
 
