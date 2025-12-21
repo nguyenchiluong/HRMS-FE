@@ -36,7 +36,7 @@ const JobDetails = lazy(
 );
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
-
+const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
 const routes: RouteObject[] = [
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
@@ -127,6 +127,15 @@ const routes: RouteObject[] = [
             children: [
               { index: true, element: <Placeholder title="My Requests" /> },
               // ...
+            ],
+          },
+          {
+            path: 'campaigns',
+            children: [
+              { index: true, element: <EmployeeCampaignHub /> },
+              { path: 'my-history', element: <Placeholder title="My Campaign History" /> },
+              // Detail page for a specific campaign if needed
+              { path: ':id', element: <Placeholder title="Campaign Details" /> },
             ],
           },
         ],

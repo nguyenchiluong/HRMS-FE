@@ -1,4 +1,4 @@
-import { createCampaign, getCampaigns, updateCampaign } from '@/api/campaign';
+import { createCampaign, getCampaigns, updateCampaign, publishCampaign, getActiveCampaigns, registerForCampaign } from '@/api/campaign';
 import type { Campaign, CampaignFormData } from '@/types/campaign';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -34,6 +34,43 @@ export const useUpdateCampaign = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    },
+  });
+};
+
+export const usePublishCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => publishCampaign(id),
+    onSuccess: () => {
+      // Sau khi publish thành công -> Refresh lại danh sách để thấy trạng thái mới (Active)
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      // Có thể thêm toast.success("Campaign published!") ở UI
+    },
+  });
+};
+
+
+// Hook to fetch active campaigns
+export const useActiveCampaigns = () => {
+  return useQuery<Campaign[]>({
+    queryKey: ['active-campaigns'],
+    queryFn: getActiveCampaigns,
+  });
+};
+
+// Hook to register for a campaign
+export const useRegisterCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (campaignId: string) => registerForCampaign(campaignId),
+    onSuccess: () => {
+      // Invalidate queries to refresh the list (e.g., move from "Can Join" to "My Active")
+      queryClient.invalidateQueries({ queryKey: ['active-campaigns'] });
+      // If you have a query for "my-registered-campaigns", invalidate that too
+      // queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
     },
   });
 };

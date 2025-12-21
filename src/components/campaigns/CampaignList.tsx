@@ -1,11 +1,24 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Edit2, Eye, Trophy, Plus, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"; // <--- Import mới
+import { Edit2, Eye, Trophy, Plus, CheckCircle, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import EditCampaignModal from "./EditCampaignModal";
 import type { Campaign, CampaignListItem } from "@/types/campaign";
+import { usePublishCampaign } from "@/hooks/useCampaigns";
+import toast from "react-hot-toast";
 
 interface CampaignListProps {
   campaigns: Campaign[];
@@ -22,7 +35,6 @@ const MOCK_IMAGES = [
   "https://images.unsplash.com/photo-1536922246289-88c42f957773?w=400&h=300&fit=crop"
 ];
 
-// DI CHUYỂN CÁC HÀM LÊN TRÊN - TRƯỚC KHI ĐƯỢC SỬ DỤNG
 const getPrimaryMetric = (activityType: string) => {
   switch (activityType) {
     case "walking":
@@ -37,14 +49,10 @@ const getPrimaryMetric = (activityType: string) => {
 
 const getStatusVariant = (status: string) => {
   switch (status) {
-    case "active":
-      return "success";
-    case "draft":
-      return "secondary";
-    case "completed":
-      return "outline";
-    default:
-      return "outline";
+    case "active": return "success"; // Hoặc "default" nếu theme chưa có success
+    case "draft": return "secondary";
+    case "completed": return "outline";
+    default: return "outline";
   }
 };
 
@@ -57,14 +65,62 @@ const getStatusDisplay = (status: string) => {
   }
 };
 
-/*export interface CampaignListItem extends Campaign {
-  primaryMetric: string;
-  participants: number;
-  totalDistance: number;
-  pendingSubmissions: number;
-  image: string;
-}*/
+// --- COMPONENT PublishButton (Giao diện Modal xịn xò) ---
+const PublishButton = ({ campaignId }: { campaignId: string }) => {
+  const publishMutation = usePublishCampaign();
 
+  const onConfirmPublish = async () => {
+    try {
+      await publishMutation.mutateAsync(campaignId);
+      toast.success("Campaign published successfully! 🚀");
+    } catch (error) {
+      toast.error("Failed to publish campaign");
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="default"
+          size="sm"
+          className="gap-2 bg-green-600 hover:bg-green-700 text-white" // Style màu xanh lá
+          disabled={publishMutation.isPending}
+          onClick={(e) => e.stopPropagation()} // Chặn click lan ra Card
+        >
+          {publishMutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
+          {publishMutation.isPending ? "Publishing..." : "Publish"}
+        </Button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone immediately. This will create an active campaign 
+            and it will be visible to <strong>all employees</strong> in the system.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={onConfirmPublish}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            Confirm Publish
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
+// --- COMPONENT CHÍNH ---
 export default function CampaignList({ 
   campaigns, 
   onCreateCampaign, 
@@ -75,7 +131,6 @@ export default function CampaignList({
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // BÂY GIỜ getPrimaryMetric ĐÃ ĐƯỢC ĐỊNH NGHĨA TRƯỚC KHI SỬ DỤNG
   const enhancedCampaigns: CampaignListItem[] = campaigns.map((campaign, index) => ({
     ...campaign,
     primaryMetric: getPrimaryMetric(campaign.activityType),
@@ -155,7 +210,6 @@ export default function CampaignList({
               className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
             >
               <div className="flex flex-col md:flex-row">
-                {/* Image Section */}
                 <div className="w-full md:w-48 h-40 flex-shrink-0 relative bg-muted">
                   <img 
                     src={campaign.image} 
@@ -164,7 +218,6 @@ export default function CampaignList({
                   />
                 </div>
 
-                {/* Content Section */}
                 <div className="flex-1 p-6 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -202,7 +255,13 @@ export default function CampaignList({
                     </div>
                   </div>
 
+                  {/* NÚT BẤM */}
                   <div className="flex gap-2 mt-4 flex-wrap">
+                    {/* Nút Publish hiện đại - Chỉ hiện khi Draft */}
+                    {campaign.status === 'draft' && (
+                      <PublishButton campaignId={campaign.id} />
+                    )}
+
                     {campaign.status !== "completed" && (
                       <Button
                         variant="outline"
@@ -214,6 +273,7 @@ export default function CampaignList({
                         Edit
                       </Button>
                     )}
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -223,6 +283,7 @@ export default function CampaignList({
                       <Eye className="w-4 h-4" />
                       View
                     </Button>
+
                     {campaign.status === "completed" && (
                       <Button
                         variant="outline"
@@ -242,14 +303,14 @@ export default function CampaignList({
         </div>
 
         {filteredCampaigns.length === 0 && (
-          <Card>
-            <div className="flex flex-col items-center justify-center py-12">
-              <p className="text-lg font-medium text-foreground">No campaigns found</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first campaign"}
-              </p>
-            </div>
-          </Card>
+            <Card>
+                <div className="flex flex-col items-center justify-center py-12">
+                    <p className="text-lg font-medium text-foreground">No campaigns found</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first campaign"}
+                    </p>
+                </div>
+            </Card>
         )}
       </div>
 

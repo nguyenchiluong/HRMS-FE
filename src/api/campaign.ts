@@ -166,3 +166,48 @@ export const updateCampaign = async (
     throw error;
   }
 };
+
+export const publishCampaign = async (id: string): Promise<Campaign> => {
+  try {
+    // Gọi API POST /campaigns/{id}/publish
+    const response = await api.post(`${CAMPAIGN_ENDPOINT}/${id}/publish`);
+    
+    // API trả về Campaign đã được update status -> map lại cho Frontend dùng
+    return transformBackendToFrontend(response.data);
+  } catch (error) {
+    console.error('Error publishing campaign:', error);
+    throw error;
+  }
+};
+
+// --- NEW FUNCTIONS FOR EMPLOYEE ---
+
+// Fetch ONLY active campaigns for employees to join
+export const getActiveCampaigns = async (): Promise<Campaign[]> => {
+  try {
+    // Assuming Backend has an endpoint like /api/campaigns/active
+    // If not, you might need to use getCampaigns() and filter by status 'active' on frontend
+    // But better to have a dedicated endpoint for performance.
+    const response = await api.get(`${CAMPAIGN_ENDPOINT}/active`);
+    
+    if (Array.isArray(response.data)) {
+      return response.data.map(transformBackendToFrontend);
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching active campaigns:', error);
+    return [];
+  }
+};
+
+// Register for a campaign
+export const registerForCampaign = async (campaignId: string): Promise<string> => {
+  try {
+    // Endpoint: POST /api/campaigns/{id}/register
+    const response = await api.post(`${CAMPAIGN_ENDPOINT}/${campaignId}/register`);
+    return response.data; // Usually returns a success message string
+  } catch (error) {
+    console.error('Error registering for campaign:', error);
+    throw error;
+  }
+};
