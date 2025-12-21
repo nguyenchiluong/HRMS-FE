@@ -12,7 +12,7 @@ export default function AdminLayout() {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
-              <h1 className="text-2xl font-bold text-primary">HRMS</h1>
+              <h1 className="text-2xl font-semibold text-primary">HRMS</h1>
               <div className="flex space-x-4">
                 <Link to="/">
                   <Button variant="ghost" size="sm">
@@ -20,7 +20,7 @@ export default function AdminLayout() {
                     Dashboard
                   </Button>
                 </Link>
-                <Link to="/employees">
+                <Link to="/admin/employees">
                   <Button variant="ghost" size="sm">
                     <Users className="mr-2 h-4 w-4" />
                     Employees
