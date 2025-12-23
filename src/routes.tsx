@@ -271,7 +271,7 @@ const routes: RouteObject[] = [
             ],
           },
           {
-            path: 'credit',
+            path: 'bonus',
             children: [
               { index: true, element: <BonusSettings /> },
               // { path: 'new', element: <CreateCampaign /> },
