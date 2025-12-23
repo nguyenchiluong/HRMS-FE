@@ -1,5 +1,5 @@
-import { JobDetails } from '@/onboarding/types';
 import { create } from 'zustand';
+import { JobDetails } from '../types';
 
 interface EmployeeOnboardingState {
   currentUser: {

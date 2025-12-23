@@ -1,9 +1,9 @@
-import { Header } from '@/onboarding/components/Header';
-import { JobDetailsSection } from '@/onboarding/components/JobDetailsSection';
-import { NotepadTextDashed } from '@/onboarding/components/ui/Icons';
-import { EmployeeOnboardingStore } from '@/onboarding/store';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { NotepadTextDashed } from 'lucide-react';
+import { Header } from '../components/Header';
+import { JobDetailsSection } from '../components/JobDetailsSection';
 import { OnboardingForm } from '../components/OnboardingForm';
+import { EmployeeOnboardingStore } from '../store';
 
 const queryClient = new QueryClient();
 

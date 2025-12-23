@@ -33,12 +33,12 @@ const JobDetails = lazy(
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 
-const ViewEmployeeList = lazy(
-  () => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList'),
+const EmployeeManagement = lazy(
+  () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
 );
 
 const EmployeeOnboarding = lazy(
-  () => import('@/onboarding/pages/EmployeeOnboarding'),
+  () => import('@/feature/employee/onboarding/pages/EmployeeOnboarding'),
 );
 
 const routes: RouteObject[] = [
@@ -164,7 +164,7 @@ const routes: RouteObject[] = [
           },
 
           // Legacy Routes
-          { path: 'employees', element: <ViewEmployeeList /> }, // /admin/employees
+          { path: 'employees', element: <EmployeeManagement /> }, // /admin/employees
           { path: 'add-employee', element: <AddEmployee /> }, // /admin/add-employee
 
           // Auth Actions
