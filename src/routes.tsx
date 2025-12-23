@@ -41,6 +41,12 @@ const EmployeeOnboarding = lazy(
   () => import('@/onboarding/pages/EmployeeOnboarding'),
 );
 
+// Bonus Management 
+
+const BonusSettings = lazy(
+  () => import('./pages/AdminBonusSettings/BonusSettings')
+);
+
 const routes: RouteObject[] = [
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
@@ -61,6 +67,11 @@ const routes: RouteObject[] = [
         path: '/onboarding/:token',
         element: <Placeholder title="Onboarding" />,
       },
+      // Test
+      {
+        path: '/test',
+        element : <BonusSettings />
+      }
     ],
   },
   {
@@ -259,6 +270,13 @@ const routes: RouteObject[] = [
               },
             ],
           },
+          {
+            path: 'bonus',
+            children: [
+              { index: true, element: <BonusSettings /> },
+              // { path: 'new', element: <CreateCampaign /> },
+            ]
+          }
         ],
       },
 
