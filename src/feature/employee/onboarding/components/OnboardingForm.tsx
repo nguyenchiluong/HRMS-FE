@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { FileUpload } from '@/onboarding/components/ui/FileUpload';
-import { FormRow } from '@/onboarding/components/ui/FormRow';
-import { SectionHeader } from '@/onboarding/components/ui/SectionHeader';
 import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import { OnboardingFormValues } from '../types';
+import { FileUpload } from './ui/FileUpload';
+import { FormRow } from './ui/FormRow';
+import { SectionHeader } from './ui/SectionHeader';
 
 const initialValues: OnboardingFormValues = {
   firstName: '',
