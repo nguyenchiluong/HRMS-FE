@@ -7,10 +7,10 @@ interface Tab {
 }
 
 const tabs: Tab[] = [
-  { label: "Personal Information", path: "/profile/personal-info" },
-  { label: "IDs", path: "/profile/ids" },
-  { label: "Education", path: "/profile/education" },
-  { label: "Financial Details", path: "/profile/financial" },
+  { label: "Personal Information", path: "/employee/profile/personal-info" },
+  { label: "IDs", path: "/employee/profile/ids" },
+  { label: "Education", path: "/employee/profile/education" },
+  { label: "Financial Details", path: "/employee/profile/financial" },
 ];
 
 export default function ProfileTabs() {
