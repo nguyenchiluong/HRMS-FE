@@ -37,14 +37,26 @@ const EmployeeManagement = lazy(
   () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
 );
 
+const EmployeeHome = lazy(
+  () => import('@/feature/employee/homepage/pages/EmployeeHome'),
+);
+
+const TimeOffRequest = lazy(
+  () => import('@/feature/employee/time-management/pages/TimeOffRequest'),
+);
+
+const TimeLayout = lazy(
+  () => import('@/feature/employee/time-management/layout/TimeLayout'),
+);
+
 const EmployeeOnboarding = lazy(
   () => import('@/feature/employee/onboarding/pages/EmployeeOnboarding'),
 );
 
-// Bonus Management 
+// Bonus Management
 
 const BonusSettings = lazy(
-  () => import('./pages/AdminBonusSettings/BonusSettings')
+  () => import('./pages/AdminBonusSettings/BonusSettings'),
 );
 
 const routes: RouteObject[] = [
@@ -70,8 +82,8 @@ const routes: RouteObject[] = [
       // Test
       {
         path: '/test',
-        element : <BonusSettings />
-      }
+        element: <BonusSettings />,
+      },
     ],
   },
   {
@@ -94,6 +106,31 @@ const routes: RouteObject[] = [
         path: '/employee',
         element: <EmployeeLayout />,
         children: [
+          // Employee Dashboard/Home
+          { index: true, element: <EmployeeHome /> },
+          { path: 'dashboard', element: <EmployeeHome /> },
+          // Time Management Routes
+          {
+            path: 'time',
+            element: <TimeLayout />,
+            children: [
+              { index: true, element: <Placeholder title="My Attendance" /> },
+              {
+                path: 'attendance',
+                element: <Placeholder title="My Attendance" />,
+              },
+              { path: 'timesheet', element: <Placeholder title="Timesheet" /> },
+              {
+                path: 'timesheet-history',
+                element: <Placeholder title="Timesheet History" />,
+              },
+              { path: 'time-off-request', element: <TimeOffRequest /> },
+              {
+                path: 'my-requests',
+                element: <Placeholder title="My Requests" />,
+              },
+            ],
+          },
           {
             path: 'profile',
             children: [
@@ -275,8 +312,8 @@ const routes: RouteObject[] = [
             children: [
               { index: true, element: <BonusSettings /> },
               // { path: 'new', element: <CreateCampaign /> },
-            ]
-          }
+            ],
+          },
         ],
       },
 
