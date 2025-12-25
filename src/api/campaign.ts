@@ -1,5 +1,5 @@
 import type { Campaign, CampaignFormData } from '@/types/campaign';
-import api from './base'; // Dùng Axios instance của Leader
+import springApi from './spring';
 
 // Relative path since baseURL is already defined in base.ts
 const CAMPAIGN_ENDPOINT = '/api/campaigns';
@@ -22,8 +22,8 @@ export const uploadImageToS3 = async (file: File): Promise<string> => {
   try {
     const extension = file.name.split('.').pop() || 'jpg';
     
-    // 1. Xin Presigned URL (Dùng api của leader)
-    const response = await api.get(`${STORAGE_ENDPOINT}/presigned-url`, {
+    // 1. Xin Presigned URL
+    const response = await springApi.get(`${STORAGE_ENDPOINT}/presigned-url`, {
       params: { 
         extension: extension,
         contentType: file.type 
@@ -104,7 +104,7 @@ export const getCampaigns = async (search?: string): Promise<Campaign[]> => {
     const url = search ? `${CAMPAIGN_ENDPOINT}/search` : CAMPAIGN_ENDPOINT;
     const params = search ? { q: search } : {};
 
-    const response = await api.get(url, { params });
+    const response = await springApi.get(url, { params });
 
     if (Array.isArray(response.data)) {
       return response.data.map(transformBackendToFrontend);
@@ -130,7 +130,7 @@ export const createCampaign = async (data: CampaignFormData): Promise<Campaign> 
     const payload = createPayload(data, finalImageUrl);
 
     // 3. Gọi API
-    const response = await api.post(CAMPAIGN_ENDPOINT, payload);
+    const response = await springApi.post(CAMPAIGN_ENDPOINT, payload);
 
     return transformBackendToFrontend(response.data);
   } catch (error) {
@@ -158,7 +158,7 @@ export const updateCampaign = async (
 
     console.log("Updating campaign with payload:", payload);
 
-    const response = await api.put(`${CAMPAIGN_ENDPOINT}/${id}`, payload);
+    const response = await springApi.put(`${CAMPAIGN_ENDPOINT}/${id}`, payload);
 
     return transformBackendToFrontend(response.data);
   } catch (error) {

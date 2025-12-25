@@ -38,7 +38,10 @@ const EmployeeManagement = lazy(
 );
 
 const EmployeeOnboarding = lazy(
-  () => import('@/feature/employee/onboarding/pages/EmployeeOnboarding'),
+  () => import('@/feature/onboarding/pages/EmployeeOnboarding'),
+);
+const OnboardingSuccess = lazy(
+  () => import('@/feature/onboarding/pages/OnboardingSuccess'),
 );
 
 // Bonus Management 
@@ -48,6 +51,18 @@ const BonusSettings = lazy(
 );
 
 const routes: RouteObject[] = [
+  // =================================================================
+  // 0. Token-based Routes (Accessible by anyone with valid token)
+  // =================================================================
+  {
+    path: '/onboarding',
+    element: <EmployeeOnboarding />,
+  },
+  {
+    path: '/onboarding/success',
+    element: <OnboardingSuccess />,
+  },
+
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
   // =================================================================
@@ -63,20 +78,12 @@ const routes: RouteObject[] = [
         path: '/reset-password/:token',
         element: <Placeholder title="Reset Password" />,
       },
-      {
-        path: '/onboarding/:token',
-        element: <Placeholder title="Onboarding" />,
-      },
       // Test
       {
         path: '/test',
         element : <BonusSettings />
       }
     ],
-  },
-  {
-    path: '/onboarding',
-    element: <EmployeeOnboarding />,
   },
 
   // =================================================================

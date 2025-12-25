@@ -1,4 +1,4 @@
-import api from './base';
+import springApi from './spring';
 
 export interface LoginPayload {
   email: string;
@@ -10,6 +10,6 @@ export interface AuthResponse {
 }
 
 export const login = async (payload: LoginPayload): Promise<AuthResponse> => {
-  const { data } = await api.post<AuthResponse>('/auth/login', payload);
+  const { data } = await springApi.post<AuthResponse>('/auth/login', payload);
   return data;
 };

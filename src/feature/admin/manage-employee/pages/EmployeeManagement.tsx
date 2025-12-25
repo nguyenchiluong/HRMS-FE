@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useMemo, useState } from 'react';
 import { EmployeeTable } from '../components/EmployeeTable';
 import { FilterSection } from '../components/FilterSection';
+import OnboardEmployeeModal from '../components/OnboardEmployeeModal';
 import { StatsCards } from '../components/StatsCards';
 import { useEmployeeStore } from '../store/useEmployeeStore';
 import { FilterState } from '../types';
@@ -19,6 +20,7 @@ export default function EmployeeManagement() {
   }, [fetchEmployees]);
 
   const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: '',
@@ -100,7 +102,10 @@ export default function EmployeeManagement() {
                 Create on boarding form for new employee here
               </p>
             </div>
-            <Button className="text-md w-full rounded-full px-8 py-4 shadow-lg sm:w-auto">
+            <Button
+              className="text-md w-full rounded-full px-8 py-4 shadow-lg sm:w-auto"
+              onClick={() => setIsOnboardModalOpen(true)}
+            >
               NEW HIRE
             </Button>
           </div>
@@ -155,6 +160,11 @@ export default function EmployeeManagement() {
             Next
           </span>
         </div>
+      )}
+
+      {/* Onboard Employee Modal */}
+      {isOnboardModalOpen && (
+        <OnboardEmployeeModal onClose={() => setIsOnboardModalOpen(false)} />
       )}
     </div>
   );
