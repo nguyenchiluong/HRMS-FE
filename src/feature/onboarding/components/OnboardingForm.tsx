@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { FieldArray, Form, Formik, FormikHelpers } from 'formik';
-import { Plus, Trash2 } from 'lucide-react';
+import { FieldArray, Form, Formik, FormikHelpers, useFormikContext } from 'formik';
+import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { useOnboarding } from '../hooks/useOnboarding';
+import { useOnboarding, useSaveOnboardingProgress } from '../hooks/useOnboarding';
 import {
   OnboardingFormValues,
   OnboardingInfo,
@@ -91,22 +91,28 @@ const Section: React.FC<SectionProps> = ({ title, children }) => (
 
 interface OnboardingFormProps {
   employeeId: number;
+  token: string;
   initialData?: OnboardingInfo;
 }
 
 export const OnboardingForm: React.FC<OnboardingFormProps> = ({
   employeeId,
+  token,
   initialData,
 }) => {
   const navigate = useNavigate();
 
-  const { mutate: submitOnboarding, isPending } = useOnboarding(employeeId, {
-    onSuccess: () => {
-      // Pass token to success page for validation
-      const currentToken = new URLSearchParams(window.location.search).get('token');
-      navigate(`/onboarding/success?token=${encodeURIComponent(currentToken || '')}`);
+  const { mutate: submitOnboarding, isPending: isSubmitPending } = useOnboarding(
+    employeeId,
+    {
+      onSuccess: () => {
+        navigate(`/onboarding/success?token=${encodeURIComponent(token)}`);
+      },
     },
-  });
+  );
+
+  const { mutate: saveProgress, isPending: isSavePending } =
+    useSaveOnboardingProgress(token);
 
   // Pre-populate form with saved data if available
   const initialValues = useMemo(() => {
@@ -294,15 +300,40 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
             <FileUpload />
           </div>
 
-          {/* Submit */}
-          <div className="flex justify-center pt-4">
+          {/* Actions */}
+          <div className="flex justify-center gap-4 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="min-w-[150px] rounded-lg"
+              disabled={isSubmitting || isSavePending || isSubmitPending}
+              onClick={() => {
+                const payload = transformFormToPayload(values);
+                saveProgress(payload);
+              }}
+            >
+              {isSavePending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Progress
+                </>
+              )}
+            </Button>
             <Button
               type="submit"
               size="lg"
               className="min-w-[200px] rounded-lg"
-              disabled={isSubmitting || isPending}
+              disabled={isSubmitting || isSavePending || isSubmitPending}
             >
-              {isSubmitting || isPending ? 'Submitting...' : 'Complete Onboarding'}
+              {isSubmitting || isSubmitPending
+                ? 'Submitting...'
+                : 'Complete Onboarding'}
             </Button>
           </div>
         </Form>

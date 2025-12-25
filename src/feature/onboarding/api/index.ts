@@ -16,11 +16,23 @@ export const getOnboardingInfo = async (
   return response.data;
 };
 
-// Submit onboarding form
+// Submit onboarding form (complete)
 export const submitOnboarding = async (
   employeeId: number,
   data: OnboardingPayload,
 ): Promise<void> => {
   await dotnetApi.post(`/api/Employees/${employeeId}/onboard`, data);
+};
+
+// Save onboarding progress (without completing)
+export const saveOnboardingProgress = async (
+  token: string,
+  data: OnboardingPayload,
+): Promise<OnboardingInfo> => {
+  const response = await dotnetApi.put(
+    `/api/Employees/onboarding-progress?token=${encodeURIComponent(token)}`,
+    data,
+  );
+  return response.data;
 };
 
