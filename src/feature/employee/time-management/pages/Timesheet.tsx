@@ -69,8 +69,6 @@ const initialTimesheetData: TimesheetRow[] = [
 
 export default function Timesheet() {
   const [timesheetData] = useState<TimesheetRow[]>(initialTimesheetData);
-  const [showClosedRequirements, setShowClosedRequirements] = useState(false);
-  const [applyForOvertime, setApplyForOvertime] = useState(false);
 
   return (
     <div className="w-full">
