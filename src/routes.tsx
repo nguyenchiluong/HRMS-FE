@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
+import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
 
 const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -105,7 +106,7 @@ const routes: RouteObject[] = [
                   { index: true, element: <PersonalInfo /> },
                   {
                     path: 'edit',
-                    element: <Placeholder title="Edit Personal Info" />,
+                    element: <EditPersonalInfo />,
                   },
                   {
                     path: 'contact',
