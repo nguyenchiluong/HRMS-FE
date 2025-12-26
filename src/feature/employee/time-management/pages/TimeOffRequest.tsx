@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import {
   Card,
   CardContent,
@@ -8,32 +7,13 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { AlertCircle, Calendar as CalendarIcon, Upload, X } from 'lucide-react';
 import { useState } from 'react';
+import { DateRangePicker } from '../components/time-off/DateRangePicker';
+import { FileUploadSection } from '../components/time-off/FileUploadSection';
+import { ImportantNotice } from '../components/time-off/ImportantNotice';
+import { RequestTypeSelect } from '../components/time-off/RequestTypeSelect';
 import { RequestType } from '../types';
-
-const requestOptions = [
-  { id: 'paid-leave', label: 'Paid Leave' },
-  { id: 'unpaid-leave', label: 'Unpaid Leave' },
-  { id: 'paid-sick-leave', label: 'Paid Sick Leave' },
-  { id: 'unpaid-sick-leave', label: 'Unpaid Sick Leave' },
-  { id: 'wfh', label: 'Work From Home (WFH)' },
-];
 
 export default function TimeOffRequest() {
   const [selectedType, setSelectedType] = useState<RequestType | null>(null);
@@ -42,16 +22,6 @@ export default function TimeOffRequest() {
   const [reason, setReason] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +32,7 @@ export default function TimeOffRequest() {
       endDate,
       reason,
       emergencyContact,
+      attachments,
     });
   };
 
@@ -77,88 +48,18 @@ export default function TimeOffRequest() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Request Type */}
-            <div className="space-y-2">
-              <Label className="font-regular text-sm">
-                Request Type <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={selectedType || ''}
-                onValueChange={(value) => setSelectedType(value as RequestType)}
-              >
-                <SelectTrigger className="w-full max-w-xs focus:ring-0 focus:ring-offset-0">
-                  <SelectValue placeholder="Select request type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {requestOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <RequestTypeSelect
+              value={selectedType}
+              onChange={setSelectedType}
+            />
 
             {/* Date Range */}
-            <div className="grid grid-cols-2 gap-10">
-              <div className="space-y-2">
-                <Label>
-                  Start Date <span className="text-red-500">*</span>
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !startDate && 'text-muted-foreground',
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                      <span className="truncate">
-                        {startDate
-                          ? format(startDate, 'PPP')
-                          : 'Select start date'}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label>
-                  End Date <span className="text-red-500">*</span>
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !endDate && 'text-muted-foreground',
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                      <span className="truncate">
-                        {endDate ? format(endDate, 'PPP') : 'Select end date'}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
 
             {/* Reason / Description */}
             <div className="space-y-2">
@@ -191,62 +92,13 @@ export default function TimeOffRequest() {
             </div>
 
             {/* Supporting Documents */}
-            <div className="space-y-2">
-              <Label>Supporting Documents (Optional)</Label>
-              <p className="text-xs text-muted-foreground">
-                Upload medical certificate or other relevant documents
-              </p>
-              <div className="flex flex-col gap-3">
-                <label
-                  htmlFor="file-upload"
-                  className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 transition-colors hover:border-gray-400 hover:bg-gray-100"
-                >
-                  <Upload className="h-5 w-5 text-gray-400" />
-                  <span className="text-sm text-gray-500">
-                    Click to upload or drag and drop
-                  </span>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    multiple
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  />
-                </label>
-                {attachments.length > 0 && (
-                  <div className="space-y-2">
-                    {attachments.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between rounded-md border bg-white px-3 py-2"
-                      >
-                        <span className="truncate text-sm">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeFile(index)}
-                          className="ml-2 text-gray-400 hover:text-red-500"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <FileUploadSection
+              files={attachments}
+              onFilesChange={setAttachments}
+            />
 
             {/* Important Notice */}
-            <div className="flex items-start gap-3 rounded-lg border bg-gray-50 p-4">
-              <AlertCircle className="mt-0.5 h-5 w-5 text-gray-500" />
-              <div>
-                <p className="text-sm font-medium">Important:</p>
-                <p className="text-sm text-muted-foreground">
-                  Sick leave exceeding 3 days requires medical certificate. Your
-                  request will be reviewed by your manager.
-                </p>
-              </div>
-            </div>
+            <ImportantNotice message="Sick leave exceeding 3 days requires medical certificate. Your request will be reviewed by your manager." />
 
             {/* Submit Button */}
             <Button type="submit" size="lg">

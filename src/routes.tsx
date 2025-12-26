@@ -132,10 +132,6 @@ const routes: RouteObject[] = [
                 element: <Placeholder title="My Attendance" />,
               },
               { path: 'timesheet', element: <Timesheet /> },
-              {
-                path: 'timesheet-history',
-                element: <Placeholder title="Timesheet History" />,
-              },
               { path: 'time-off-request', element: <TimeOffRequest /> },
               {
                 path: 'my-requests',

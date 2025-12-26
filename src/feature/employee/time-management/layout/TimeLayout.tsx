@@ -1,11 +1,5 @@
 import { cn } from '@/lib/utils';
-import {
-  Calendar,
-  ClipboardList,
-  Clock,
-  FileText,
-  History,
-} from 'lucide-react';
+import { Calendar, ClipboardList, Clock, FileText } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 interface SidebarItem {
@@ -24,11 +18,6 @@ const sidebarItems: SidebarItem[] = [
     path: '/employee/time/timesheet',
     label: 'Timesheet',
     icon: ClipboardList,
-  },
-  {
-    path: '/employee/time/timesheet-history',
-    label: 'Timesheet History',
-    icon: History,
   },
   {
     path: '/employee/time/time-off-request',

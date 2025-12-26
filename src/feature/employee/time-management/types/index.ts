@@ -1,21 +1,50 @@
+export const TimesheetStatus = {
+  Draft: 'draft',
+  Submitted: 'submitted',
+  Approved: 'approved',
+} as const;
+
+export type TimesheetStatus =
+  (typeof TimesheetStatus)[keyof typeof TimesheetStatus];
+
+export interface TimesheetRow {
+  id: string;
+  name: string;
+  type: 'project' | 'leave';
+  weeklyData: {
+    hours: number;
+  }[];
+}
+
+export interface WeekRange {
+  start: string;
+  end: string;
+  weekNumber: number;
+  isCurrentWeek: boolean;
+}
+
+export interface WeeklyTotal {
+  totalHours: number;
+  percentage: number;
+}
+
+export interface AvailableProject {
+  id: string;
+  name: string;
+  type: 'project' | 'leave';
+}
+
+export interface StatusConfig {
+  label: string;
+  bgColor: string;
+  textColor: string;
+  borderColor: string;
+}
+
+// Time Off Request types
 export type RequestType =
   | 'paid-leave'
   | 'unpaid-leave'
   | 'paid-sick-leave'
   | 'unpaid-sick-leave'
   | 'wfh';
-
-export interface RequestOption {
-  id: RequestType;
-  label: string;
-  icon: React.ElementType;
-  iconColor: string;
-}
-
-export interface TimeOffFormData {
-  requestType: RequestType | null;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  emergencyContact: string;
-}
