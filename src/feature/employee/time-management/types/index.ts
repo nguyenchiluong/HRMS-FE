@@ -48,3 +48,34 @@ export type RequestType =
   | 'paid-sick-leave'
   | 'unpaid-sick-leave'
   | 'wfh';
+
+// Leave Request Status
+export const LeaveRequestStatus = {
+  Pending: 'pending',
+  Approved: 'approved',
+  Rejected: 'rejected',
+  Cancelled: 'cancelled',
+} as const;
+
+export type LeaveRequestStatus =
+  (typeof LeaveRequestStatus)[keyof typeof LeaveRequestStatus];
+
+// Leave Balance
+export interface LeaveBalance {
+  type: string;
+  total: number;
+  used: number;
+  remaining: number;
+}
+
+// Leave Request History
+export interface LeaveRequest {
+  id: string;
+  type: RequestType;
+  startDate: Date;
+  endDate: Date;
+  duration: number;
+  submittedDate: Date;
+  status: LeaveRequestStatus;
+  reason?: string;
+}

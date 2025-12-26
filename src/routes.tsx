@@ -50,6 +50,10 @@ const Timesheet = lazy(
   () => import('@/feature/employee/time-management/pages/Timesheet'),
 );
 
+const MyRequests = lazy(
+  () => import('@/feature/employee/time-management/pages/MyRequests'),
+);
+
 const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
@@ -135,7 +139,7 @@ const routes: RouteObject[] = [
               { path: 'time-off-request', element: <TimeOffRequest /> },
               {
                 path: 'my-requests',
-                element: <Placeholder title="My Requests" />,
+                element: <MyRequests />,
               },
             ],
           },
