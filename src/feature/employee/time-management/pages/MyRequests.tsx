@@ -126,11 +126,6 @@ const mockRequests: LeaveRequest[] = [
 export default function MyRequests() {
   const [requests, setRequests] = useState<LeaveRequest[]>(mockRequests);
 
-  const handleViewRequest = (request: LeaveRequest) => {
-    // TODO: Open a modal or navigate to detail page
-    console.log('View request:', request);
-  };
-
   const handleCancelRequest = (request: LeaveRequest) => {
     // Update the request status to cancelled
     setRequests((prev) =>
@@ -145,11 +140,7 @@ export default function MyRequests() {
       {/* Leave Balance Section */}
       <LeaveBalanceCards balances={mockLeaveBalances} />
       {/* Request History Section */}
-      <RequestHistoryTable
-        requests={requests}
-        onView={handleViewRequest}
-        onCancel={handleCancelRequest}
-      />
+      <RequestHistoryTable requests={requests} onCancel={handleCancelRequest} />
     </div>
   );
 }

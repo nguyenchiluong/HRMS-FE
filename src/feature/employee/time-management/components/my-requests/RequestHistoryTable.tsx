@@ -15,7 +15,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Eye,
   HeartPulse,
   Home,
   Palmtree,
@@ -28,7 +27,6 @@ const ITEMS_PER_PAGE = 5;
 
 interface RequestHistoryTableProps {
   requests: LeaveRequest[];
-  onView: (request: LeaveRequest) => void;
   onCancel: (request: LeaveRequest) => void;
 }
 
@@ -104,7 +102,6 @@ const getStatusConfig = (status: LeaveRequestStatus) => {
 
 export const RequestHistoryTable: React.FC<RequestHistoryTableProps> = ({
   requests,
-  onView,
   onCancel,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -261,15 +258,6 @@ export const RequestHistoryTable: React.FC<RequestHistoryTableProps> = ({
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onView(request)}
-                        className="gap-1"
-                      >
-                        <Eye className="h-4 w-4" />
-                        View
-                      </Button>
                       {canCancel && (
                         <Button
                           variant="outline"

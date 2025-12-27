@@ -79,3 +79,14 @@ export interface LeaveRequest {
   status: LeaveRequestStatus;
   reason?: string;
 }
+
+// Attendance types
+export interface AttendanceRecord {
+  id: string;
+  date: Date;
+  clockInTime: Date | null;
+  clockOutTime: Date | null;
+  totalWorkingMinutes: number | null;
+}
+
+export type ClockStatus = 'clocked-out' | 'clocked-in';
