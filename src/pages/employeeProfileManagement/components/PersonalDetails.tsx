@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 const personalData = [
   { label: "Sex", value: "Male" },
   { label: "Date of Birth", value: "02/07/2003" },
@@ -17,6 +19,12 @@ const personalData = [
 ];
 
 export default function PersonalDetails() {
+  const navigate = useNavigate();
+
+  const handleEdit = () => {
+    navigate("/employee/profile/personal-info/edit");
+  };
+
   return (
     <div className="flex flex-col px-6 lg:px-[45px] py-6 lg:py-[30px] gap-6 lg:gap-[35px] rounded-2xl lg:rounded-[25px] bg-white">
       <h2 className="text-xl lg:text-[25px] font-semibold text-black">
@@ -39,7 +47,10 @@ export default function PersonalDetails() {
         ))}
       </div>
 
-      <button className="w-full lg:w-[168px] px-0 py-3 lg:py-[15px] rounded-[25px] bg-sky-200 text-lg lg:text-xl font-medium text-black hover:bg-sky-300 transition-colors">
+      <button 
+        onClick={handleEdit}
+        className="w-full lg:w-[168px] px-0 py-3 lg:py-[15px] rounded-[25px] bg-sky-200 text-lg lg:text-xl font-medium text-black hover:bg-sky-300 transition-colors"
+      >
         EDIT
       </button>
     </div>
