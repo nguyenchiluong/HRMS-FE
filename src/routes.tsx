@@ -5,7 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
-import BonusCreditPage from './pages/AdminBonusSettings/BonusSettings';
+import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
 
 const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -34,25 +34,52 @@ const JobDetails = lazy(
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 
-const ViewEmployeeList = lazy(
-  () => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList'),
+const EmployeeManagement = lazy(
+  () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
+);
+
+const EmployeeHome = lazy(
+  () => import('@/feature/employee/homepage/pages/EmployeeHome'),
+);
+
+const TimeOffRequest = lazy(
+  () => import('@/feature/employee/time-management/pages/TimeOffRequest'),
+);
+
+const Timesheet = lazy(
+  () => import('@/feature/employee/time-management/pages/Timesheet'),
+);
+
+const TimeLayout = lazy(
+  () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
 
 const EmployeeOnboarding = lazy(
-  () => import('@/onboarding/pages/EmployeeOnboarding'),
+  () => import('@/feature/onboarding/pages/EmployeeOnboarding'),
+);
+const OnboardingSuccess = lazy(
+  () => import('@/feature/onboarding/pages/OnboardingSuccess'),
 );
 
-// Bonus Management 
+// Bonus Management
 
 const BonusSettings = lazy(
-  () => import('./pages/AdminBonusSettings/BonusSettings')
+  () => import('./pages/AdminBonusSettings/BonusSettings'),
 );
 
-const ViewBonus = lazy(
-  () => import('./pages/employeeBonus/page/EmployeeBonusPage')
-)
-
 const routes: RouteObject[] = [
+  // =================================================================
+  // 0. Token-based Routes (Accessible by anyone with valid token)
+  // =================================================================
+  {
+    path: '/onboarding',
+    element: <EmployeeOnboarding />,
+  },
+  {
+    path: '/onboarding/success',
+    element: <OnboardingSuccess />,
+  },
+
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
   // =================================================================
@@ -68,15 +95,12 @@ const routes: RouteObject[] = [
         path: '/reset-password/:token',
         element: <Placeholder title="Reset Password" />,
       },
+      // Test
       {
-        path: '/onboarding/:token',
-        element: <Placeholder title="Onboarding" />,
+        path: '/test',
+        element: <BonusSettings />,
       },
     ],
-  },
-  {
-    path: '/onboarding',
-    element: <EmployeeOnboarding />,
   },
 
   // =================================================================
@@ -94,6 +118,31 @@ const routes: RouteObject[] = [
         path: '/employee',
         element: <EmployeeLayout />,
         children: [
+          // Employee Dashboard/Home
+          { index: true, element: <EmployeeHome /> },
+          { path: 'dashboard', element: <EmployeeHome /> },
+          // Time Management Routes
+          {
+            path: 'time',
+            element: <TimeLayout />,
+            children: [
+              { index: true, element: <Placeholder title="My Attendance" /> },
+              {
+                path: 'attendance',
+                element: <Placeholder title="My Attendance" />,
+              },
+              { path: 'timesheet', element: <Timesheet /> },
+              {
+                path: 'timesheet-history',
+                element: <Placeholder title="Timesheet History" />,
+              },
+              { path: 'time-off-request', element: <TimeOffRequest /> },
+              {
+                path: 'my-requests',
+                element: <Placeholder title="My Requests" />,
+              },
+            ],
+          },
           {
             path: 'profile',
             children: [
@@ -105,7 +154,7 @@ const routes: RouteObject[] = [
                   { index: true, element: <PersonalInfo /> },
                   {
                     path: 'edit',
-                    element: <Placeholder title="Edit Personal Info" />,
+                    element: <EditPersonalInfo />,
                   },
                   {
                     path: 'contact',
@@ -182,7 +231,7 @@ const routes: RouteObject[] = [
           },
 
           // Legacy Routes
-          { path: 'employees', element: <ViewEmployeeList /> }, // /admin/employees
+          { path: 'employees', element: <EmployeeManagement /> }, // /admin/employees
           { path: 'add-employee', element: <AddEmployee /> }, // /admin/add-employee
 
           // Auth Actions
@@ -277,7 +326,13 @@ const routes: RouteObject[] = [
               },
             ],
           },
-          
+          {
+            path: 'bonus',
+            children: [
+              { index: true, element: <BonusSettings /> },
+              // { path: 'new', element: <CreateCampaign /> },
+            ],
+          },
         ],
       },
 

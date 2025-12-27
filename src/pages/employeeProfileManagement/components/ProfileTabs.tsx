@@ -20,7 +20,7 @@ export default function ProfileTabs() {
   return (
     <div className="flex flex-wrap items-center gap-4 lg:gap-[30px] bg-white rounded-[20px] px-4 lg:px-[30px] py-2.5 h-auto lg:h-[70px]">
       {tabs.map((tab, index) => {
-        const isActive = location.pathname === tab.path;
+        const isActive = location.pathname === tab.path || location.pathname.startsWith(tab.path + "/");
         return (
           <button
             key={index}
