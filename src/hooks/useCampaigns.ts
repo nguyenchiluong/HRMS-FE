@@ -1,4 +1,4 @@
-import { createCampaign, getCampaigns, updateCampaign, publishCampaign, getActiveCampaigns, registerForCampaign } from '@/api/campaign';
+import { createCampaign, getCampaigns, updateCampaign, publishCampaign, getActiveCampaigns, registerForCampaign, getMyCampaigns } from '@/api/campaign';
 import type { Campaign, CampaignFormData } from '@/types/campaign';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -60,6 +60,14 @@ export const useActiveCampaigns = () => {
   });
 };
 
+// Hook: Lấy danh sách chiến dịch tôi đã tham gia
+export const useMyCampaigns = () => {
+  return useQuery<Campaign[]>({
+    queryKey: ['my-campaigns'], // Key riêng để cache
+    queryFn: getMyCampaigns,    // Gọi API lấy lịch sử
+  });
+};
+
 // Hook to register for a campaign
 export const useRegisterCampaign = () => {
   const queryClient = useQueryClient();
@@ -70,7 +78,8 @@ export const useRegisterCampaign = () => {
       // Invalidate queries to refresh the list (e.g., move from "Can Join" to "My Active")
       queryClient.invalidateQueries({ queryKey: ['active-campaigns'] });
       // If you have a query for "my-registered-campaigns", invalidate that too
-      // queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
     },
   });
 };
+

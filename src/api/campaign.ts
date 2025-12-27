@@ -211,3 +211,9 @@ export const registerForCampaign = async (campaignId: string): Promise<string> =
     throw error;
   }
 };
+
+export const getMyCampaigns = async () => {
+  // Gọi đúng endpoint mà Backend Controller đang cung cấp
+  const { data } = await api.get('api/campaigns/my-campaigns');
+  return data;
+};
