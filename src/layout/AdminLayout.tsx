@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore } from '@/feature/auth/store/useAuthStore';
 import { Home, LogOut, Trophy, Users } from 'lucide-react';
 import { Link, Outlet } from 'react-router-dom';
 
@@ -38,8 +38,8 @@ export default function AdminLayout() {
               {user && (
                 <>
                   <div className="text-sm">
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-muted-foreground">{user.role}</p>
+                    <p className="font-medium">{user.email}</p>
+                    <p className="text-muted-foreground">{user.roles[0]}</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={logout}>
                     <LogOut className="mr-2 h-4 w-4" />

@@ -3,11 +3,12 @@ import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import Placeholder from './components/Placeholder';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import RoleBasedRedirect from './components/RoleBasedRedirect';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
 
-const Login = lazy(() => import('@/pages/Login'));
+const Login = lazy(() => import('@/feature/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
@@ -109,9 +110,8 @@ const routes: RouteObject[] = [
   {
     element: <ProtectedRoute />,
     children: [
-      // A. Root Redirect Logic
-      // If a logged-in user hits '/', send them to the admin dashboard (or employee dashboard)
-      { path: '/', element: <Navigate to="/admin" replace /> },
+      // A. Root Redirect Logic (role-based)
+      { path: '/', element: <RoleBasedRedirect /> },
 
       // B. Employee Routes
       {

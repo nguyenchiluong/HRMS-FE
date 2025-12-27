@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore } from '@/feature/auth/store/useAuthStore';
 import {
   Calendar,
   CheckCircle2,
