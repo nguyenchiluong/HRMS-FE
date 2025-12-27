@@ -51,6 +51,14 @@ const Timesheet = lazy(
   () => import('@/feature/employee/time-management/pages/Timesheet'),
 );
 
+const MyRequests = lazy(
+  () => import('@/feature/employee/time-management/pages/MyRequests'),
+);
+
+const MyAttendance = lazy(
+  () => import('@/feature/employee/time-management/pages/MyAttendance'),
+);
+
 const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
@@ -126,20 +134,16 @@ const routes: RouteObject[] = [
             path: 'time',
             element: <TimeLayout />,
             children: [
-              { index: true, element: <Placeholder title="My Attendance" /> },
+              { index: true, element: <MyAttendance /> },
               {
                 path: 'attendance',
-                element: <Placeholder title="My Attendance" />,
+                element: <MyAttendance />,
               },
               { path: 'timesheet', element: <Timesheet /> },
-              {
-                path: 'timesheet-history',
-                element: <Placeholder title="Timesheet History" />,
-              },
               { path: 'time-off-request', element: <TimeOffRequest /> },
               {
                 path: 'my-requests',
-                element: <Placeholder title="My Requests" />,
+                element: <MyRequests />,
               },
             ],
           },
