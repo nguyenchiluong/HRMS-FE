@@ -48,6 +48,10 @@ const BonusSettings = lazy(
   () => import('./pages/AdminBonusSettings/BonusSettings')
 );
 
+const ViewBonus = lazy(
+  () => import('./pages/employeeBonus/page/EmployeeBonusPage')
+)
+
 const routes: RouteObject[] = [
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
@@ -79,7 +83,7 @@ const routes: RouteObject[] = [
   // 2. Protected Routes (Only accessible when Logged in)
   // =================================================================
   {
-    element: <ProtectedRoute />,
+    element: <PublicRoute />, //TESTING
     children: [
       // A. Root Redirect Logic
       // If a logged-in user hits '/', send them to the admin dashboard (or employee dashboard)
@@ -144,6 +148,13 @@ const routes: RouteObject[] = [
               // ...
             ],
           },
+          {
+            path: 'credits',
+            children: [
+              { index: true,
+                element: <ViewBonus/> },
+            ]
+          }
         ],
       },
 
@@ -266,13 +277,7 @@ const routes: RouteObject[] = [
               },
             ],
           },
-          {
-            path: 'credit',
-            children: [
-              { index: true, element: <BonusSettings /> },
-              // { path: 'new', element: <CreateCampaign /> },
-            ]
-          }
+          
         ],
       },
 
