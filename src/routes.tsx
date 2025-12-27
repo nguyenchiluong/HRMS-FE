@@ -67,6 +67,10 @@ const BonusSettings = lazy(
   () => import('./pages/AdminBonusSettings/BonusSettings'),
 );
 
+const ViewBonus = lazy(
+  () => import('./pages//employeeBonus/page/EmployeeBonusPage'),
+);
+
 const routes: RouteObject[] = [
   // =================================================================
   // 0. Token-based Routes (Accessible by anyone with valid token)
