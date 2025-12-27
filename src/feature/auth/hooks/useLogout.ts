@@ -1,25 +1,24 @@
-import { useAuthStore } from '@/store/useAuthStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore';
 
-// ... existing useLogin ...
 export const useLogout = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient(); // Access the cache
+  const queryClient = useQueryClient();
   const clearAuth = useAuthStore((state) => state.logout);
 
   return useMutation({
     mutationFn: () => Promise.resolve(),
 
     onSettled: () => {
-      // 1. Clear Zustand Store (Token & User)
+      // Clear Zustand Store (Token & User)
       clearAuth();
 
-      // 2. Clear React Query Cache
-      // (Removes all cached data so the next user starts fresh)
+      // Clear React Query Cache
       queryClient.clear();
 
       navigate('/login', { replace: true });
     },
   });
 };
+

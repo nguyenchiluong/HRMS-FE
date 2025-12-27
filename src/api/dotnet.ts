@@ -7,7 +7,7 @@
  * - Timesheet
  */
 
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore } from '@/feature/auth/store/useAuthStore';
 import axios from 'axios';
 
 const dotnetApi = axios.create({

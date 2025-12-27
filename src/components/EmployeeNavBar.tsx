@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore } from '@/feature/auth/store/useAuthStore';
 import {
   Bell,
   Briefcase,
@@ -63,12 +63,12 @@ export default function EmployeeNavBar() {
             {user && (
               <div className="flex items-center space-x-3">
                 <div className="hidden text-right sm:block">
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <p className="text-xs text-muted-foreground">{user.role}</p>
+                  <p className="text-sm font-medium">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">{user.roles[0]}</p>
                 </div>
 
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
-                  {user.name?.charAt(0).toUpperCase() || 'U'}
+                  {user.email?.charAt(0).toUpperCase() || 'U'}
                 </div>
 
                 <Button variant="outline" size="sm" onClick={logout}>

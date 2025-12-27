@@ -1,6 +1,3 @@
-import { useLogin } from '@/hooks/useLogin';
-import { useState } from 'react';
-
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,10 +7,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { useLogin } from '../hooks/useLogin';
 
 export default function Login() {
-  const { mutate: login, isPending, error, isError } = useLogin();
+  const { mutate: login, isPending } = useLogin();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -29,15 +28,7 @@ export default function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simply trigger the mutation
     login(formData);
-  };
-
-  // Helper to extract error message safely
-  const getErrorMessage = () => {
-    if (!error) return null;
-    // @ts-ignore - Assuming axios error structure
-    return error.response?.data?.message || error.message || 'Login failed';
   };
 
   return (
@@ -53,14 +44,6 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* React Query Error State */}
-            {isError && (
-              <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-                <AlertCircle className="h-4 w-4" />
-                <span>{getErrorMessage()}</span>
-              </div>
-            )}
-
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -109,3 +92,4 @@ export default function Login() {
     </div>
   );
 }
+
