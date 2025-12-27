@@ -22,6 +22,7 @@ export const useLogin = () => {
 
       // Extract user info from token
       const user: User = {
+        name: "John Doe",
         sub: decoded.sub,
         email: decoded.mail,
         roles: decoded.roles,

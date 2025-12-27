@@ -11,6 +11,7 @@ export interface TokenPayload {
 
 // User stored in auth state
 export interface User {
+  name: string;
   sub: string;
   email: string;
   roles: Role[];
