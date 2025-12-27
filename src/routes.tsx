@@ -24,7 +24,7 @@ const PersonalInfo = lazy(
   () => import('./pages/employeeProfileManagement/pages/PersonalInfo'),
 );
 const Education = lazy(
-  () => import('./pages/employeeProfileManagement/pages/Education'),
+  () => import('./pages/employeeProfileManagement/pages/EmployeeEducation'),
 );
 const Financial = lazy(
   () => import('./pages/employeeProfileManagement/pages/Financial'),
@@ -146,8 +146,7 @@ const routes: RouteObject[] = [
           {
             path: 'profile',
             children: [
-              { index: true, element: <EmployeeIDs /> },
-              { path: 'edit', element: <EmployeeEditIDs /> },
+              { index: true, element: <Navigate to="ids" replace /> },
               {
                 path: 'personal-info',
                 children: [
@@ -176,6 +175,7 @@ const routes: RouteObject[] = [
                 path: 'ids',
                 children: [
                   { index: true, element: <EmployeeIDs /> },
+                  { path: 'edit', element: <EmployeeEditIDs /> },
                   {
                     path: 'request-update',
                     element: <Placeholder title="Request ID Update" />,

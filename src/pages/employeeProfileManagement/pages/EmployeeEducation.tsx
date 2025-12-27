@@ -1,8 +1,10 @@
 import NavigationBar from "@/pages/employeeProfileManagement/components/NavigationBar";
 import EmployeeSidebar from "@/pages/employeeProfileManagement/components/EmployeeSidebar";
 import ProfileTabs from "@/pages/employeeProfileManagement/components/ProfileTabs";
+import EducationContent from "@/pages/employeeProfileManagement/components/EducationContent";
+import "./EmployeeIDs.standalone.css";
 
-export default function Education() {
+export default function EmployeeEducation() {
   return (
     <div className="min-h-screen bg-white">
       <NavigationBar />
@@ -13,10 +15,7 @@ export default function Education() {
         <main className="flex-1 bg-hrms-bg-page min-h-[calc(100vh-85px)] p-4 lg:p-[30px]">
           <div className="flex flex-col gap-[30px] max-w-[1177px]">
             <ProfileTabs />
-            <div className="bg-white rounded-[20px] p-[30px]">
-              <h2 className="text-2xl font-semibold mb-4">Education</h2>
-              <p className="text-gray-600">Education information content coming soon...</p>
-            </div>
+            <EducationContent />
           </div>
         </main>
       </div>
