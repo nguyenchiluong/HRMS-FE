@@ -63,6 +63,18 @@ const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
 
+// Approve Requests
+const ApproveRequestsLayout = lazy(
+  () =>
+    import('@/feature/employee/approve-requests/layout/ApproveRequestsLayout'),
+);
+const ApproveTimesheet = lazy(
+  () => import('@/feature/employee/approve-requests/pages/ApproveTimesheet'),
+);
+const ApproveTimeOff = lazy(
+  () => import('@/feature/employee/approve-requests/pages/ApproveTimeOff'),
+);
+
 const EmployeeOnboarding = lazy(
   () => import('@/feature/onboarding/pages/EmployeeOnboarding'),
 );
@@ -145,6 +157,16 @@ const routes: RouteObject[] = [
                 path: 'my-requests',
                 element: <MyRequests />,
               },
+            ],
+          },
+          // Approve Requests Routes
+          {
+            path: 'approve-requests',
+            element: <ApproveRequestsLayout />,
+            children: [
+              { index: true, element: <Navigate to="timesheet" replace /> },
+              { path: 'timesheet', element: <ApproveTimesheet /> },
+              { path: 'time-off', element: <ApproveTimeOff /> },
             ],
           },
           {

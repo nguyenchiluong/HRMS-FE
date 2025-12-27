@@ -2,9 +2,8 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/feature/auth/store/useAuthStore';
 import {
   Bell,
-  Briefcase,
+  CheckCircle2,
   Clock,
-  FileText,
   Home,
   LogOut,
   Settings,
@@ -20,8 +19,11 @@ export default function EmployeeNavBar() {
     { path: '/employee/dashboard', label: 'Dashboard', icon: Home },
     { path: '/employee/profile', label: 'Profile', icon: User },
     { path: '/employee/time', label: 'Time Management', icon: Clock },
-    { path: '/employee/job-details', label: 'Job Details', icon: Briefcase },
-    { path: '/employee/documents', label: 'Documents', icon: FileText },
+    {
+      path: '/employee/approve-requests',
+      label: 'Request Approval',
+      icon: CheckCircle2,
+    },
     { path: '/employee/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -62,13 +64,16 @@ export default function EmployeeNavBar() {
 
             {user && (
               <div className="flex items-center space-x-3">
-                <div className="hidden text-right sm:block">
-                  <p className="text-sm font-medium">{user.email}</p>
-                  <p className="text-xs text-muted-foreground">{user.roles[0]}</p>
-                </div>
-
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
-                  {user.email?.charAt(0).toUpperCase() || 'U'}
+                <div className="hidden max-w-[140px] text-right sm:block">
+                  <p
+                    className="truncate text-xs font-medium"
+                    title={user.email}
+                  >
+                    {user.email}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user.roles[0]}
+                  </p>
                 </div>
 
                 <Button variant="outline" size="sm" onClick={logout}>

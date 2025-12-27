@@ -1,49 +1,30 @@
 import { cn } from '@/lib/utils';
-import { Calendar, ClipboardList, Clock, FileText } from 'lucide-react';
+import { Calendar, ClipboardCheck } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
-interface SidebarItem {
+interface TabItem {
   path: string;
   label: string;
   icon: React.ElementType;
 }
 
-const sidebarItems: SidebarItem[] = [
+const tabItems: TabItem[] = [
   {
-    path: '/employee/time/attendance',
-    label: 'My Attendance',
-    icon: Clock,
+    path: '/employee/approve-requests/timesheet',
+    label: 'Approve Timesheet',
+    icon: ClipboardCheck,
   },
   {
-    path: '/employee/time/timesheet',
-    label: 'Timesheet',
-    icon: ClipboardList,
-  },
-  {
-    path: '/employee/time/time-off-request',
-    label: 'Time Off Request',
+    path: '/employee/approve-requests/time-off',
+    label: 'Approve Time-off',
     icon: Calendar,
-  },
-  {
-    path: '/employee/time/my-requests',
-    label: 'My Requests',
-    icon: FileText,
   },
 ];
 
-export default function TimeLayout() {
+export default function ApproveRequestsLayout() {
   const location = useLocation();
 
-  const isActive = (path: string) => {
-    // Special case: highlight "My Attendance" for both /employee/time and /employee/time/attendance
-    if (path === '/employee/time/attendance') {
-      return (
-        location.pathname === '/employee/time' ||
-        location.pathname === '/employee/time/attendance'
-      );
-    }
-    return location.pathname === path;
-  };
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="fixed inset-0 top-16 flex">
@@ -51,10 +32,10 @@ export default function TimeLayout() {
       <aside className="w-84 shrink-0 border-r bg-white">
         <div className="mx-6 p-4">
           <h2 className="mb-6 mt-4 text-lg font-semibold text-slate-800">
-            Time Management
+            Approve Requests
           </h2>
           <nav className="space-y-1">
-            {sidebarItems.map((item) => (
+            {tabItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
