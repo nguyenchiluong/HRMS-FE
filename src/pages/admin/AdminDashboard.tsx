@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuthStore } from '@/feature/auth/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { useEmployeeStore } from '@/store/useStore';
 import { Briefcase, DollarSign, TrendingUp, Users } from 'lucide-react';
 

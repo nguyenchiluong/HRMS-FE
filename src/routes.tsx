@@ -8,7 +8,7 @@ import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
 
-const Login = lazy(() => import('@/feature/auth/pages/Login'));
+const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
@@ -36,7 +36,7 @@ const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 
 const EmployeeManagement = lazy(
-  () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
+  () => import('@/feature/admin/employee-management/pages/EmployeeManagement'),
 );
 
 const EmployeeHome = lazy(
@@ -76,10 +76,10 @@ const ApproveTimeOff = lazy(
 );
 
 const EmployeeOnboarding = lazy(
-  () => import('@/feature/onboarding/pages/EmployeeOnboarding'),
+  () => import('@/feature/employee/onboarding/pages/EmployeeOnboarding'),
 );
 const OnboardingSuccess = lazy(
-  () => import('@/feature/onboarding/pages/OnboardingSuccess'),
+  () => import('@/feature/employee/onboarding/pages/OnboardingSuccess'),
 );
 
 // Bonus Management

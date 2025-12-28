@@ -7,7 +7,7 @@
  * - Bonus
  */
 
-import { useAuthStore } from '@/feature/auth/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import axios from 'axios';
 
 const springApi = axios.create({
