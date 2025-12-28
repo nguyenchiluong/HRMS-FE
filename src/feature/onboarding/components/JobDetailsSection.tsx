@@ -16,6 +16,8 @@ export const JobDetailsSection: React.FC<JobDetailsSectionProps> = ({
       label: 'Type',
       value: `${onboardingInfo.employeeType ?? ''} · ${onboardingInfo.timeType ?? ''}`,
     },
+    { label: 'Personal Email', value: onboardingInfo.personalEmail },
+    { label: 'Work Email', value: onboardingInfo.email },
   ];
 
   return (

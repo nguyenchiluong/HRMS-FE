@@ -47,8 +47,8 @@ const initialProfileSchema = Yup.object().shape({
   fullName: Yup.string()
     .required('Full name is required')
     .min(2, 'Full name must be at least 2 characters'),
-  email: Yup.string()
-    .required('Email is required')
+  personalEmail: Yup.string()
+    .required('Personal email is required')
     .email('Invalid email format'),
   positionId: Yup.number()
     .required('Position is required')
@@ -92,7 +92,7 @@ export default function OnboardEmployeeModal({
   const formik = useFormik<InitialProfileFormData>({
     initialValues: {
       fullName: '',
-      email: '',
+      personalEmail: '',
       positionId: '',
       jobLevel: '',
       departmentId: '',
@@ -104,7 +104,7 @@ export default function OnboardEmployeeModal({
     onSubmit: (values) => {
       createMutation.mutate({
         fullName: values.fullName,
-        email: values.email,
+        personalEmail: values.personalEmail,
         positionId: Number(values.positionId),
         jobLevel: values.jobLevel as string,
         departmentId: Number(values.departmentId),
@@ -161,25 +161,25 @@ export default function OnboardEmployeeModal({
               )}
             </div>
 
-            {/* Email */}
+            {/* Personal Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="personalEmail">Personal Email *</Label>
               <Input
-                id="email"
-                name="email"
+                id="personalEmail"
+                name="personalEmail"
                 type="email"
-                placeholder="Enter email address"
-                value={formik.values.email}
+                placeholder="Enter personal email address"
+                value={formik.values.personalEmail}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 className={
-                  formik.touched.email && formik.errors.email
+                  formik.touched.personalEmail && formik.errors.personalEmail
                     ? 'border-red-500'
                     : ''
                 }
               />
-              {formik.touched.email && formik.errors.email && (
-                <p className="text-sm text-red-500">{formik.errors.email}</p>
+              {formik.touched.personalEmail && formik.errors.personalEmail && (
+                <p className="text-sm text-red-500">{formik.errors.personalEmail}</p>
               )}
             </div>
 
