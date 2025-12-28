@@ -16,9 +16,6 @@ import { FormRow } from './ui/FormRow';
 const validationSchema = Yup.object().shape({
   firstName: Yup.string().required('First name is required'),
   lastName: Yup.string().required('Last name is required'),
-  personalEmail: Yup.string()
-    .email('Invalid email address')
-    .required('Personal email is required'),
   phone: Yup.string().required('Phone number is required'),
   sex: Yup.string().required('Sex is required'),
   dateOfBirth: Yup.string().required('Date of birth is required'),
@@ -148,7 +145,6 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
               <FormRow label="First Name" name="firstName" required />
               <FormRow label="Last Name" name="lastName" required />
             </div>
-            <FormRow label="Personal Email" name="personalEmail" required />
             <FormRow label="Phone Number" name="phone" required />
             <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
               <FormRow
