@@ -3,16 +3,14 @@ import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import Placeholder from './components/Placeholder';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import RoleBasedRedirect from './components/RoleBasedRedirect';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
+import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
 
-const Login = lazy(() => import('@/pages/Login'));
+const Login = lazy(() => import('@/feature/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
-// Employee Management (Legacy)
-const Employees = lazy(
-  () => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList'),
-); // Path UPDATED
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
@@ -26,7 +24,7 @@ const PersonalInfo = lazy(
   () => import('./pages/employeeProfileManagement/pages/PersonalInfo'),
 );
 const Education = lazy(
-  () => import('./pages/employeeProfileManagement/pages/Education'),
+  () => import('./pages/employeeProfileManagement/pages/EmployeeEducation'),
 );
 const Financial = lazy(
   () => import('./pages/employeeProfileManagement/pages/Financial'),
@@ -36,8 +34,61 @@ const JobDetails = lazy(
 );
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
+
+const EmployeeManagement = lazy(
+  () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
+);
+
+const EmployeeHome = lazy(
+  () => import('@/feature/employee/homepage/pages/EmployeeHome'),
+);
+
+const TimeOffRequest = lazy(
+  () => import('@/feature/employee/time-management/pages/TimeOffRequest'),
+);
+
+const Timesheet = lazy(
+  () => import('@/feature/employee/time-management/pages/Timesheet'),
+);
+
+const MyRequests = lazy(
+  () => import('@/feature/employee/time-management/pages/MyRequests'),
+);
+
+const MyAttendance = lazy(
+  () => import('@/feature/employee/time-management/pages/MyAttendance'),
+);
+
+const TimeLayout = lazy(
+  () => import('@/feature/employee/time-management/layout/TimeLayout'),
+);
+
+const EmployeeOnboarding = lazy(
+  () => import('@/feature/onboarding/pages/EmployeeOnboarding'),
+);
+const OnboardingSuccess = lazy(
+  () => import('@/feature/onboarding/pages/OnboardingSuccess'),
+);
+
+// Bonus Management
+
+const BonusSettings = lazy(
+  () => import('./pages/AdminBonusSettings/BonusSettings'),
+);
 const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
 const routes: RouteObject[] = [
+  // =================================================================
+  // 0. Token-based Routes (Accessible by anyone with valid token)
+  // =================================================================
+  {
+    path: '/onboarding',
+    element: <EmployeeOnboarding />,
+  },
+  {
+    path: '/onboarding/success',
+    element: <OnboardingSuccess />,
+  },
+
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
   // =================================================================
@@ -53,9 +104,10 @@ const routes: RouteObject[] = [
         path: '/reset-password/:token',
         element: <Placeholder title="Reset Password" />,
       },
+      // Test
       {
-        path: '/onboarding/:token',
-        element: <Placeholder title="Onboarding" />,
+        path: '/test',
+        element: <BonusSettings />,
       },
     ],
   },
@@ -66,27 +118,46 @@ const routes: RouteObject[] = [
   {
     element: <ProtectedRoute />,
     children: [
-      // A. Root Redirect Logic
-      // If a logged-in user hits '/', send them to the admin dashboard (or employee dashboard)
-      { path: '/', element: <Navigate to="/admin" replace /> },
+      // A. Root Redirect Logic (role-based)
+      { path: '/', element: <RoleBasedRedirect /> },
 
       // B. Employee Routes
       {
         path: '/employee',
         element: <EmployeeLayout />,
         children: [
+          // Employee Dashboard/Home
+          { index: true, element: <EmployeeHome /> },
+          { path: 'dashboard', element: <EmployeeHome /> },
+          // Time Management Routes
+          {
+            path: 'time',
+            element: <TimeLayout />,
+            children: [
+              { index: true, element: <MyAttendance /> },
+              {
+                path: 'attendance',
+                element: <MyAttendance />,
+              },
+              { path: 'timesheet', element: <Timesheet /> },
+              { path: 'time-off-request', element: <TimeOffRequest /> },
+              {
+                path: 'my-requests',
+                element: <MyRequests />,
+              },
+            ],
+          },
           {
             path: 'profile',
             children: [
-              { index: true, element: <EmployeeIDs /> },
-              { path: 'edit', element: <EmployeeEditIDs /> },
+              { index: true, element: <Navigate to="ids" replace /> },
               {
                 path: 'personal-info',
                 children: [
                   { index: true, element: <PersonalInfo /> },
                   {
                     path: 'edit',
-                    element: <Placeholder title="Edit Personal Info" />,
+                    element: <EditPersonalInfo />,
                   },
                   {
                     path: 'contact',
@@ -108,6 +179,7 @@ const routes: RouteObject[] = [
                 path: 'ids',
                 children: [
                   { index: true, element: <EmployeeIDs /> },
+                  { path: 'edit', element: <EmployeeEditIDs /> },
                   {
                     path: 'request-update',
                     element: <Placeholder title="Request ID Update" />,
@@ -165,7 +237,7 @@ const routes: RouteObject[] = [
           },
 
           // Legacy Routes
-          { path: 'employees', element: <Employees /> }, // /admin/employees
+          { path: 'employees', element: <EmployeeManagement /> }, // /admin/employees
           { path: 'add-employee', element: <AddEmployee /> }, // /admin/add-employee
 
           // Auth Actions
@@ -258,6 +330,13 @@ const routes: RouteObject[] = [
                   },
                 ],
               },
+            ],
+          },
+          {
+            path: 'bonus',
+            children: [
+              { index: true, element: <BonusSettings /> },
+              // { path: 'new', element: <CreateCampaign /> },
             ],
           },
         ],
