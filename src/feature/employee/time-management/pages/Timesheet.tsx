@@ -48,14 +48,28 @@ export default function Timesheet() {
     });
   }, [timesheetData, weekRanges]);
 
-  // Calculate overall progress (average of all weeks)
-  const overallProgress = useMemo(() => {
-    const totalPercentage = weeklyTotals.reduce(
-      (sum, week) => sum + week.percentage,
-      0,
+  // Determine current week index based on today's date
+  const currentWeekIndex = useMemo(() => {
+    const today = new Date();
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+
+    // If viewing a different month, default to first week
+    if (currentYear !== todayYear || currentMonth !== todayMonth) {
+      return 0;
+    }
+
+    const todayDate = today.getDate();
+    const weekIndex = weekRanges.findIndex(
+      (week) => todayDate >= Number(week.start) && todayDate <= Number(week.end),
     );
-    return Math.round(totalPercentage / weeklyTotals.length);
-  }, [weeklyTotals]);
+    return weekIndex >= 0 ? weekIndex : 0;
+  }, [weekRanges, currentYear, currentMonth]);
+
+  // Get current week's progress
+  const currentWeekProgress = useMemo(() => {
+    return weeklyTotals[currentWeekIndex]?.percentage || 0;
+  }, [weeklyTotals, currentWeekIndex]);
 
   const handleToggleDropdown = () => {
     setShowProjectDropdown(!showProjectDropdown);
@@ -89,7 +103,7 @@ export default function Timesheet() {
           onAdjust={adjustTimesheet}
         />
 
-        <ProgressBar progress={overallProgress} />
+        <ProgressBar progress={currentWeekProgress} />
 
         <TimesheetTable
           timesheetData={timesheetData}
