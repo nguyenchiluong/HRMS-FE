@@ -1,5 +1,6 @@
-import type { Campaign, CampaignFormData } from '@/types/campaign';
+import type { Campaign, CampaignFormData, ActivitySubmissionData} from '@/types/campaign';
 import springApi from './spring';
+import type { EmployeeActivity } from '@/types/campaign';
 
 // Relative path since baseURL is already defined in base.ts
 const CAMPAIGN_ENDPOINT = '/api/campaigns';
@@ -222,4 +223,35 @@ export const getMyCampaigns = async (): Promise<Campaign[]> => {
     return data.map(transformBackendToFrontend);
   }
   return [];
+};
+
+// API: Submit Activity
+export const submitActivity = async (data: ActivitySubmissionData): Promise<any> => {
+  try {
+    // 1. Upload ảnh lên S3
+    const imageUrl = await uploadImageToS3(data.imageFile);
+
+    // 2. Chuẩn bị payload
+    const payload = {
+      activityDate: data.activityDate,
+      proofImage: imageUrl,
+      metrics: JSON.stringify({
+        distance: data.distance
+      }),
+      status: "pending"
+    };
+
+    // Gọi endpoint
+    const response = await springApi.post(`${CAMPAIGN_ENDPOINT}/${data.campaignId}/activities`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting activity:', error);
+    throw error;
+  }
+};
+
+// API: Lấy danh sách hoạt động của chính mình trong một chiến dịch
+export const getMyCampaignActivities = async (campaignId: string): Promise<EmployeeActivity[]> => {
+  const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${campaignId}/activities/me`);
+  return response.data;
 };

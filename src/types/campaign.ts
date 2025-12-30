@@ -24,3 +24,20 @@ export interface CampaignListItem extends Campaign {
   pendingSubmissions: number;
   image: string;
 }
+
+export interface ActivitySubmissionData {
+  campaignId: string;
+  activityDate: string; // Format: YYYY-MM-DD
+  distance: number;
+  imageFile: File;
+}
+
+export interface EmployeeActivity {
+  activityId: string; // Hoặc number tùy cấu hình, nhưng string an toàn hơn cho BigInt
+  activityDate: string; 
+  metrics: string; 
+  proofImage: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string; 
+}
+

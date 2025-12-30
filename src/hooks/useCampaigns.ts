@@ -1,5 +1,5 @@
-import { createCampaign, getCampaigns, updateCampaign, publishCampaign, getActiveCampaigns, registerForCampaign, getMyCampaigns } from '@/api/campaign';
-import type { Campaign, CampaignFormData } from '@/types/campaign';
+import { createCampaign, getCampaigns, updateCampaign, publishCampaign, getActiveCampaigns, registerForCampaign, getMyCampaigns, submitActivity, getMyCampaignActivities } from '@/api/campaign';
+import type { Campaign, CampaignFormData, ActivitySubmissionData } from '@/types/campaign';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useCampaigns = () => {
@@ -86,3 +86,24 @@ export const useRegisterCampaign = () => {
   });
 };
 
+// Hook: Submit Activity
+export const useSubmitActivity = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: ActivitySubmissionData) => submitActivity(data),
+    onSuccess: () => {
+      // Refresh lại dữ liệu campaign (nếu cần hiển thị progress ngay)
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+    },
+  });
+};
+
+// Hook: Lấy danh sách hoạt động của chính mình trong một chiến dịch
+export const useMyCampaignActivities = (campaignId: string) => {
+  return useQuery({
+    queryKey: ['campaign-activities', campaignId], // Key định danh cache
+    queryFn: () => getMyCampaignActivities(campaignId), 
+    enabled: !!campaignId, // Chỉ chạy khi có campaignId
+  });
+};
