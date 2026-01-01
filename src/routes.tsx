@@ -7,6 +7,7 @@ import RoleBasedRedirect from './components/RoleBasedRedirect';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
+import WorkingHistory from './pages/employeeProfileManagement/pages/WorkingHistory';
 
 const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -212,8 +213,14 @@ const routes: RouteObject[] = [
                 path: 'change-requests',
                 element: <Placeholder title="Profile Change Requests" />,
               },
-              { path: 'job-details', element: <JobDetails /> },
             ],
+          },
+          { path: 'job-details',
+            children: [
+              { index: true, element: <Navigate to="info" replace /> },
+              { path: 'info', element: <JobDetails /> },
+              { path: 'working-history', element: <WorkingHistory /> },
+            ]
           },
           // ... (Rest of Employee Sub-routes kept as is, just ensured nesting)
           {

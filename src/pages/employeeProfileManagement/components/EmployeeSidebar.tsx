@@ -8,7 +8,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { label: "Personal Information", path: "/employee/profile" },
-  { label: "Job Details", path: "/employee/profile/job-details" },
+  { label: "Job Details", path: "/employee/job-details" },
   { label: "Time Requests", path: "/employee/requests" },
   { label: "Activities", path: "/employee/my-activities" },
   { label: "Bonus", path: "/employee/credits" },
