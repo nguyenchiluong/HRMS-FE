@@ -8,7 +8,7 @@ import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
 
-const Login = lazy(() => import('@/feature/auth/pages/Login'));
+const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
@@ -36,7 +36,7 @@ const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 
 const EmployeeManagement = lazy(
-  () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
+  () => import('@/feature/admin/employee-management/pages/EmployeeManagement'),
 );
 
 const EmployeeHome = lazy(
@@ -63,11 +63,23 @@ const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
 
+// Approve Requests
+const ApproveRequestsLayout = lazy(
+  () =>
+    import('@/feature/employee/approve-requests/layout/ApproveRequestsLayout'),
+);
+const ApproveTimesheet = lazy(
+  () => import('@/feature/employee/approve-requests/pages/ApproveTimesheet'),
+);
+const ApproveTimeOff = lazy(
+  () => import('@/feature/employee/approve-requests/pages/ApproveTimeOff'),
+);
+
 const EmployeeOnboarding = lazy(
-  () => import('@/feature/onboarding/pages/EmployeeOnboarding'),
+  () => import('@/feature/employee/onboarding/pages/EmployeeOnboarding'),
 );
 const OnboardingSuccess = lazy(
-  () => import('@/feature/onboarding/pages/OnboardingSuccess'),
+  () => import('@/feature/employee/onboarding/pages/OnboardingSuccess'),
 );
 
 // Bonus Management
@@ -145,6 +157,16 @@ const routes: RouteObject[] = [
                 path: 'my-requests',
                 element: <MyRequests />,
               },
+            ],
+          },
+          // Approve Requests Routes
+          {
+            path: 'approve-requests',
+            element: <ApproveRequestsLayout />,
+            children: [
+              { index: true, element: <Navigate to="timesheet" replace /> },
+              { path: 'timesheet', element: <ApproveTimesheet /> },
+              { path: 'time-off', element: <ApproveTimeOff /> },
             ],
           },
           {
