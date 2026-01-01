@@ -9,7 +9,7 @@ const PublicRoute = () => {
   }
 
   // Redirect based on role
-  if (user?.roles.includes('ADMIN')) {
+  if (user?.roles?.includes('ADMIN')) {
     return <Navigate to="/admin" replace />;
   }
 
