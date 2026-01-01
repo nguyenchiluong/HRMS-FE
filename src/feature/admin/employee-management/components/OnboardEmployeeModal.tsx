@@ -48,7 +48,7 @@ const initialProfileSchema = Yup.object().shape({
     .required('Full name is required')
     .min(2, 'Full name must be at least 2 characters'),
   personalEmail: Yup.string()
-    .required('Email is required')
+    .required('Personal email is required')
     .email('Invalid email format'),
   positionId: Yup.number()
     .required('Position is required')
