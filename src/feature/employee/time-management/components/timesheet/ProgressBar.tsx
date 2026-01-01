@@ -11,7 +11,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress }) => {
     <div className="mb-6">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700">
-          Monthly Working Hours Progress
+          Weekly Working Hours Progress
         </span>
         <span className="text-sm font-semibold text-blue-600">{progress}%</span>
       </div>
@@ -31,7 +31,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress }) => {
         />
       </div>
       <p className="mt-2 text-xs text-gray-500">
-        Based on {MAX_HOURS_PER_WEEK} hours per week (excludes Leave)
+        Target: {MAX_HOURS_PER_WEEK} hours per week (excludes Leave)
       </p>
     </div>
   );

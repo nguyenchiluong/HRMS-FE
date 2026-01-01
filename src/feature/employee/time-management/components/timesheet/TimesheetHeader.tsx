@@ -12,15 +12,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
-import {
-  AVAILABLE_PROJECTS,
-  getMonthName,
-  getStatusConfig,
-} from '../../store/useTimesheetStore';
-import {
+import { getMonthName, getStatusConfig } from '../../store/useTimesheetStore';
+import type {
   StatusConfig,
+  Task,
   TimesheetRow,
   TimesheetStatus,
   WeekRange,
@@ -47,34 +44,43 @@ const YEARS = Array.from({ length: 11 }, (_, i) => 2020 + i);
 interface TimesheetHeaderProps {
   currentMonth: number;
   currentYear: number;
+  selectedWeekIndex: number;
   status: TimesheetStatus;
-  isEditing: boolean;
+  isSubmitting: boolean;
   showProjectDropdown: boolean;
   timesheetData: TimesheetRow[];
   weekRanges: WeekRange[];
+  availableTasks: Task[];
   onToggleDropdown: () => void;
-  onAddProject: (projectId: string) => void;
+  onAddTask: (task: Task) => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
   onMonthYearChange: (month: number, year: number) => void;
   onSubmit: () => void;
   onAdjust: () => void;
+  onCancel?: () => void;
+  canEdit: boolean;
 }
 
 export const TimesheetHeader: React.FC<TimesheetHeaderProps> = ({
   currentMonth,
   currentYear,
+  selectedWeekIndex,
   status,
-  isEditing,
+  isSubmitting,
   showProjectDropdown,
   timesheetData,
+  weekRanges,
+  availableTasks,
   onToggleDropdown,
-  onAddProject,
+  onAddTask,
   onPreviousMonth,
   onNextMonth,
   onMonthYearChange,
   onSubmit,
   onAdjust,
+  onCancel,
+  canEdit,
 }) => {
   const statusConfig: StatusConfig = getStatusConfig(status);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -95,39 +101,55 @@ export const TimesheetHeader: React.FC<TimesheetHeaderProps> = ({
     setIsMonthPickerOpen(open);
   };
 
+  // Filter out tasks that are already added
+  const availableToAdd = availableTasks.filter(
+    (task) => !timesheetData.some((row) => row.taskId === task.id),
+  );
+
+  const currentWeek = weekRanges[selectedWeekIndex];
+  const weekLabel = currentWeek
+    ? `Week ${currentWeek.weekNumber} (${currentWeek.start} - ${currentWeek.end})`
+    : '';
+
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-4">
         {/* Add Tasks Button with Dropdown */}
         <div className="relative">
-          <Button onClick={onToggleDropdown} disabled={!isEditing}>
+          <Button onClick={onToggleDropdown} disabled={!canEdit || isSubmitting}>
             Add tasks
             <ChevronDown className="ml-1 h-4 w-4" />
           </Button>
 
-          {showProjectDropdown && isEditing && (
+          {showProjectDropdown && canEdit && (
             <div className="absolute left-0 top-full z-10 mt-1 w-56 rounded-md border bg-white shadow-lg">
               <div className="py-1">
                 <div className="px-3 py-2 text-xs font-semibold uppercase text-gray-500">
-                  Available Projects
+                  Available Tasks
                 </div>
-                {AVAILABLE_PROJECTS.map((project) => (
-                  <button
-                    key={project.id}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => onAddProject(project.id)}
-                    disabled={timesheetData.some(
-                      (row) => row.name === project.name,
-                    )}
-                  >
-                    {project.name}
-                    {timesheetData.some((row) => row.name === project.name) && (
-                      <span className="ml-2 text-xs text-gray-400">
-                        (Added)
-                      </span>
-                    )}
-                  </button>
-                ))}
+                {availableToAdd.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-gray-400">
+                    All tasks added
+                  </div>
+                ) : (
+                  availableToAdd.map((task) => (
+                    <button
+                      key={task.id}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                      onClick={() => onAddTask(task)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{task.taskName}</span>
+                        {task.taskType === 'leave' && (
+                          <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs text-orange-600">
+                            Leave
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400">{task.taskCode}</div>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -222,35 +244,73 @@ export const TimesheetHeader: React.FC<TimesheetHeaderProps> = ({
           </Button>
         </div>
 
-        {/* Status Tag */}
-        <div
-          className={cn(
-            'rounded-full border px-3 py-1 text-sm font-medium',
-            statusConfig.bgColor,
-            statusConfig.textColor,
-            statusConfig.borderColor,
-          )}
-        >
-          {statusConfig.label}
+        {/* Week Info & Status */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600">{weekLabel}</span>
+          <div
+            className={cn(
+              'rounded-full border px-3 py-1 text-sm font-medium',
+              statusConfig.bgColor,
+              statusConfig.textColor,
+              statusConfig.borderColor,
+            )}
+          >
+            {statusConfig.label}
+          </div>
         </div>
       </div>
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          onClick={onAdjust}
-          disabled={isEditing}
-          className="border-gray-300"
-        >
-          Adjust
-        </Button>
-        <Button
-          onClick={onSubmit}
-          disabled={!isEditing || status === 'approved'}
-        >
-          Submit
-        </Button>
+        {status === 'REJECTED' && (
+          <Button
+            variant="outline"
+            onClick={onAdjust}
+            disabled={isSubmitting}
+            className="border-gray-300"
+          >
+            {isSubmitting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
+            Adjust & Resubmit
+          </Button>
+        )}
+        {(status === 'DRAFT' || status === 'REJECTED' || status === 'CANCELLED') && (
+          <Button
+            onClick={onSubmit}
+            disabled={isSubmitting || status === 'APPROVED'}
+          >
+            {isSubmitting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
+            Submit Week {weekRanges[selectedWeekIndex]?.weekNumber}
+          </Button>
+        )}
+        {status === 'PENDING' && (
+          <>
+            {onCancel && (
+              <Button
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSubmitting}
+                className="border-gray-300"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Cancel
+              </Button>
+            )}
+            <span className="text-sm text-gray-500">
+              Awaiting manager approval
+            </span>
+          </>
+        )}
+        {status === 'APPROVED' && (
+          <span className="text-sm text-green-600">
+            ✓ Week approved
+          </span>
+        )}
       </div>
     </div>
   );

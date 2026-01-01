@@ -7,7 +7,7 @@
  * - Timesheet
  */
 
-import { useAuthStore } from '@/feature/auth/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import axios from 'axios';
 
 const dotnetApi = axios.create({
@@ -29,8 +29,14 @@ dotnetApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+      const authStore = useAuthStore.getState();
+      // Only logout if we're actually authenticated (avoid infinite loops)
+      if (authStore.isAuthenticated) {
+        authStore.logout();
+        // Let React Router handle the redirect via ProtectedRoute
+        // Don't use window.location.href as it causes full page reload
+        // and conflicts with React Router
+      }
     }
     return Promise.reject(error);
   },

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/feature/auth/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { ClipboardCheck, Home, LogOut, Trophy, Users } from 'lucide-react';
 import { Link, Outlet } from 'react-router-dom';
 
