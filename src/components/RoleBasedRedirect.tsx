@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/feature/auth/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { Navigate } from 'react-router-dom';
 
 const RoleBasedRedirect = () => {
