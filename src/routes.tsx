@@ -39,6 +39,11 @@ const EmployeeManagement = lazy(
   () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
 );
 
+// Profile Change Requests
+const ProfileChangeRequests = lazy(
+  () => import('@/feature/admin/profile-requests/pages/ProfileChangeRequests'),
+);
+
 const EmployeeHome = lazy(
   () => import('@/feature/employee/homepage/pages/EmployeeHome'),
 );
@@ -284,7 +289,7 @@ const routes: RouteObject[] = [
             children: [
               {
                 index: true,
-                element: <Placeholder title="Profile Requests" />,
+                element: <ProfileChangeRequests />,
               },
               { path: ':id', element: <Placeholder title="Request Detail" /> },
             ],

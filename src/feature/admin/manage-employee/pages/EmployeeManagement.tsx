@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { EmployeeTable } from '../components/EmployeeTable';
 import { FilterSection } from '../components/FilterSection';
@@ -81,10 +82,54 @@ export default function EmployeeManagement() {
   // Pagination Logic
   const totalItems = filteredData.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const currentData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = filteredData.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePageClick = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(
+          1,
+          '...',
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages,
+        );
+      } else {
+        pages.push(
+          1,
+          '...',
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          '...',
+          totalPages,
+        );
+      }
+    }
+    return pages;
+  };
 
   return (
     <div className="mx-auto min-h-screen space-y-8">
@@ -124,41 +169,54 @@ export default function EmployeeManagement() {
       />
 
       {/* Data Table */}
-      <div className="mb-4 text-right">
-        <span className="text-sm text-slate-500">
-          Showing {currentData.length}/{stats?.total ?? 0} rows
-        </span>
-      </div>
-
       <EmployeeTable data={currentData} isLoading={isLoading} />
 
       {/* Footer / Pagination */}
-      {!isLoading && totalItems > 0 && (
-        <div className="mt-6 flex items-center justify-end gap-2">
-          <span className="font-regular ml-2 cursor-pointer text-sm hover:underline">
-            Previous
-          </span>
+      {!isLoading && totalItems > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between border-t bg-white px-6 py-4">
+          <div className="text-sm text-gray-500">
+            Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of{' '}
+            {totalItems} results
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
 
-          {[...Array(Math.min(4, totalPages))].map((_, idx) => {
-            const pageNum = idx + 1;
-            return (
-              <button
-                key={pageNum}
-                onClick={() => setCurrentPage(pageNum)}
-                className={`flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors ${
-                  currentPage === pageNum
-                    ? 'bg-black-100 text-black-700 font-bold'
-                    : 'text-slate-600 hover:bg-gray-100'
-                }`}
-              >
-                {pageNum}
-              </button>
-            );
-          })}
+            {getPageNumbers().map((page, index) =>
+              typeof page === 'number' ? (
+                <Button
+                  key={index}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handlePageClick(page)}
+                  className="h-8 w-8 p-0"
+                >
+                  {page}
+                </Button>
+              ) : (
+                <span key={index} className="px-2 text-gray-400">
+                  {page}
+                </span>
+              ),
+            )}
 
-          <span className="font-regular ml-2 cursor-pointer text-sm hover:underline">
-            Next
-          </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/feature/auth/store/useAuthStore';
-import { Home, LogOut, Trophy, Users } from 'lucide-react';
+import { ClipboardCheck, Home, LogOut, Trophy, Users } from 'lucide-react';
 import { Link, Outlet } from 'react-router-dom';
 
 export default function AdminLayout() {
@@ -30,6 +30,12 @@ export default function AdminLayout() {
                   <Button variant="ghost" size="sm">
                     <Trophy className="mr-2 h-4 w-4" />
                     Campaigns
+                  </Button>
+                </Link>
+                <Link to="/admin/profile-requests">
+                  <Button variant="ghost" size="sm">
+                    <ClipboardCheck className="mr-2 h-4 w-4" />
+                    Profile Requests
                   </Button>
                 </Link>
               </div>
