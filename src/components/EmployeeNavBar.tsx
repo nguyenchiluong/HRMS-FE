@@ -64,7 +64,7 @@ export default function EmployeeNavBar() {
               <div className="flex items-center space-x-3">
                 <div className="hidden text-right sm:block">
                   <p className="text-sm font-medium">{user.email}</p>
-                  <p className="text-xs text-muted-foreground">{user.roles[0]}</p>
+                  <p className="text-xs text-muted-foreground">{user.roles?.[0]}</p>
                 </div>
 
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
