@@ -1,86 +1,87 @@
 import { Card } from '@/components/ui/card';
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import {
+  useApproveTimesheet,
+  usePendingApprovals,
+  useRejectTimesheet,
+} from '../hooks/useTimesheetApproval';
+import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { TimesheetApprovalTable } from '../components/approve-timesheet/TimesheetApprovalTable';
-import { TimesheetApprovalRequest } from '../types';
-
-// Mock data for demonstration
-const generateMockTimesheetRequests = (): TimesheetApprovalRequest[] => {
-  const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
-  const names = [
-    'John Smith',
-    'Sarah Johnson',
-    'Mike Chen',
-    'Emily Davis',
-    'Alex Wilson',
-    'Lisa Brown',
-    'David Lee',
-    'Jennifer Garcia',
-    'Robert Martinez',
-    'Amanda Taylor',
-  ];
-
-  const requests: TimesheetApprovalRequest[] = [];
-  const today = new Date();
-
-  for (let i = 0; i < 15; i++) {
-    const submittedDate = new Date(today);
-    submittedDate.setDate(today.getDate() - Math.floor(Math.random() * 30));
-
-    const status = i < 5 ? 'pending' : i < 10 ? 'approved' : 'rejected';
-
-    const regularHours = 140 + Math.floor(Math.random() * 20);
-    const overtimeHours = Math.floor(Math.random() * 20);
-    const leaveHours = Math.floor(Math.random() * 16);
-
-    requests.push({
-      id: `TS-${String(i + 1).padStart(4, '0')}`,
-      employeeId: `EMP-${String(i + 1).padStart(4, '0')}`,
-      employeeName: names[i % names.length],
-      employeeEmail: `${names[i % names.length].toLowerCase().replace(' ', '.')}@company.com`,
-      department: departments[i % departments.length],
-      month: (today.getMonth() - Math.floor(i / 5)) % 12,
-      year:
-        today.getMonth() - Math.floor(i / 5) < 0
-          ? today.getFullYear() - 1
-          : today.getFullYear(),
-      totalHours: regularHours + overtimeHours,
-      regularHours,
-      overtimeHours,
-      leaveHours,
-      submittedDate,
-      status: status as 'pending' | 'approved' | 'rejected',
-    });
-  }
-
-  return requests;
-};
+import type { TimesheetApprovalRequest } from '../types';
 
 export default function ApproveTimesheet() {
-  const [requests, setRequests] = useState<TimesheetApprovalRequest[]>(
-    generateMockTimesheetRequests,
-  );
+  const [page, setPage] = useState(1);
+  const limit = 20;
+
+  // React Query hooks
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+  } = usePendingApprovals(page, limit);
+
+  const { mutate: approveTimesheet, isPending: isApproving } = useApproveTimesheet();
+  const { mutate: rejectTimesheet, isPending: isRejecting } = useRejectTimesheet();
+
+  // Map API response to component types
+  const requests: TimesheetApprovalRequest[] = (response?.data || []).map((ts) => ({
+    requestId: ts.requestId,
+    employeeId: ts.employeeId,
+    employeeName: ts.employeeName,
+    department: ts.department,
+    year: ts.year,
+    month: ts.month,
+    weekNumber: ts.weekNumber,
+    weekStartDate: ts.weekStartDate,
+    weekEndDate: ts.weekEndDate,
+    summary: ts.summary,
+    submittedAt: ts.submittedAt,
+    status: ts.status as TimesheetApprovalRequest['status'],
+  }));
+
+  const pagination = response?.pagination || {
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+  };
 
   // Calculate stats
-  const pendingCount = requests.filter((r) => r.status === 'pending').length;
-  const approvedCount = requests.filter((r) => r.status === 'approved').length;
-  const rejectedCount = requests.filter((r) => r.status === 'rejected').length;
+  const pendingCount = requests.filter((r) => r.status === 'PENDING').length;
+  const approvedCount = requests.filter((r) => r.status === 'APPROVED').length;
+  const rejectedCount = requests.filter((r) => r.status === 'REJECTED').length;
 
-  const handleApprove = (request: TimesheetApprovalRequest, notes?: string) => {
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === request.id ? { ...r, status: 'approved' as const, notes } : r,
-      ),
-    );
-  };
+  const handleApprove = useCallback(
+    async (request: TimesheetApprovalRequest, comment?: string) => {
+      approveTimesheet({
+        requestId: request.requestId,
+        data: { comment },
+      });
+    },
+    [approveTimesheet],
+  );
 
-  const handleReject = (request: TimesheetApprovalRequest, notes: string) => {
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === request.id ? { ...r, status: 'rejected' as const, notes } : r,
-      ),
+  const handleReject = useCallback(
+    async (request: TimesheetApprovalRequest, reason: string) => {
+      rejectTimesheet({
+        requestId: request.requestId,
+        data: { reason },
+      });
+    },
+    [rejectTimesheet],
+  );
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  if (isLoading && requests.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
     );
-  };
+  }
 
   return (
     <div className="w-full space-y-6">
@@ -134,8 +135,13 @@ export default function ApproveTimesheet() {
         </h2>
         <TimesheetApprovalTable
           requests={requests}
+          pagination={pagination}
+          isLoading={isFetching}
+          isApproving={isApproving}
+          isRejecting={isRejecting}
           onApprove={handleApprove}
           onReject={handleReject}
+          onPageChange={handlePageChange}
         />
       </div>
     </div>

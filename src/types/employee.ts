@@ -21,7 +21,7 @@ export type TimeType = 'OnSite' | 'Remote' | 'Hybrid';
 
 export interface InitialProfileFormData {
   fullName: string;
-  email: string;
+  personalEmail: string;
   positionId: number | '';
   jobLevel: JobLevel | '';
   departmentId: number | '';
@@ -32,7 +32,7 @@ export interface InitialProfileFormData {
 
 export interface InitialProfilePayload {
   fullName: string;
-  email: string;
+  personalEmail: string;
   positionId: number;
   jobLevel: string;
   departmentId: number;

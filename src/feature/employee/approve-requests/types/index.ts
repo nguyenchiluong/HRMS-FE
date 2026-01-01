@@ -1,30 +1,51 @@
 // Approval Status
 export const ApprovalStatus = {
-  Pending: 'pending',
-  Approved: 'approved',
-  Rejected: 'rejected',
+  Pending: 'PENDING',
+  Approved: 'APPROVED',
+  Rejected: 'REJECTED',
 } as const;
 
 export type ApprovalStatus =
   (typeof ApprovalStatus)[keyof typeof ApprovalStatus];
 
-// Timesheet Approval Types
-export interface TimesheetApprovalRequest {
-  id: string;
-  employeeId: string;
-  employeeName: string;
-  employeeEmail: string;
-  employeeAvatar?: string;
-  department: string;
-  month: number;
-  year: number;
+// Timesheet Summary from API
+export interface TimesheetSummary {
   totalHours: number;
   regularHours: number;
   overtimeHours: number;
   leaveHours: number;
-  submittedDate: Date;
+}
+
+// Timesheet Approval Types (matches API response)
+export interface TimesheetApprovalRequest {
+  requestId: number;
+  employeeId: number;
+  employeeName: string;
+  employeeEmail?: string;
+  employeeAvatar?: string;
+  department: string;
+  year: number;
+  month: number;
+  weekNumber: number;
+  weekStartDate: string;
+  weekEndDate: string;
+  summary: TimesheetSummary;
+  submittedAt: string;
   status: ApprovalStatus;
-  notes?: string;
+  reason?: string;
+  approvalComment?: string;
+  rejectionReason?: string;
+}
+
+// Pagination response
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 // Time-Off Approval Types

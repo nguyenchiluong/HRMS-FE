@@ -8,32 +8,42 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { Check, ChevronLeft, ChevronRight, Clock, Eye, X } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { Check, ChevronLeft, ChevronRight, Clock, Eye, Loader2, X } from 'lucide-react';
 import { useState } from 'react';
-import { ApprovalStatus, TimesheetApprovalRequest } from '../../types';
+import type { ApprovalStatus, TimesheetApprovalRequest } from '../../types';
 
-const ITEMS_PER_PAGE = 10;
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
 
 interface TimesheetApprovalTableProps {
   requests: TimesheetApprovalRequest[];
-  onApprove: (request: TimesheetApprovalRequest, notes?: string) => void;
-  onReject: (request: TimesheetApprovalRequest, notes: string) => void;
+  pagination: Pagination;
+  isLoading: boolean;
+  isApproving: boolean;
+  isRejecting: boolean;
+  onApprove: (request: TimesheetApprovalRequest, comment?: string) => void;
+  onReject: (request: TimesheetApprovalRequest, reason: string) => void;
+  onPageChange: (page: number) => void;
 }
 
 const getStatusConfig = (status: ApprovalStatus) => {
   switch (status) {
-    case 'approved':
+    case 'APPROVED':
       return {
         label: 'Approved',
         className: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
       };
-    case 'pending':
+    case 'PENDING':
       return {
         label: 'Pending',
         className: 'bg-amber-100 text-amber-700 border border-amber-200',
       };
-    case 'rejected':
+    case 'REJECTED':
       return {
         label: 'Rejected',
         className: 'bg-red-100 text-red-700 border border-red-200',
@@ -61,15 +71,19 @@ const getMonthName = (month: number) => {
     'November',
     'December',
   ];
-  return months[month];
+  return months[month - 1] || months[month]; // Handle 0-based and 1-based
 };
 
 export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
   requests,
+  pagination,
+  isLoading,
+  isApproving,
+  isRejecting,
   onApprove,
   onReject,
+  onPageChange,
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] =
     useState<TimesheetApprovalRequest | null>(null);
@@ -78,21 +92,26 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
   );
   const [notes, setNotes] = useState('');
 
-  const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentRequests = requests.slice(startIndex, endIndex);
+  const { page, total, totalPages, limit } = pagination;
+  const startIndex = (page - 1) * limit;
+  const endIndex = Math.min(startIndex + limit, total);
+
+  const isSubmitting = isApproving || isRejecting;
 
   const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    if (page > 1) {
+      onPageChange(page - 1);
+    }
   };
 
   const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    if (page < totalPages) {
+      onPageChange(page + 1);
+    }
   };
 
-  const handlePageClick = (page: number) => {
-    setCurrentPage(page);
+  const handlePageClick = (pageNum: number) => {
+    onPageChange(pageNum);
   };
 
   const handleActionClick = (
@@ -110,14 +129,16 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
 
     if (actionType === 'approve') {
       onApprove(selectedRequest, notes || undefined);
+      setActionDialogOpen(false);
+      setSelectedRequest(null);
+      setNotes('');
     } else if (actionType === 'reject') {
-      if (!notes.trim()) return; // Require notes for rejection
+      if (!notes.trim()) return;
       onReject(selectedRequest, notes);
+      setActionDialogOpen(false);
+      setSelectedRequest(null);
+      setNotes('');
     }
-
-    setActionDialogOpen(false);
-    setSelectedRequest(null);
-    setNotes('');
   };
 
   const handleCloseDialog = () => {
@@ -133,9 +154,9 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
         pages.push(i);
       }
     } else {
-      if (currentPage <= 3) {
+      if (page <= 3) {
         pages.push(1, 2, 3, 4, '...', totalPages);
-      } else if (currentPage >= totalPages - 2) {
+      } else if (page >= totalPages - 2) {
         pages.push(
           1,
           '...',
@@ -148,15 +169,33 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
         pages.push(
           1,
           '...',
-          currentPage - 1,
-          currentPage,
-          currentPage + 1,
+          page - 1,
+          page,
+          page + 1,
           '...',
           totalPages,
         );
       }
     }
     return pages;
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(parseISO(dateString), 'MMM dd, yyyy');
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatWeekPeriod = (request: TimesheetApprovalRequest) => {
+    try {
+      const start = format(parseISO(request.weekStartDate), 'MMM dd');
+      const end = format(parseISO(request.weekEndDate), 'MMM dd, yyyy');
+      return `Week ${request.weekNumber}: ${start} - ${end}`;
+    } catch {
+      return `Week ${request.weekNumber}`;
+    }
   };
 
   return (
@@ -186,135 +225,147 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {currentRequests.map((request) => {
-              const statusConfig = getStatusConfig(request.status);
-              const isPending = request.status === 'pending';
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="py-12 text-center">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-gray-400" />
+                </td>
+              </tr>
+            ) : requests.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-12 text-center text-gray-500">
+                  No timesheet requests found
+                </td>
+              </tr>
+            ) : (
+              requests.map((request) => {
+                const statusConfig = getStatusConfig(request.status);
+                const isPending = request.status === 'PENDING';
 
-              return (
-                <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-xs font-normal text-white">
-                        {request.employeeName.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {request.employeeName}
+                return (
+                  <tr key={request.requestId} className="hover:bg-gray-50">
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-xs font-normal text-white">
+                          {request.employeeName.charAt(0).toUpperCase()}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {request.department}
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {request.employeeName}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {request.department}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      {getMonthName(request.month)} {request.year}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-center">
-                    <div className="text-sm font-medium text-gray-900">
-                      {request.totalHours}h
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {request.regularHours}h regular • {request.overtimeHours}h
-                      OT
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600">
-                    {format(request.submittedDate, 'MMM dd, yyyy')}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex justify-center">
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium',
-                          statusConfig.className,
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {getMonthName(request.month)} {request.year}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {formatWeekPeriod(request)}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-center">
+                      <div className="text-sm font-medium text-gray-900">
+                        {request.summary.totalHours}h
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {request.summary.regularHours}h regular • {request.summary.overtimeHours}h
+                        OT
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600">
+                      {formatDate(request.submittedAt)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex justify-center">
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium',
+                            statusConfig.className,
+                          )}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {statusConfig.label}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleActionClick(request, 'view')}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {isPending && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleActionClick(request, 'approve')
+                              }
+                              disabled={isSubmitting}
+                              className="h-8 w-8 border-emerald-200 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleActionClick(request, 'reject')}
+                              disabled={isSubmitting}
+                              className="h-8 w-8 border-red-200 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
-                      >
-                        <Clock className="h-3 w-3" />
-                        {statusConfig.label}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleActionClick(request, 'view')}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {isPending && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleActionClick(request, 'approve')
-                            }
-                            className="h-8 w-8 border-emerald-200 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleActionClick(request, 'reject')}
-                            className="h-8 w-8 border-red-200 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
-
-        {requests.length === 0 && (
-          <div className="py-12 text-center text-gray-500">
-            No timesheet requests found
-          </div>
-        )}
 
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t bg-white px-6 py-4">
             <div className="text-sm text-gray-500">
-              Showing {startIndex + 1} to {Math.min(endIndex, requests.length)}{' '}
-              of {requests.length} results
+              Showing {startIndex + 1} to {endIndex} of {total} results
             </div>
             <div className="flex items-center gap-1">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePreviousPage}
-                disabled={currentPage === 1}
+                disabled={page === 1}
                 className="h-8 w-8 p-0"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
 
-              {getPageNumbers().map((page, index) =>
-                typeof page === 'number' ? (
+              {getPageNumbers().map((pageNum, index) =>
+                typeof pageNum === 'number' ? (
                   <Button
                     key={index}
-                    variant={currentPage === page ? 'default' : 'outline'}
+                    variant={page === pageNum ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => handlePageClick(page)}
+                    onClick={() => handlePageClick(pageNum)}
                     className="h-8 w-8 p-0"
                   >
-                    {page}
+                    {pageNum}
                   </Button>
                 ) : (
                   <span key={index} className="px-2 text-gray-400">
-                    {page}
+                    {pageNum}
                   </span>
                 ),
               )}
@@ -323,7 +374,7 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={handleNextPage}
-                disabled={currentPage === totalPages}
+                disabled={page === totalPages}
                 className="h-8 w-8 p-0"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -375,25 +426,29 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
                   <div className="font-medium">
                     {getMonthName(selectedRequest.month)} {selectedRequest.year}
                   </div>
+                  <div className="text-gray-500">Week:</div>
+                  <div className="font-medium">
+                    {formatWeekPeriod(selectedRequest)}
+                  </div>
                   <div className="text-gray-500">Total Hours:</div>
                   <div className="font-medium">
-                    {selectedRequest.totalHours}h
+                    {selectedRequest.summary.totalHours}h
                   </div>
                   <div className="text-gray-500">Regular Hours:</div>
                   <div className="font-medium">
-                    {selectedRequest.regularHours}h
+                    {selectedRequest.summary.regularHours}h
                   </div>
                   <div className="text-gray-500">Overtime:</div>
                   <div className="font-medium">
-                    {selectedRequest.overtimeHours}h
+                    {selectedRequest.summary.overtimeHours}h
                   </div>
                   <div className="text-gray-500">Leave Hours:</div>
                   <div className="font-medium">
-                    {selectedRequest.leaveHours}h
+                    {selectedRequest.summary.leaveHours}h
                   </div>
                   <div className="text-gray-500">Submitted:</div>
                   <div className="font-medium">
-                    {format(selectedRequest.submittedDate, 'MMM dd, yyyy')}
+                    {formatDate(selectedRequest.submittedAt)}
                   </div>
                 </div>
               </div>
@@ -403,7 +458,7 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
                   <label className="text-sm font-medium text-gray-700">
                     {actionType === 'reject'
                       ? 'Reason for rejection *'
-                      : 'Notes (optional)'}
+                      : 'Comments (optional)'}
                   </label>
                   <Textarea
                     value={notes}
@@ -411,7 +466,7 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
                     placeholder={
                       actionType === 'reject'
                         ? 'Please provide a reason for rejection...'
-                        : 'Add any notes...'
+                        : 'Add any comments...'
                     }
                     rows={3}
                   />
@@ -427,19 +482,28 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
             {actionType === 'approve' && (
               <Button
                 onClick={handleConfirmAction}
+                disabled={isSubmitting}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
-                <Check className="mr-2 h-4 w-4" />
+                {isApproving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="mr-2 h-4 w-4" />
+                )}
                 Approve
               </Button>
             )}
             {actionType === 'reject' && (
               <Button
                 onClick={handleConfirmAction}
-                disabled={!notes.trim()}
+                disabled={!notes.trim() || isSubmitting}
                 className="bg-red-600 hover:bg-red-700"
               >
-                <X className="mr-2 h-4 w-4" />
+                {isRejecting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <X className="mr-2 h-4 w-4" />
+                )}
                 Reject
               </Button>
             )}
