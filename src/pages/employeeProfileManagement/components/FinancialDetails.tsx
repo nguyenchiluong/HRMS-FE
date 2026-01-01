@@ -6,13 +6,6 @@ import toast from 'react-hot-toast';
 import * as Yup from 'yup';
 import { Input } from './ui/input';
 
-const tabs = [
-  { label: 'Personal Information', active: false },
-  { label: 'IDs', active: false },
-  { label: 'Education', active: false },
-  { label: 'Financial Details', active: true },
-];
-
 // Form values interface
 interface FinancialFormValues {
   bankName: string;
