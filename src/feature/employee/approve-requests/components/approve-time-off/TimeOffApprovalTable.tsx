@@ -15,12 +15,15 @@ import {
   ChevronRight,
   Clock,
   Eye,
+  FileText,
   HeartPulse,
   Home,
+  Loader2,
+  Paperclip,
   Palmtree,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ApprovalStatus,
   TimeOffApprovalRequest,
@@ -31,6 +34,9 @@ const ITEMS_PER_PAGE = 10;
 
 interface TimeOffApprovalTableProps {
   requests: TimeOffApprovalRequest[];
+  isLoading?: boolean;
+  isApproving?: boolean;
+  isRejecting?: boolean;
   onApprove: (request: TimeOffApprovalRequest, notes?: string) => void;
   onReject: (request: TimeOffApprovalRequest, notes: string) => void;
 }
@@ -103,6 +109,9 @@ const getStatusConfig = (status: ApprovalStatus) => {
 
 export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
   requests,
+  isLoading = false,
+  isApproving = false,
+  isRejecting = false,
   onApprove,
   onReject,
 }) => {
@@ -114,6 +123,14 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
     'view',
   );
   const [notes, setNotes] = useState('');
+  const prevSubmittingRef = useRef(false);
+  const MIN_REJECTION_REASON_LENGTH = 10;
+  
+  // Validation: check if rejection reason meets minimum length
+  const isRejectionReasonValid = 
+    actionType !== 'reject' || notes.trim().length >= MIN_REJECTION_REASON_LENGTH;
+  const rejectionReasonLength = notes.trim().length;
+  const rejectionReasonRemaining = Math.max(0, MIN_REJECTION_REASON_LENGTH - rejectionReasonLength);
 
   const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -142,19 +159,35 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
     setActionDialogOpen(true);
   };
 
+  const isSubmitting = isApproving || isRejecting;
+
+  // Close dialog when mutation completes successfully
+  useEffect(() => {
+    const wasSubmitting = prevSubmittingRef.current;
+    const isCurrentlySubmitting = isApproving || isRejecting;
+    
+    // If we were submitting and now we're not, close the dialog
+    if (wasSubmitting && !isCurrentlySubmitting && actionDialogOpen) {
+      setActionDialogOpen(false);
+      setSelectedRequest(null);
+      setNotes('');
+    }
+    
+    prevSubmittingRef.current = isCurrentlySubmitting;
+  }, [isApproving, isRejecting, actionDialogOpen]);
+
   const handleConfirmAction = () => {
     if (!selectedRequest) return;
 
     if (actionType === 'approve') {
       onApprove(selectedRequest, notes || undefined);
     } else if (actionType === 'reject') {
-      if (!notes.trim()) return;
+      // Validate rejection reason length
+      if (!notes.trim() || notes.trim().length < MIN_REJECTION_REASON_LENGTH) {
+        return; // Don't submit if validation fails
+      }
       onReject(selectedRequest, notes);
     }
-
-    setActionDialogOpen(false);
-    setSelectedRequest(null);
-    setNotes('');
   };
 
   const handleCloseDialog = () => {
@@ -226,7 +259,20 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {currentRequests.map((request) => {
+            {isLoading ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-gray-400" />
+                </td>
+              </tr>
+            ) : currentRequests.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center text-gray-500">
+                  No time-off requests found
+                </td>
+              </tr>
+            ) : (
+              currentRequests.map((request) => {
               const typeConfig = getTimeOffTypeConfig(request.type);
               const statusConfig = getStatusConfig(request.status);
               const isPending = request.status === 'PENDING';
@@ -260,11 +306,26 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-xs text-gray-900">
-                      {format(request.startDate, 'MMM dd, yyyy')}
-                    </div>
-                    <div className="text-[10px] text-gray-500">
-                      to {format(request.endDate, 'MMM dd, yyyy')}
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <div className="text-xs text-gray-900">
+                          {format(request.startDate, 'MMM dd, yyyy')}
+                        </div>
+                        <div className="text-[10px] text-gray-500">
+                          to {format(request.endDate, 'MMM dd, yyyy')}
+                        </div>
+                      </div>
+                      {request.attachments && request.attachments.length > 0 && (
+                        <div
+                          className="flex items-center gap-1 text-gray-400"
+                          title={`${request.attachments.length} attachment${request.attachments.length !== 1 ? 's' : ''}`}
+                        >
+                          <Paperclip className="h-3 w-3" />
+                          <span className="text-[10px]">
+                            {request.attachments.length}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600">
@@ -304,6 +365,7 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
                             onClick={() =>
                               handleActionClick(request, 'approve')
                             }
+                            disabled={isSubmitting}
                             className="h-8 w-8 border-emerald-200 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
                           >
                             <Check className="h-4 w-4" />
@@ -312,6 +374,7 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={() => handleActionClick(request, 'reject')}
+                            disabled={isSubmitting}
                             className="h-8 w-8 border-red-200 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                           >
                             <X className="h-4 w-4" />
@@ -322,15 +385,10 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
                   </td>
                 </tr>
               );
-            })}
+            })
+            )}
           </tbody>
         </table>
-
-        {requests.length === 0 && (
-          <div className="py-12 text-center text-gray-500">
-            No time-off requests found
-          </div>
-        )}
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -446,25 +504,80 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
                     <div className="mt-1 text-sm">{selectedRequest.reason}</div>
                   </div>
                 )}
+
+                {/* Attachments */}
+                {selectedRequest.attachments &&
+                  selectedRequest.attachments.length > 0 && (
+                    <div className="mt-4 border-t pt-4">
+                      <div className="text-sm font-medium text-gray-700 mb-2">
+                        Supporting Documents
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedRequest.attachments.map(
+                          (url: string, index: number) => (
+                            <a
+                              key={index}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 rounded border bg-white px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 transition-colors"
+                            >
+                              <FileText className="h-3 w-3" />
+                              Document {index + 1}
+                            </a>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
               </div>
 
               {(actionType === 'approve' || actionType === 'reject') && (
                 <div className="mt-4 space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    {actionType === 'reject'
-                      ? 'Reason for rejection *'
-                      : 'Notes (optional)'}
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">
+                      {actionType === 'reject'
+                        ? 'Reason for rejection *'
+                        : 'Notes (optional)'}
+                    </label>
+                    {actionType === 'reject' && (
+                      <span
+                        className={cn(
+                          'text-xs',
+                          isRejectionReasonValid
+                            ? 'text-gray-500'
+                            : 'text-red-600 font-medium',
+                        )}
+                      >
+                        {rejectionReasonLength < MIN_REJECTION_REASON_LENGTH
+                          ? `${rejectionReasonRemaining} more character${
+                              rejectionReasonRemaining !== 1 ? 's' : ''
+                            } required`
+                          : `${rejectionReasonLength} characters`}
+                      </span>
+                    )}
+                  </div>
                   <Textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={
                       actionType === 'reject'
-                        ? 'Please provide a reason for rejection...'
+                        ? `Please provide a reason for rejection (minimum ${MIN_REJECTION_REASON_LENGTH} characters)...`
                         : 'Add any notes...'
                     }
                     rows={3}
+                    className={cn(
+                      actionType === 'reject' &&
+                        !isRejectionReasonValid &&
+                        'border-red-300 focus:border-red-500 focus:ring-red-500',
+                    )}
                   />
+                  {actionType === 'reject' && !isRejectionReasonValid && (
+                    <p className="text-xs text-red-600">
+                      Rejection reason must be at least {MIN_REJECTION_REASON_LENGTH}{' '}
+                      characters long.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -477,19 +590,28 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
             {actionType === 'approve' && (
               <Button
                 onClick={handleConfirmAction}
+                disabled={isSubmitting}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
-                <Check className="mr-2 h-4 w-4" />
+                {isApproving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="mr-2 h-4 w-4" />
+                )}
                 Approve
               </Button>
             )}
             {actionType === 'reject' && (
               <Button
                 onClick={handleConfirmAction}
-                disabled={!notes.trim()}
+                disabled={!isRejectionReasonValid || isSubmitting}
                 className="bg-red-600 hover:bg-red-700"
               >
-                <X className="mr-2 h-4 w-4" />
+                {isRejecting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <X className="mr-2 h-4 w-4" />
+                )}
                 Reject
               </Button>
             )}

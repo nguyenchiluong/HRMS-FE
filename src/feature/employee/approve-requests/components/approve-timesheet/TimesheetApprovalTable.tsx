@@ -18,7 +18,8 @@ import {
   Loader2,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTimesheetDetails } from '../../hooks/useTimesheetApproval';
 import type { ApprovalStatus, TimesheetApprovalRequest } from '../../types';
 
 interface Pagination {
@@ -99,12 +100,57 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
     'view',
   );
   const [notes, setNotes] = useState('');
+  const prevSubmittingRef = useRef(false);
+  const MIN_REJECTION_REASON_LENGTH = 10;
+  
+  // Validation: check if rejection reason meets minimum length
+  const isRejectionReasonValid = 
+    actionType !== 'reject' || notes.trim().length >= MIN_REJECTION_REASON_LENGTH;
+  const rejectionReasonLength = notes.trim().length;
+  const rejectionReasonRemaining = Math.max(0, MIN_REJECTION_REASON_LENGTH - rejectionReasonLength);
+  
+  // Fetch full details only when viewing a specific timesheet
+  const { data: fullTimesheetDetails, isLoading: isLoadingDetails } =
+    useTimesheetDetails(
+      actionType === 'view' && selectedRequest ? selectedRequest.requestId : null,
+    );
+  
+  // Use full details if available, otherwise use the request from list
+  const displayRequest = fullTimesheetDetails
+    ? {
+        ...selectedRequest!,
+        year: fullTimesheetDetails.year,
+        month: fullTimesheetDetails.month,
+        weekNumber: fullTimesheetDetails.weekNumber,
+        weekStartDate: fullTimesheetDetails.weekStartDate,
+        weekEndDate: fullTimesheetDetails.weekEndDate,
+        summary: fullTimesheetDetails.summary,
+        reason: fullTimesheetDetails.reason,
+        approvalComment: fullTimesheetDetails.approvalComment,
+        rejectionReason: fullTimesheetDetails.rejectionReason,
+      }
+    : selectedRequest;
 
   const { page, total, totalPages, limit } = pagination;
   const startIndex = (page - 1) * limit;
   const endIndex = Math.min(startIndex + limit, total);
 
   const isSubmitting = isApproving || isRejecting;
+
+  // Close dialog when mutation completes successfully
+  useEffect(() => {
+    const wasSubmitting = prevSubmittingRef.current;
+    const isCurrentlySubmitting = isApproving || isRejecting;
+    
+    // If we were submitting and now we're not, close the dialog
+    if (wasSubmitting && !isCurrentlySubmitting && actionDialogOpen) {
+      setActionDialogOpen(false);
+      setSelectedRequest(null);
+      setNotes('');
+    }
+    
+    prevSubmittingRef.current = isCurrentlySubmitting;
+  }, [isApproving, isRejecting, actionDialogOpen]);
 
   const handlePreviousPage = () => {
     if (page > 1) {
@@ -137,15 +183,14 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
 
     if (actionType === 'approve') {
       onApprove(selectedRequest, notes || undefined);
-      setActionDialogOpen(false);
-      setSelectedRequest(null);
-      setNotes('');
+      // Dialog will close when mutation completes (via useEffect)
     } else if (actionType === 'reject') {
-      if (!notes.trim()) return;
+      // Validate rejection reason length
+      if (!notes.trim() || notes.trim().length < MIN_REJECTION_REASON_LENGTH) {
+        return; // Don't submit if validation fails
+      }
       onReject(selectedRequest, notes);
-      setActionDialogOpen(false);
-      setSelectedRequest(null);
-      setNotes('');
+      // Don't close dialog immediately - let mutation handle success/error
     }
   };
 
@@ -261,20 +306,28 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="text-xs font-medium text-gray-900">
-                        {getMonthName(request.month)} {request.year}
+                        {request.month && request.year
+                          ? `${getMonthName(request.month)} ${request.year}`
+                          : 'N/A'}
                       </div>
                       <div className="text-[10px] text-gray-500">
-                        {formatWeekPeriod(request)}
+                        {request.weekNumber > 0
+                          ? formatWeekPeriod(request)
+                          : 'Timesheet submission'}
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-center">
                       <div className="text-xs font-medium text-gray-900">
-                        {request.summary.totalHours}h
+                        {request.summary.totalHours > 0
+                          ? `${request.summary.totalHours}h`
+                          : 'N/A'}
                       </div>
-                      <div className="text-[10px] text-gray-500">
-                        {request.summary.regularHours}h regular •{' '}
-                        {request.summary.overtimeHours}h OT
-                      </div>
+                      {request.summary.totalHours > 0 && (
+                        <div className="text-[10px] text-gray-500">
+                          {request.summary.regularHours}h regular •{' '}
+                          {request.summary.overtimeHours}h OT
+                        </div>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600">
                       {formatDate(request.submittedAt)}
@@ -412,66 +465,113 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
             </DialogTitle>
           </DialogHeader>
 
-          {selectedRequest && (
+          {displayRequest && (
             <div className="py-4">
-              <div className="rounded-lg border bg-gray-50 p-4">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="text-gray-500">Employee:</div>
-                  <div className="font-medium">
-                    {selectedRequest.employeeName}
-                  </div>
-                  <div className="text-gray-500">Department:</div>
-                  <div className="font-medium">
-                    {selectedRequest.department}
-                  </div>
-                  <div className="text-gray-500">Period:</div>
-                  <div className="font-medium">
-                    {getMonthName(selectedRequest.month)} {selectedRequest.year}
-                  </div>
-                  <div className="text-gray-500">Week:</div>
-                  <div className="font-medium">
-                    {formatWeekPeriod(selectedRequest)}
-                  </div>
-                  <div className="text-gray-500">Total Hours:</div>
-                  <div className="font-medium">
-                    {selectedRequest.summary.totalHours}h
-                  </div>
-                  <div className="text-gray-500">Regular Hours:</div>
-                  <div className="font-medium">
-                    {selectedRequest.summary.regularHours}h
-                  </div>
-                  <div className="text-gray-500">Overtime:</div>
-                  <div className="font-medium">
-                    {selectedRequest.summary.overtimeHours}h
-                  </div>
-                  <div className="text-gray-500">Leave Hours:</div>
-                  <div className="font-medium">
-                    {selectedRequest.summary.leaveHours}h
-                  </div>
-                  <div className="text-gray-500">Submitted:</div>
-                  <div className="font-medium">
-                    {formatDate(selectedRequest.submittedAt)}
+              {isLoadingDetails && actionType === 'view' ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : (
+                <div className="rounded-lg border bg-gray-50 p-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="text-gray-500">Employee:</div>
+                    <div className="font-medium">
+                      {displayRequest.employeeName}
+                    </div>
+                    <div className="text-gray-500">Department:</div>
+                    <div className="font-medium">
+                      {displayRequest.department}
+                    </div>
+                    <div className="text-gray-500">Period:</div>
+                    <div className="font-medium">
+                      {displayRequest.month && displayRequest.year
+                        ? `${getMonthName(displayRequest.month)} ${displayRequest.year}`
+                        : 'N/A'}
+                    </div>
+                    <div className="text-gray-500">Week:</div>
+                    <div className="font-medium">
+                      {displayRequest.weekNumber > 0
+                        ? formatWeekPeriod(displayRequest)
+                        : 'N/A'}
+                    </div>
+                    <div className="text-gray-500">Total Hours:</div>
+                    <div className="font-medium">
+                      {displayRequest.summary.totalHours > 0
+                        ? `${displayRequest.summary.totalHours}h`
+                        : 'N/A'}
+                    </div>
+                    <div className="text-gray-500">Regular Hours:</div>
+                    <div className="font-medium">
+                      {displayRequest.summary.regularHours > 0
+                        ? `${displayRequest.summary.regularHours}h`
+                        : 'N/A'}
+                    </div>
+                    <div className="text-gray-500">Overtime:</div>
+                    <div className="font-medium">
+                      {displayRequest.summary.overtimeHours > 0
+                        ? `${displayRequest.summary.overtimeHours}h`
+                        : 'N/A'}
+                    </div>
+                    <div className="text-gray-500">Leave Hours:</div>
+                    <div className="font-medium">
+                      {displayRequest.summary.leaveHours > 0
+                        ? `${displayRequest.summary.leaveHours}h`
+                        : 'N/A'}
+                    </div>
+                    <div className="text-gray-500">Submitted:</div>
+                    <div className="font-medium">
+                      {formatDate(displayRequest.submittedAt)}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {(actionType === 'approve' || actionType === 'reject') && (
                 <div className="mt-4 space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    {actionType === 'reject'
-                      ? 'Reason for rejection *'
-                      : 'Comments (optional)'}
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">
+                      {actionType === 'reject'
+                        ? 'Reason for rejection *'
+                        : 'Comments (optional)'}
+                    </label>
+                    {actionType === 'reject' && (
+                      <span
+                        className={cn(
+                          'text-xs',
+                          isRejectionReasonValid
+                            ? 'text-gray-500'
+                            : 'text-red-600 font-medium',
+                        )}
+                      >
+                        {rejectionReasonLength < MIN_REJECTION_REASON_LENGTH
+                          ? `${rejectionReasonRemaining} more character${
+                              rejectionReasonRemaining !== 1 ? 's' : ''
+                            } required`
+                          : `${rejectionReasonLength} characters`}
+                      </span>
+                    )}
+                  </div>
                   <Textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={
                       actionType === 'reject'
-                        ? 'Please provide a reason for rejection...'
+                        ? `Please provide a reason for rejection (minimum ${MIN_REJECTION_REASON_LENGTH} characters)...`
                         : 'Add any comments...'
                     }
                     rows={3}
+                    className={cn(
+                      actionType === 'reject' &&
+                        !isRejectionReasonValid &&
+                        'border-red-300 focus:border-red-500 focus:ring-red-500',
+                    )}
                   />
+                  {actionType === 'reject' && !isRejectionReasonValid && (
+                    <p className="text-xs text-red-600">
+                      Rejection reason must be at least {MIN_REJECTION_REASON_LENGTH}{' '}
+                      characters long.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -498,7 +598,7 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
             {actionType === 'reject' && (
               <Button
                 onClick={handleConfirmAction}
-                disabled={!notes.trim() || isSubmitting}
+                disabled={!isRejectionReasonValid || isSubmitting}
                 className="bg-red-600 hover:bg-red-700"
               >
                 {isRejecting ? (
