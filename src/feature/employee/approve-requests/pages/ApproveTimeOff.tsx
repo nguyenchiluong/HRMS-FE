@@ -1,88 +1,86 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { TimeOffApprovalTable } from '../components/approve-time-off/TimeOffApprovalTable';
-import { ApprovalStatus, TimeOffApprovalRequest, TimeOffType } from '../types';
-
-// Mock data for demonstration
-const generateMockTimeOffRequests = (): TimeOffApprovalRequest[] => {
-  const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
-  const names = [
-    'John Smith',
-    'Sarah Johnson',
-    'Mike Chen',
-    'Emily Davis',
-    'Alex Wilson',
-    'Lisa Brown',
-    'David Lee',
-    'Jennifer Garcia',
-    'Robert Martinez',
-    'Amanda Taylor',
-  ];
-  const types: TimeOffType[] = [
-    'paid-leave',
-    'unpaid-leave',
-    'paid-sick-leave',
-    'unpaid-sick-leave',
-    'wfh',
-  ];
-  const reasons = [
-    'Family vacation',
-    'Personal matters',
-    'Medical appointment',
-    'Home renovation',
-    'Childcare',
-    'Wedding attendance',
-    'Moving to new apartment',
-    'Feeling unwell',
-    'Doctor visit',
-    'Working on focused project',
-  ];
-
-  const requests: TimeOffApprovalRequest[] = [];
-  const today = new Date();
-
-  for (let i = 0; i < 15; i++) {
-    const submittedDate = new Date(today);
-    submittedDate.setDate(today.getDate() - Math.floor(Math.random() * 14));
-
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() + Math.floor(Math.random() * 30));
-
-    const duration = 1 + Math.floor(Math.random() * 5);
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + duration - 1);
-
-    const status = i < 6 ? 'PENDING' : i < 11 ? 'APPROVED' : 'REJECTED';
-
-    requests.push({
-      id: `TO-${String(i + 1).padStart(4, '0')}`,
-      employeeId: `EMP-${String(i + 1).padStart(4, '0')}`,
-      employeeName: names[i % names.length],
-      employeeEmail: `${names[i % names.length].toLowerCase().replace(' ', '.')}@company.com`,
-      department: departments[i % departments.length],
-      type: types[i % types.length],
-      startDate,
-      endDate,
-      duration,
-      reason: reasons[i % reasons.length],
-      submittedDate,
-      status: status as ApprovalStatus,
-    });
-  }
-
-  return requests;
-};
+import {
+  useApproveTimeOff,
+  usePendingTimeOffApprovals,
+  useRejectTimeOff,
+} from '../hooks/useTimeOffApproval';
+import { ApprovalStatus, TimeOffApprovalRequest } from '../types';
 
 type FilterStatus = 'all' | ApprovalStatus;
 
 export default function ApproveTimeOff() {
-  const [allRequests, setAllRequests] = useState<TimeOffApprovalRequest[]>(
-    generateMockTimeOffRequests,
-  );
+  const [page] = useState(1);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const limit = 20;
 
-  // Calculate stats
+  // Always fetch all requests (no status filter) - filter client-side like timesheet page
+  // React Query hooks
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+  } = usePendingTimeOffApprovals(page, limit);
+
+  const { mutate: approveTimeOff, isPending: isApproving } =
+    useApproveTimeOff();
+  const { mutate: rejectTimeOff, isPending: isRejecting } = useRejectTimeOff();
+
+  // Map API response to component types
+  const allRequests: TimeOffApprovalRequest[] = useMemo(() => {
+    if (!response?.data) return [];
+
+    return response.data
+      .filter((req) => {
+        // Filter out timesheet requests, only keep time-off requests
+        const timeOffTypes = [
+          'PAID_LEAVE',
+          'UNPAID_LEAVE',
+          'PAID_SICK_LEAVE',
+          'UNPAID_SICK_LEAVE',
+          'WFH',
+        ];
+        return timeOffTypes.includes(req.type);
+      })
+      .map((req) => {
+        // Map request type from API format to frontend format
+        const typeMap: Record<string, TimeOffApprovalRequest['type']> = {
+          PAID_LEAVE: 'paid-leave',
+          UNPAID_LEAVE: 'unpaid-leave',
+          PAID_SICK_LEAVE: 'paid-sick-leave',
+          UNPAID_SICK_LEAVE: 'unpaid-sick-leave',
+          WFH: 'wfh',
+        };
+
+        return {
+          id: req.id,
+          employeeId: req.employeeId,
+          employeeName: req.employeeName,
+          employeeEmail: req.employeeEmail,
+          employeeAvatar: req.employeeAvatar || undefined,
+          department: req.department || '',
+          type: typeMap[req.type] || 'paid-leave',
+          startDate: req.startDate ? new Date(req.startDate) : new Date(),
+          endDate: req.endDate ? new Date(req.endDate) : new Date(),
+          duration: req.duration || 0,
+          reason: req.reason,
+          submittedDate: new Date(req.submittedDate),
+          status: req.status as ApprovalStatus,
+          attachments: req.attachments || [],
+        };
+      });
+  }, [response]);
+
+  // Filter requests based on selected status (client-side filtering for stats)
+  const requests = useMemo(() => {
+    if (filterStatus === 'all') return allRequests;
+    return allRequests.filter((r) => r.status === filterStatus);
+  }, [allRequests, filterStatus]);
+
+  // Calculate stats from all requests (not filtered)
   const pendingCount = allRequests.filter((r) => r.status === 'PENDING').length;
   const approvedCount = allRequests.filter(
     (r) => r.status === 'APPROVED',
@@ -91,31 +89,33 @@ export default function ApproveTimeOff() {
     (r) => r.status === 'REJECTED',
   ).length;
 
-  // Filter requests based on selected status
-  const requests =
-    filterStatus === 'all'
-      ? allRequests
-      : allRequests.filter((r) => r.status === filterStatus);
+  const handleApprove = useCallback(
+    async (request: TimeOffApprovalRequest, notes?: string) => {
+      approveTimeOff({
+        requestId: request.id,
+        data: { comment: notes },
+      });
+    },
+    [approveTimeOff],
+  );
 
-  const handleApprove = (request: TimeOffApprovalRequest, notes?: string) => {
-    setAllRequests((prev) =>
-      prev.map((r) =>
-        r.id === request.id
-          ? { ...r, status: 'APPROVED' as ApprovalStatus, notes }
-          : r,
-      ),
-    );
-  };
+  const handleReject = useCallback(
+    async (request: TimeOffApprovalRequest, notes: string) => {
+      rejectTimeOff({
+        requestId: request.id,
+        data: { reason: notes },
+      });
+    },
+    [rejectTimeOff],
+  );
 
-  const handleReject = (request: TimeOffApprovalRequest, notes: string) => {
-    setAllRequests((prev) =>
-      prev.map((r) =>
-        r.id === request.id
-          ? { ...r, status: 'REJECTED' as ApprovalStatus, notes }
-          : r,
-      ),
+  if (isLoading && requests.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
     );
-  };
+  }
 
   return (
     <div className="w-full space-y-6">
@@ -177,7 +177,7 @@ export default function ApproveTimeOff() {
           <h2 className="text-lg font-medium text-gray-900">
             Time-off Requests
             {filterStatus !== 'all' && (
-              <span className="ml-2 text-xs font-normal text-gray-500">
+              <span className="ml-2 text-sm font-normal text-gray-500">
                 ({requests.length} {filterStatus.toLowerCase()})
               </span>
             )}
@@ -185,6 +185,9 @@ export default function ApproveTimeOff() {
         </div>
         <TimeOffApprovalTable
           requests={requests}
+          isLoading={isFetching}
+          isApproving={isApproving}
+          isRejecting={isRejecting}
           onApprove={handleApprove}
           onReject={handleReject}
         />

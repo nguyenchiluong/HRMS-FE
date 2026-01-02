@@ -30,22 +30,7 @@ export default function ApproveTimesheet() {
     useRejectTimesheet();
 
   // Map API response to component types
-  const allRequests: TimesheetApprovalRequest[] = (response?.data || []).map(
-    (ts) => ({
-      requestId: ts.requestId,
-      employeeId: ts.employeeId,
-      employeeName: ts.employeeName,
-      department: ts.department,
-      year: ts.year,
-      month: ts.month,
-      weekNumber: ts.weekNumber,
-      weekStartDate: ts.weekStartDate,
-      weekEndDate: ts.weekEndDate,
-      summary: ts.summary,
-      submittedAt: ts.submittedAt,
-      status: ts.status as TimesheetApprovalRequest['status'],
-    }),
-  );
+  const allRequests: TimesheetApprovalRequest[] = response?.data || [];
 
   // Filter requests based on selected status
   const requests = useMemo(() => {
