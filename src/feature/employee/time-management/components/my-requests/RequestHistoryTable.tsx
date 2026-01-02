@@ -6,6 +6,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import {
@@ -15,23 +20,57 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Download,
+  File,
   HeartPulse,
   Home,
   Palmtree,
+  Paperclip,
   XCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { LeaveRequest, LeaveRequestStatus, RequestType } from '../../types';
 
-const ITEMS_PER_PAGE = 5;
-
 interface RequestHistoryTableProps {
   requests: LeaveRequest[];
-  onCancel: (request: LeaveRequest) => void;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  onCancel: (request: { id: string }) => void;
+  onPageChange?: (page: number) => void;
 }
 
 const getRequestTypeConfig = (type: RequestType) => {
   switch (type) {
+    case 'PAID_LEAVE':
+      return {
+        label: 'Paid Leave',
+        icon: <Palmtree className="h-4 w-4 text-blue-500" />,
+      };
+    case 'UNPAID_LEAVE':
+      return {
+        label: 'Unpaid Leave',
+        icon: <Palmtree className="h-4 w-4 text-gray-500" />,
+      };
+    case 'PAID_SICK_LEAVE':
+      return {
+        label: 'Paid Sick Leave',
+        icon: <HeartPulse className="h-4 w-4 text-red-500" />,
+      };
+    case 'UNPAID_SICK_LEAVE':
+      return {
+        label: 'Unpaid Sick Leave',
+        icon: <HeartPulse className="h-4 w-4 text-gray-500" />,
+      };
+    case 'WFH':
+      return {
+        label: 'Work From Home',
+        icon: <Home className="h-4 w-4 text-green-500" />,
+      };
+    // Legacy support for kebab-case (during migration)
     case 'paid-leave':
       return {
         label: 'Paid Leave',
@@ -102,29 +141,39 @@ const getStatusConfig = (status: LeaveRequestStatus) => {
 
 export const RequestHistoryTable: React.FC<RequestHistoryTableProps> = ({
   requests,
+  pagination,
   onCancel,
+  onPageChange,
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [requestToCancel, setRequestToCancel] = useState<LeaveRequest | null>(
     null,
   );
 
-  const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentRequests = requests.slice(startIndex, endIndex);
+  // Use pagination from API if available, otherwise use client-side pagination
+  const currentPage = pagination?.page || 1;
+  const totalPages = pagination?.totalPages || 1;
+  const total = pagination?.total || requests.length;
+  const startIndex = pagination
+    ? (currentPage - 1) * pagination.limit
+    : 0;
+  const endIndex = pagination
+    ? startIndex + requests.length
+    : requests.length;
+  const currentRequests = requests;
 
   const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    const newPage = Math.max(currentPage - 1, 1);
+    onPageChange?.(newPage);
   };
 
   const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    const newPage = Math.min(currentPage + 1, totalPages);
+    onPageChange?.(newPage);
   };
 
   const handlePageClick = (page: number) => {
-    setCurrentPage(page);
+    onPageChange?.(page);
   };
 
   const handleCancelClick = (request: LeaveRequest) => {
@@ -134,7 +183,7 @@ export const RequestHistoryTable: React.FC<RequestHistoryTableProps> = ({
 
   const handleConfirmCancel = () => {
     if (requestToCancel) {
-      onCancel(requestToCancel);
+      onCancel({ id: requestToCancel.id });
       setCancelDialogOpen(false);
       setRequestToCancel(null);
     }
@@ -207,6 +256,9 @@ export const RequestHistoryTable: React.FC<RequestHistoryTableProps> = ({
                 Status
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                Attachments
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
                 Actions
               </th>
             </tr>
@@ -256,6 +308,63 @@ export const RequestHistoryTable: React.FC<RequestHistoryTableProps> = ({
                       </span>
                     </div>
                   </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center">
+                      {request.attachments && request.attachments.length > 0 ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1.5 text-xs text-gray-600 hover:text-gray-900"
+                            >
+                              <Paperclip className="h-3.5 w-3.5" />
+                              <span className="font-medium">
+                                {request.attachments.length}
+                              </span>
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80" align="center">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 border-b pb-2">
+                                <Paperclip className="h-4 w-4 text-gray-500" />
+                                <h4 className="text-sm font-semibold">
+                                  Attachments ({request.attachments.length})
+                                </h4>
+                              </div>
+                              <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                                {request.attachments.map((url, index) => {
+                                  const fileName =
+                                    url.split('/').pop() || `attachment-${index + 1}`;
+                                  const fileExtension =
+                                    fileName.split('.').pop()?.toLowerCase() || '';
+
+                                  return (
+                                    <a
+                                      key={index}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 rounded-md border border-gray-200 bg-white p-2 text-xs transition-colors hover:bg-gray-50 hover:border-gray-300"
+                                      download
+                                    >
+                                      <File className="h-4 w-4 flex-shrink-0 text-gray-500" />
+                                      <span className="flex-1 truncate text-gray-700">
+                                        {fileName}
+                                      </span>
+                                      <Download className="h-3.5 w-3.5 flex-shrink-0 text-blue-600" />
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
                       {canCancel && (
@@ -287,8 +396,8 @@ export const RequestHistoryTable: React.FC<RequestHistoryTableProps> = ({
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t bg-white px-6 py-4">
             <div className="text-sm text-gray-500">
-              Showing {startIndex + 1} to {Math.min(endIndex, requests.length)}{' '}
-              of {requests.length} results
+              Showing {startIndex + 1} to {Math.min(endIndex, total)} of {total}{' '}
+              results
             </div>
             <div className="flex items-center gap-1">
               <Button

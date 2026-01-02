@@ -7,15 +7,20 @@ import dotnetApi from '@/api/dotnet';
 import type {
   AdjustTimesheetRequest,
   ApproveTimesheetRequest,
+  CancelTimeOffRequest,
+  LeaveBalance,
   PaginatedResponse,
   RejectTimesheetRequest,
+  SubmitTimeOffRequest,
   SubmitTimesheetRequest,
   Task,
+  TimeOffRequestResponse,
   TimesheetResponse,
   TimesheetSummaryResponse,
 } from '../types';
 
 const BASE_URL = '/api/v1/timesheet';
+const TIME_OFF_BASE_URL = '/api/time-off';
 
 // ==================== Task Management ====================
 
@@ -168,6 +173,99 @@ export const cancelTimesheet = async (
     message: string;
     data: TimesheetResponse;
   }>(`${BASE_URL}/${requestId}/cancel`);
+  return response.data;
+};
+
+// ==================== Time-Off Request APIs ====================
+
+/**
+ * Submit a time-off request with file attachment URLs
+ */
+export const submitTimeOffRequest = async (
+  request: SubmitTimeOffRequest,
+): Promise<{ message: string; data: TimeOffRequestResponse }> => {
+  const response = await dotnetApi.post<{
+    message: string;
+    data: TimeOffRequestResponse;
+  }>(`${TIME_OFF_BASE_URL}/requests`, {
+    type: request.type,
+    startDate: request.startDate,
+    endDate: request.endDate,
+    reason: request.reason,
+    attachments: request.attachments || [],
+  });
+  return response.data;
+};
+
+/**
+ * Get leave balances for the authenticated employee
+ */
+export const getLeaveBalances = async (
+  year?: number,
+): Promise<{ balances: LeaveBalance[] }> => {
+  const response = await dotnetApi.get<{ balances: LeaveBalance[] }>(
+    `${TIME_OFF_BASE_URL}/balances`,
+    {
+      params: year ? { year } : {},
+    },
+  );
+  return response.data;
+};
+
+/**
+ * Get time-off request history with pagination and filters
+ */
+export const getTimeOffRequests = async (params?: {
+  page?: number;
+  limit?: number;
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  type?: string;
+}): Promise<PaginatedResponse<TimeOffRequestResponse>> => {
+  const response = await dotnetApi.get<
+    PaginatedResponse<TimeOffRequestResponse>
+  >(`${TIME_OFF_BASE_URL}/requests`, { params });
+  return response.data;
+};
+
+/**
+ * Cancel a time-off request
+ */
+export const cancelTimeOffRequest = async (
+  requestId: string,
+  request?: CancelTimeOffRequest,
+): Promise<{ message: string; data: TimeOffRequestResponse }> => {
+  const response = await dotnetApi.patch<{
+    message: string;
+    data: TimeOffRequestResponse;
+  }>(`${TIME_OFF_BASE_URL}/requests/${requestId}/cancel`, request);
+  return response.data;
+};
+
+/**
+ * Get available request types from API
+ */
+export const getRequestTypes = async (): Promise<{
+  requestTypes: Array<{
+    id: number;
+    value: string;
+    category: 'time-off' | 'timesheet' | 'profile' | 'other';
+    name: string;
+    description: string;
+    isActive: boolean;
+    requiresApproval: boolean;
+  }>;
+}> => {
+  const response = await dotnetApi.get<{
+    requestTypes: Array<{
+      id: number;
+      value: string;
+      category: 'time-off' | 'timesheet' | 'profile' | 'other';
+      name: string;
+      description: string;
+      isActive: boolean;
+      requiresApproval: boolean;
+    }>;
+  }>('/api/v1/request-types');
   return response.data;
 };
 
