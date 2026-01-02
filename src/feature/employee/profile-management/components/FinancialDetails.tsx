@@ -4,7 +4,7 @@ import { Edit, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import * as Yup from 'yup';
-import { Input } from './ui/input';
+import { Input } from '@/components/ui/input';
 
 // Form values interface
 interface FinancialFormValues {

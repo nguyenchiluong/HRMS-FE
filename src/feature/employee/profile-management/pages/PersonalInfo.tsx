@@ -1,10 +1,10 @@
-import NavigationBar from "@/pages/employeeProfileManagement/components/NavigationBar";
-import EmployeeSidebar from "@/pages/employeeProfileManagement/components/EmployeeSidebar";
-import ProfileTabs from "@/pages/employeeProfileManagement/components/ProfileTabs";
-import EducationContent from "@/pages/employeeProfileManagement/components/EducationContent";
+import NavigationBar from "@/feature/employee/profile-management/components/NavigationBar";
+import EmployeeSidebar from "@/feature/employee/profile-management/components/EmployeeSidebar";
+import ProfileTabs from "@/feature/employee/profile-management/components/ProfileTabs";
+import PersonalDetails from "@/feature/employee/profile-management/components/PersonalDetails";
 import "./EmployeeIDs.standalone.css";
 
-export default function EmployeeEducation() {
+export default function PersonalInfo() {
   return (
     <div className="min-h-screen bg-white">
       <NavigationBar />
@@ -15,7 +15,7 @@ export default function EmployeeEducation() {
         <main className="flex-1 bg-hrms-bg-page min-h-[calc(100vh-85px)] p-4 lg:p-[30px]">
           <div className="flex flex-col gap-[30px] max-w-[1177px]">
             <ProfileTabs />
-            <EducationContent />
+            <PersonalDetails />
           </div>
         </main>
       </div>

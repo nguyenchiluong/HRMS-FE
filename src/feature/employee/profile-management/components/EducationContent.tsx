@@ -3,16 +3,16 @@ import { BookOpen, X, File, Image, FileText } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage, useField } from "formik";
 import type { FormikProps } from "formik";
 import * as Yup from "yup";
-import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
-import { Label } from "./ui/label";
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
+} from '@/components/ui/select';
 
 interface EducationEntry {
   id: string;
