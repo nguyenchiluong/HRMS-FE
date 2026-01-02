@@ -1,7 +1,10 @@
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import { SubmitTimeOffRequestModal } from '../components/time-off/SubmitTimeOffRequestModal';
 import { LeaveBalanceCards } from '../components/my-requests/LeaveBalanceCards';
 import { RequestHistoryTable } from '../components/my-requests/RequestHistoryTable';
-import { LeaveBalance, LeaveRequest } from '../types';
+import { LeaveBalance, LeaveRequest, RequestType } from '../types';
 
 // Mock data for leave balances
 const mockLeaveBalances: LeaveBalance[] = [
@@ -123,8 +126,9 @@ const mockRequests: LeaveRequest[] = [
   },
 ];
 
-export default function MyRequests() {
+export default function TimeOffRequests() {
   const [requests, setRequests] = useState<LeaveRequest[]>(mockRequests);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleCancelRequest = (request: LeaveRequest) => {
     // Update the request status to cancelled
@@ -135,12 +139,42 @@ export default function MyRequests() {
     );
   };
 
+  const handleSubmitRequest = (data: {
+    selectedType: RequestType | null;
+    startDate: Date | undefined;
+    endDate: Date | undefined;
+    reason: string;
+    emergencyContact: string;
+    attachments: File[];
+  }) => {
+    // Handle form submission
+    console.log('Submitting request:', data);
+    // TODO: Add API call to submit request
+    // After successful submission, the modal will close automatically
+  };
+
   return (
     <div className="w-full space-y-8">
+      {/* Header with Submit Button */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Time Off Requests</h1>
+        <Button onClick={() => setIsModalOpen(true)} size="lg">
+          <Plus className="mr-2 h-4 w-4" />
+          Submit New Request
+        </Button>
+      </div>
+
       {/* Leave Balance Section */}
       <LeaveBalanceCards balances={mockLeaveBalances} />
       {/* Request History Section */}
       <RequestHistoryTable requests={requests} onCancel={handleCancelRequest} />
+
+      {/* Submit Request Modal */}
+      <SubmitTimeOffRequestModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onSubmit={handleSubmitRequest}
+      />
     </div>
   );
 }

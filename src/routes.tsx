@@ -48,16 +48,12 @@ const EmployeeHome = lazy(
   () => import('@/feature/employee/homepage/pages/EmployeeHome'),
 );
 
-const TimeOffRequest = lazy(
-  () => import('@/feature/employee/time-management/pages/TimeOffRequest'),
-);
-
 const Timesheet = lazy(
   () => import('@/feature/employee/time-management/pages/Timesheet'),
 );
 
-const MyRequests = lazy(
-  () => import('@/feature/employee/time-management/pages/MyRequests'),
+const TimeOffRequests = lazy(
+  () => import('@/feature/employee/time-management/pages/TimeOffRequests'),
 );
 
 const MyAttendance = lazy(
@@ -157,10 +153,9 @@ const routes: RouteObject[] = [
                 element: <MyAttendance />,
               },
               { path: 'timesheet', element: <Timesheet /> },
-              { path: 'time-off-request', element: <TimeOffRequest /> },
               {
                 path: 'my-requests',
-                element: <MyRequests />,
+                element: <TimeOffRequests />,
               },
             ],
           },
