@@ -183,12 +183,32 @@ export interface WeekSubmission {
 
 // ==================== Time Off Request types ====================
 
+// Request types in uppercase snake_case format (as returned by API)
 export type RequestType =
+  | 'PAID_LEAVE'
+  | 'UNPAID_LEAVE'
+  | 'PAID_SICK_LEAVE'
+  | 'UNPAID_SICK_LEAVE'
+  | 'WFH';
+
+// Legacy kebab-case format (for backward compatibility during migration)
+export type RequestTypeKebab =
   | 'paid-leave'
   | 'unpaid-leave'
   | 'paid-sick-leave'
   | 'unpaid-sick-leave'
   | 'wfh';
+
+// Request Type from API
+export interface RequestTypeOption {
+  id: number;
+  value: string; // Uppercase snake_case (e.g., "PAID_LEAVE")
+  category: 'time-off' | 'timesheet' | 'profile' | 'other';
+  name: string; // Display name (e.g., "Paid Leave")
+  description: string;
+  isActive: boolean;
+  requiresApproval: boolean;
+}
 
 // Leave Request Status
 export const LeaveRequestStatus = {
@@ -209,7 +229,20 @@ export interface LeaveBalance {
   remaining: number;
 }
 
-// Leave Request History
+// Leave Request History (API Response)
+export interface TimeOffRequestResponse {
+  id: string;
+  type: RequestType;
+  startDate: string; // ISO date string (yyyy-MM-dd)
+  endDate: string; // ISO date string (yyyy-MM-dd)
+  duration: number;
+  submittedDate: string; // ISO timestamp
+  status: LeaveRequestStatus;
+  reason: string;
+  attachments?: string[]; // Array of file URLs
+}
+
+// Leave Request History (Frontend UI)
 export interface LeaveRequest {
   id: string;
   type: RequestType;
@@ -219,6 +252,21 @@ export interface LeaveRequest {
   submittedDate: Date;
   status: LeaveRequestStatus;
   reason?: string;
+  attachments?: string[];
+}
+
+// Submit Time Off Request
+export interface SubmitTimeOffRequest {
+  type: RequestType;
+  startDate: string; // ISO date string (yyyy-MM-dd)
+  endDate: string; // ISO date string (yyyy-MM-dd)
+  reason: string;
+  attachments?: File[]; // Array of files
+}
+
+// Cancel Time Off Request
+export interface CancelTimeOffRequest {
+  comment?: string;
 }
 
 // ==================== Attendance types ====================

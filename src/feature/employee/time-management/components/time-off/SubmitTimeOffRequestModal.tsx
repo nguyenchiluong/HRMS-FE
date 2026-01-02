@@ -11,52 +11,90 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useSubmitTimeOffRequest } from '../../hooks';
+import { RequestType } from '../../types';
 import { DateRangePicker } from './DateRangePicker';
 import { FileUploadSection } from './FileUploadSection';
 import { ImportantNotice } from './ImportantNotice';
 import { RequestTypeSelect } from './RequestTypeSelect';
-import { RequestType } from '../../types';
 
 interface SubmitTimeOffRequestModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit?: (data: {
-    selectedType: RequestType | null;
-    startDate: Date | undefined;
-    endDate: Date | undefined;
-    reason: string;
-    emergencyContact: string;
-    attachments: File[];
-  }) => void;
+  onSuccess?: () => void;
 }
 
 export const SubmitTimeOffRequestModal: React.FC<
   SubmitTimeOffRequestModalProps
-> = ({ open, onOpenChange, onSubmit }) => {
+> = ({ open, onOpenChange, onSuccess }) => {
   const [selectedType, setSelectedType] = useState<RequestType | null>(null);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [reason, setReason] = useState('');
-  const [emergencyContact, setEmergencyContact] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submitMutation = useSubmitTimeOffRequest();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit({
-        selectedType,
-        startDate,
-        endDate,
-        reason,
-        emergencyContact,
-        attachments,
-      });
+
+    // Validation
+    if (!selectedType) {
+      return;
     }
-    handleCloseModal();
+    if (!startDate || !endDate) {
+      return;
+    }
+    if (reason.trim().length < 10) {
+      return;
+    }
+
+    // Check if sick leave > 3 days requires attachments
+    const isSickLeave =
+      selectedType === 'PAID_SICK_LEAVE' || selectedType === 'UNPAID_SICK_LEAVE';
+    const duration =
+      Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    if (isSickLeave && duration > 3 && attachments.length === 0) {
+      // Show error message
+      toast.error('Medical certificate is required for sick leave requests longer than 3 days.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Format dates as ISO date strings (yyyy-MM-dd) - use local timezone
+      const formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const startDateStr = formatDate(startDate);
+      const endDateStr = formatDate(endDate);
+
+      await submitMutation.mutateAsync({
+        type: selectedType,
+        startDate: startDateStr,
+        endDate: endDateStr,
+        reason: reason.trim(),
+        attachments: attachments.length > 0 ? attachments : undefined,
+      });
+
+      handleCloseModal();
+      onSuccess?.();
+    } catch (error) {
+      // Error is handled by the mutation hook
+      console.error('Failed to submit time-off request:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -66,8 +104,8 @@ export const SubmitTimeOffRequestModal: React.FC<
     setStartDate(undefined);
     setEndDate(undefined);
     setReason('');
-    setEmergencyContact('');
     setAttachments([]);
+    setIsSubmitting(false);
   };
 
   return (
@@ -108,25 +146,16 @@ export const SubmitTimeOffRequestModal: React.FC<
                   id="reason"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Provide a detailed reason for your request..."
+                  placeholder="Provide a detailed reason for your request (minimum 10 characters)..."
                   rows={4}
                   className="focus-visible:ring-0 focus-visible:ring-offset-0"
+                  minLength={10}
                 />
-              </div>
-
-              {/* Emergency Contact */}
-              <div className="space-y-2">
-                <Label htmlFor="emergencyContact">
-                  Emergency Contact (Optional)
-                </Label>
-                <Input
-                  id="emergencyContact"
-                  type="text"
-                  value={emergencyContact}
-                  onChange={(e) => setEmergencyContact(e.target.value)}
-                  placeholder="Phone number or email for emergencies"
-                  className="focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
+                {reason.length > 0 && reason.length < 10 && (
+                  <p className="text-xs text-red-500">
+                    Reason must be at least 10 characters ({reason.length}/10)
+                  </p>
+                )}
               </div>
 
               {/* Supporting Documents */}
@@ -144,11 +173,22 @@ export const SubmitTimeOffRequestModal: React.FC<
                   type="button"
                   variant="outline"
                   onClick={handleCloseModal}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" size="lg">
-                  Submit Request
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={
+                    isSubmitting ||
+                    !selectedType ||
+                    !startDate ||
+                    !endDate ||
+                    reason.trim().length < 10
+                  }
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
                 </Button>
               </div>
             </form>
