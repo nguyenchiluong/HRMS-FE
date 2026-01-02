@@ -1,8 +1,8 @@
-import { Card } from '@/components/ui/card';
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { TimeOffApprovalTable } from '../components/approve-time-off/TimeOffApprovalTable';
-import { TimeOffApprovalRequest, TimeOffType } from '../types';
+import { ApprovalStatus, TimeOffApprovalRequest, TimeOffType } from '../types';
 
 // Mock data for demonstration
 const generateMockTimeOffRequests = (): TimeOffApprovalRequest[] => {
@@ -53,7 +53,7 @@ const generateMockTimeOffRequests = (): TimeOffApprovalRequest[] => {
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + duration - 1);
 
-    const status = i < 6 ? 'pending' : i < 11 ? 'approved' : 'rejected';
+    const status = i < 6 ? 'PENDING' : i < 11 ? 'APPROVED' : 'REJECTED';
 
     requests.push({
       id: `TO-${String(i + 1).padStart(4, '0')}`,
@@ -67,89 +67,122 @@ const generateMockTimeOffRequests = (): TimeOffApprovalRequest[] => {
       duration,
       reason: reasons[i % reasons.length],
       submittedDate,
-      status: status as 'pending' | 'approved' | 'rejected',
+      status: status as ApprovalStatus,
     });
   }
 
   return requests;
 };
 
+type FilterStatus = 'all' | ApprovalStatus;
+
 export default function ApproveTimeOff() {
-  const [requests, setRequests] = useState<TimeOffApprovalRequest[]>(
+  const [allRequests, setAllRequests] = useState<TimeOffApprovalRequest[]>(
     generateMockTimeOffRequests,
   );
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
 
   // Calculate stats
-  const pendingCount = requests.filter((r) => r.status === 'pending').length;
-  const approvedCount = requests.filter((r) => r.status === 'approved').length;
-  const rejectedCount = requests.filter((r) => r.status === 'rejected').length;
+  const pendingCount = allRequests.filter((r) => r.status === 'PENDING').length;
+  const approvedCount = allRequests.filter(
+    (r) => r.status === 'APPROVED',
+  ).length;
+  const rejectedCount = allRequests.filter(
+    (r) => r.status === 'REJECTED',
+  ).length;
+
+  // Filter requests based on selected status
+  const requests =
+    filterStatus === 'all'
+      ? allRequests
+      : allRequests.filter((r) => r.status === filterStatus);
 
   const handleApprove = (request: TimeOffApprovalRequest, notes?: string) => {
-    setRequests((prev) =>
+    setAllRequests((prev) =>
       prev.map((r) =>
-        r.id === request.id ? { ...r, status: 'approved' as const, notes } : r,
+        r.id === request.id
+          ? { ...r, status: 'APPROVED' as ApprovalStatus, notes }
+          : r,
       ),
     );
   };
 
   const handleReject = (request: TimeOffApprovalRequest, notes: string) => {
-    setRequests((prev) =>
+    setAllRequests((prev) =>
       prev.map((r) =>
-        r.id === request.id ? { ...r, status: 'rejected' as const, notes } : r,
+        r.id === request.id
+          ? { ...r, status: 'REJECTED' as ApprovalStatus, notes }
+          : r,
       ),
     );
   };
 
   return (
     <div className="w-full space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100">
-              <Clock className="h-6 w-6 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Pending Approval</p>
-              <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
-            </div>
-          </div>
-        </Card>
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Approve Time-off
+        </h1>
+        <p className="mt-1 text-xs text-gray-500">
+          Review and approve employee time-off requests
+        </p>
+      </div>
 
-        <Card className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100">
-              <CheckCircle className="h-6 w-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Approved</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {approvedCount}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-              <XCircle className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Rejected</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {rejectedCount}
-              </p>
-            </div>
-          </div>
-        </Card>
+      {/* Filter Buttons */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant={filterStatus === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilterStatus('all')}
+        >
+          All ({allRequests.length})
+        </Button>
+        <Button
+          variant={filterStatus === 'PENDING' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilterStatus('PENDING')}
+          className={cn(
+            filterStatus === 'PENDING' && 'bg-amber-600 hover:bg-amber-700',
+          )}
+        >
+          Pending ({pendingCount})
+        </Button>
+        <Button
+          variant={filterStatus === 'APPROVED' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilterStatus('APPROVED')}
+          className={cn(
+            filterStatus === 'APPROVED' &&
+              'bg-emerald-600 hover:bg-emerald-700',
+          )}
+        >
+          Approved ({approvedCount})
+        </Button>
+        <Button
+          variant={filterStatus === 'REJECTED' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilterStatus('REJECTED')}
+          className={cn(
+            filterStatus === 'REJECTED' && 'bg-red-600 hover:bg-red-700',
+          )}
+        >
+          Rejected ({rejectedCount})
+        </Button>
       </div>
 
       {/* Approval Table */}
       <div>
-        <h2 className="font-regular text-md mb-4 text-gray-900">
-          Time-off Requests
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-medium text-gray-900">
+            Time-off Requests
+            {filterStatus !== 'all' && (
+              <span className="ml-2 text-xs font-normal text-gray-500">
+                ({requests.length} {filterStatus.toLowerCase()})
+              </span>
+            )}
+          </h2>
+        </div>
         <TimeOffApprovalTable
           requests={requests}
           onApprove={handleApprove}
