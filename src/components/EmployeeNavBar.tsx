@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
+import { NotificationDropdown } from '@/feature/shared/notifications/components/NotificationDropdown';
+import { Notification } from '@/feature/shared/notifications/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from '@/pages/employeeProfileManagement/components/ui/dropdown-menu';
 import {
-  Bell,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -17,12 +18,64 @@ import {
   Settings,
   User,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+
+// Mock notifications data
+const generateMockNotifications = (): Notification[] => {
+  const notifications: Notification[] = [];
+  const today = new Date();
+
+  const notificationTemplates = [
+    {
+      title: 'Timesheet Approved',
+      content: 'Your timesheet for Week 1 has been approved by your manager.',
+    },
+    {
+      title: 'Time-off Request Pending',
+      content:
+        'Your time-off request is pending approval. Please wait for manager review.',
+    },
+    {
+      title: 'Profile Update Required',
+      content:
+        'Please update your emergency contact information in your profile.',
+    },
+    {
+      title: 'New Campaign Available',
+      content: 'A new wellness campaign has been launched. Check it out!',
+    },
+    {
+      title: 'Password Change Successful',
+      content: 'Your password has been successfully changed.',
+    },
+  ];
+
+  for (let i = 0; i < 8; i++) {
+    const notificationDate = new Date(today);
+    notificationDate.setHours(today.getHours() - i * 2);
+
+    const template = notificationTemplates[i % notificationTemplates.length];
+
+    notifications.push({
+      id: `NOTIF-${String(i + 1).padStart(4, '0')}`,
+      title: template.title,
+      content: template.content,
+      time: notificationDate,
+      isRead: i >= 3, // First 3 are unread
+    });
+  }
+
+  return notifications;
+};
 
 export default function EmployeeNavBar() {
   const { user, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState<Notification[]>(
+    generateMockNotifications,
+  );
 
   const navItems = [
     { path: '/employee/dashboard', label: 'Dashboard', icon: Home },
@@ -66,10 +119,20 @@ export default function EmployeeNavBar() {
 
           {/* Right Side - Notifications & User */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-            </Button>
+            <NotificationDropdown
+              notifications={notifications}
+              unreadCount={notifications.filter((n) => !n.isRead).length}
+              onMarkAsRead={(id) => {
+                setNotifications((prev) =>
+                  prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+                );
+              }}
+              onMarkAllAsRead={() => {
+                setNotifications((prev) =>
+                  prev.map((n) => ({ ...n, isRead: true })),
+                );
+              }}
+            />
 
             {user && (
               <DropdownMenu>

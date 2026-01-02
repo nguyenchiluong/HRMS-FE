@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
+import { NotificationDropdown } from '@/feature/shared/notifications/components/NotificationDropdown';
+import { Notification } from '@/feature/shared/notifications/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,11 +18,61 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
+
+// Mock notifications data for admin
+const generateMockNotifications = (): Notification[] => {
+  const notifications: Notification[] = [];
+  const today = new Date();
+
+  const notificationTemplates = [
+    {
+      title: 'New Profile Change Request',
+      content: 'John Smith has requested to change their phone number.',
+    },
+    {
+      title: 'Timesheet Approval Required',
+      content: '5 timesheet submissions are pending your approval.',
+    },
+    {
+      title: 'Time-off Request Pending',
+      content: 'Sarah Johnson has submitted a time-off request.',
+    },
+    {
+      title: 'Employee Onboarding Complete',
+      content: 'New employee onboarding has been completed successfully.',
+    },
+    {
+      title: 'Campaign Registration',
+      content: '10 employees have registered for the wellness campaign.',
+    },
+  ];
+
+  for (let i = 0; i < 8; i++) {
+    const notificationDate = new Date(today);
+    notificationDate.setHours(today.getHours() - i * 2);
+
+    const template = notificationTemplates[i % notificationTemplates.length];
+
+    notifications.push({
+      id: `NOTIF-${String(i + 1).padStart(4, '0')}`,
+      title: template.title,
+      content: template.content,
+      time: notificationDate,
+      isRead: i >= 3, // First 3 are unread
+    });
+  }
+
+  return notifications;
+};
 
 export default function AdminLayout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState<Notification[]>(
+    generateMockNotifications,
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,6 +109,20 @@ export default function AdminLayout() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <NotificationDropdown
+                notifications={notifications}
+                unreadCount={notifications.filter((n) => !n.isRead).length}
+                onMarkAsRead={(id) => {
+                  setNotifications((prev) =>
+                    prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+                  );
+                }}
+                onMarkAllAsRead={() => {
+                  setNotifications((prev) =>
+                    prev.map((n) => ({ ...n, isRead: true })),
+                  );
+                }}
+              />
               {user && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

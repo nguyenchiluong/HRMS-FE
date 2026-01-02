@@ -64,6 +64,14 @@ const AccountSettings = lazy(
   () => import('@/feature/shared/account-settings/pages/AccountSettings'),
 );
 
+const NotificationsPage = lazy(
+  () => import('@/feature/shared/notifications/pages/NotificationsPage'),
+);
+
+const NotificationDetailPage = lazy(
+  () => import('@/feature/shared/notifications/pages/NotificationDetailPage'),
+);
+
 const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
@@ -228,6 +236,13 @@ const routes: RouteObject[] = [
             ],
           },
           { path: 'settings', element: <AccountSettings /> },
+          {
+            path: 'notifications',
+            children: [
+              { index: true, element: <NotificationsPage /> },
+              { path: ':id', element: <NotificationDetailPage /> },
+            ],
+          },
         ],
       },
 
@@ -265,6 +280,13 @@ const routes: RouteObject[] = [
             element: <Placeholder title="Change Password" />,
           },
           { path: 'settings', element: <AccountSettings /> },
+          {
+            path: 'notifications',
+            children: [
+              { index: true, element: <NotificationsPage /> },
+              { path: ':id', element: <NotificationDetailPage /> },
+            ],
+          },
 
           // Nested Admin Features
           {
@@ -363,10 +385,6 @@ const routes: RouteObject[] = [
 
       { path: '/settings', element: <Placeholder title="Settings" /> },
       { path: '/help', element: <Placeholder title="Help Center" /> },
-      {
-        path: '/notifications',
-        element: <Placeholder title="Notifications" />,
-      },
     ],
   },
 
