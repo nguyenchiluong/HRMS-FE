@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useUploadFiles } from '@/hooks/useFileUpload';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useSubmitTimeOffRequest } from '../../hooks';
@@ -37,8 +38,10 @@ export const SubmitTimeOffRequestModal: React.FC<
   const [reason, setReason] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
 
   const submitMutation = useSubmitTimeOffRequest();
+  const uploadFilesMutation = useUploadFiles();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,12 +82,28 @@ export const SubmitTimeOffRequestModal: React.FC<
       const startDateStr = formatDate(startDate);
       const endDateStr = formatDate(endDate);
 
+      // 1. Upload files to S3 first if there are any
+      let attachmentUrls: string[] | undefined;
+      if (attachments.length > 0) {
+        setUploadProgress(`Uploading ${attachments.length} file(s)...`);
+        try {
+          attachmentUrls = await uploadFilesMutation.mutateAsync(attachments);
+          setUploadProgress('');
+        } catch (uploadError) {
+          setUploadProgress('');
+          setIsSubmitting(false);
+          // Error is already handled by the mutation hook
+          return;
+        }
+      }
+
+      // 2. Submit the time-off request with file URLs
       await submitMutation.mutateAsync({
         type: selectedType,
         startDate: startDateStr,
         endDate: endDateStr,
         reason: reason.trim(),
-        attachments: attachments.length > 0 ? attachments : undefined,
+        attachments: attachmentUrls,
       });
 
       handleCloseModal();
@@ -92,6 +111,7 @@ export const SubmitTimeOffRequestModal: React.FC<
     } catch (error) {
       // Error is handled by the mutation hook
       console.error('Failed to submit time-off request:', error);
+      setUploadProgress('');
     } finally {
       setIsSubmitting(false);
     }
@@ -106,6 +126,7 @@ export const SubmitTimeOffRequestModal: React.FC<
     setReason('');
     setAttachments([]);
     setIsSubmitting(false);
+    setUploadProgress('');
   };
 
   return (
@@ -188,7 +209,9 @@ export const SubmitTimeOffRequestModal: React.FC<
                     reason.trim().length < 10
                   }
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                  {isSubmitting
+                    ? uploadProgress || 'Submitting...'
+                    : 'Submit Request'}
                 </Button>
               </div>
             </form>

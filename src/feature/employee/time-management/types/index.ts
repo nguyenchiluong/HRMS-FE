@@ -261,7 +261,7 @@ export interface SubmitTimeOffRequest {
   startDate: string; // ISO date string (yyyy-MM-dd)
   endDate: string; // ISO date string (yyyy-MM-dd)
   reason: string;
-  attachments?: File[]; // Array of files
+  attachments?: string[]; // Array of file URLs (CloudFront URLs)
 }
 
 // Cancel Time Off Request

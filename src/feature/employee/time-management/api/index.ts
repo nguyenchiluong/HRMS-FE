@@ -179,31 +179,20 @@ export const cancelTimesheet = async (
 // ==================== Time-Off Request APIs ====================
 
 /**
- * Submit a time-off request with file attachments
+ * Submit a time-off request with file attachment URLs
  */
 export const submitTimeOffRequest = async (
   request: SubmitTimeOffRequest,
 ): Promise<{ message: string; data: TimeOffRequestResponse }> => {
-  const formData = new FormData();
-  formData.append('type', request.type);
-  formData.append('startDate', request.startDate);
-  formData.append('endDate', request.endDate);
-  formData.append('reason', request.reason);
-
-  // Append files if provided
-  if (request.attachments && request.attachments.length > 0) {
-    request.attachments.forEach((file) => {
-      formData.append('attachments', file);
-    });
-  }
-
   const response = await dotnetApi.post<{
     message: string;
     data: TimeOffRequestResponse;
-  }>(`${TIME_OFF_BASE_URL}/requests`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  }>(`${TIME_OFF_BASE_URL}/requests`, {
+    type: request.type,
+    startDate: request.startDate,
+    endDate: request.endDate,
+    reason: request.reason,
+    attachments: request.attachments || [],
   });
   return response.data;
 };
