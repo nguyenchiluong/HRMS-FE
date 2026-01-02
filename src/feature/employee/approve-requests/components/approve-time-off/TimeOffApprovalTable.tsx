@@ -78,17 +78,17 @@ const getTimeOffTypeConfig = (type: TimeOffType) => {
 
 const getStatusConfig = (status: ApprovalStatus) => {
   switch (status) {
-    case 'approved':
+    case 'APPROVED':
       return {
         label: 'Approved',
         className: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
       };
-    case 'pending':
+    case 'PENDING':
       return {
         label: 'Pending',
         className: 'bg-amber-100 text-amber-700 border border-amber-200',
       };
-    case 'rejected':
+    case 'REJECTED':
       return {
         label: 'Rejected',
         className: 'bg-red-100 text-red-700 border border-red-200',
@@ -229,7 +229,7 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
             {currentRequests.map((request) => {
               const typeConfig = getTimeOffTypeConfig(request.type);
               const statusConfig = getStatusConfig(request.status);
-              const isPending = request.status === 'pending';
+              const isPending = request.status === 'PENDING';
 
               return (
                 <tr key={request.id} className="hover:bg-gray-50">
@@ -239,10 +239,10 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
                         {request.employeeName.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-xs font-medium text-gray-900">
                           {request.employeeName}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-[10px] text-gray-500">
                           {request.department}
                         </div>
                       </div>
@@ -260,14 +260,14 @@ export const TimeOffApprovalTable: React.FC<TimeOffApprovalTableProps> = ({
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-xs text-gray-900">
                       {format(request.startDate, 'MMM dd, yyyy')}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-[10px] text-gray-500">
                       to {format(request.endDate, 'MMM dd, yyyy')}
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-gray-600">
+                  <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600">
                     {request.duration} {request.duration === 1 ? 'day' : 'days'}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600">

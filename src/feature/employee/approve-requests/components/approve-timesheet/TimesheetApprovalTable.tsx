@@ -9,7 +9,15 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { Check, ChevronLeft, ChevronRight, Clock, Eye, Loader2, X } from 'lucide-react';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Eye,
+  Loader2,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import type { ApprovalStatus, TimesheetApprovalRequest } from '../../types';
 
@@ -166,15 +174,7 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
           totalPages,
         );
       } else {
-        pages.push(
-          1,
-          '...',
-          page - 1,
-          page,
-          page + 1,
-          '...',
-          totalPages,
-        );
+        pages.push(1, '...', page - 1, page, page + 1, '...', totalPages);
       }
     }
     return pages;
@@ -250,30 +250,30 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
                           {request.employeeName.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-xs font-medium text-gray-900">
                             {request.employeeName}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-[10px] text-gray-500">
                             {request.department}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-xs font-medium text-gray-900">
                         {getMonthName(request.month)} {request.year}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-[10px] text-gray-500">
                         {formatWeekPeriod(request)}
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-center">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-xs font-medium text-gray-900">
                         {request.summary.totalHours}h
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {request.summary.regularHours}h regular • {request.summary.overtimeHours}h
-                        OT
+                      <div className="text-[10px] text-gray-500">
+                        {request.summary.regularHours}h regular •{' '}
+                        {request.summary.overtimeHours}h OT
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600">
@@ -318,7 +318,9 @@ export const TimesheetApprovalTable: React.FC<TimesheetApprovalTableProps> = ({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleActionClick(request, 'reject')}
+                              onClick={() =>
+                                handleActionClick(request, 'reject')
+                              }
                               disabled={isSubmitting}
                               className="h-8 w-8 border-red-200 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                             >

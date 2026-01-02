@@ -64,6 +64,10 @@ const MyAttendance = lazy(
   () => import('@/feature/employee/time-management/pages/MyAttendance'),
 );
 
+const AccountSettings = lazy(
+  () => import('@/feature/shared/account-settings/pages/AccountSettings'),
+);
+
 const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
@@ -228,6 +232,7 @@ const routes: RouteObject[] = [
               // ...
             ],
           },
+          { path: 'settings', element: <AccountSettings /> },
         ],
       },
 
@@ -264,6 +269,7 @@ const routes: RouteObject[] = [
             path: 'change-password',
             element: <Placeholder title="Change Password" />,
           },
+          { path: 'settings', element: <AccountSettings /> },
 
           // Nested Admin Features
           {
