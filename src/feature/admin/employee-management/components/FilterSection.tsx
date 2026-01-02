@@ -2,14 +2,12 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Check, ChevronDown, Filter, Search, X } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  DEPARTMENTS,
-  EMPLOYMENT_TYPES,
-  JOB_LEVELS,
-  POSITIONS,
-  TIME_TYPES,
-} from '../store/useEmployeeStore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useDepartments } from '../hooks/useDepartments';
+import { useEmploymentTypes } from '../hooks/useEmploymentTypes';
+import { useJobLevels } from '../hooks/useJobLevels';
+import { usePositions } from '../hooks/usePositions';
+import { useTimeTypes } from '../hooks/useTimeTypes';
 import { EmployeeStatus, FilterState } from '../types';
 import { Input } from './ui/Input';
 
@@ -26,6 +24,35 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   isOpen,
   setIsOpen,
 }) => {
+  // Fetch all filter options from backend
+  const { data: departmentsData = [] } = useDepartments();
+  const { data: positionsData = [] } = usePositions();
+  const { data: jobLevelsData = [] } = useJobLevels();
+  const { data: employmentTypesData = [] } = useEmploymentTypes();
+  const { data: timeTypesData = [] } = useTimeTypes();
+
+  // Map to string arrays for filter dropdowns
+  const departments = useMemo(
+    () => departmentsData.map((dept) => dept.name),
+    [departmentsData],
+  );
+  const positions = useMemo(
+    () => positionsData.map((pos) => pos.title),
+    [positionsData],
+  );
+  const jobLevels = useMemo(
+    () => jobLevelsData.map((level) => level.name),
+    [jobLevelsData],
+  );
+  const employmentTypes = useMemo(
+    () => employmentTypesData.map((type) => type.name),
+    [employmentTypesData],
+  );
+  const timeTypes = useMemo(
+    () => timeTypesData.map((type) => type.name),
+    [timeTypesData],
+  );
+
   const handleStatusChange = (status: EmployeeStatus) => {
     setFilters((prev) => {
       const currentStatuses = prev.status;
@@ -110,31 +137,31 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <FilterDropdown
               label="Department"
-              options={DEPARTMENTS}
+              options={departments}
               selectedValues={filters.department}
               onChange={(vals) => updateFilter('department', vals)}
             />
             <FilterDropdown
               label="Position"
-              options={POSITIONS}
+              options={positions}
               selectedValues={filters.position}
               onChange={(vals) => updateFilter('position', vals)}
             />
             <FilterDropdown
               label="Job Level"
-              options={JOB_LEVELS}
+              options={jobLevels}
               selectedValues={filters.jobLevel}
               onChange={(vals) => updateFilter('jobLevel', vals)}
             />
             <FilterDropdown
               label="Employment Type"
-              options={EMPLOYMENT_TYPES}
+              options={employmentTypes}
               selectedValues={filters.employmentType}
               onChange={(vals) => updateFilter('employmentType', vals)}
             />
             <FilterDropdown
               label="Time Type"
-              options={TIME_TYPES}
+              options={timeTypes}
               selectedValues={filters.timeType}
               onChange={(vals) => updateFilter('timeType', vals)}
             />

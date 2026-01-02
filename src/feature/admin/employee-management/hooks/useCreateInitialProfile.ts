@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import toast from 'react-hot-toast';
 import { createInitialProfile } from '../api';
+import { employeeKeys } from './useEmployees';
+import { employeeStatsKeys } from './useEmployeeStats';
 
 interface UseCreateInitialProfileOptions {
   onSuccess?: () => void;
@@ -16,7 +18,9 @@ export const useCreateInitialProfile = (
   return useMutation({
     mutationFn: (data: InitialProfilePayload) => createInitialProfile(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      // Invalidate both employees list and stats
+      queryClient.invalidateQueries({ queryKey: employeeKeys.all });
+      queryClient.invalidateQueries({ queryKey: employeeStatsKeys.all });
       toast.success('Employee onboarded successfully!');
       options?.onSuccess?.();
     },

@@ -1,25 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EmployeeTable } from '../components/EmployeeTable';
 import { FilterSection } from '../components/FilterSection';
 import OnboardEmployeeModal from '../components/OnboardEmployeeModal';
 import { StatsCards } from '../components/StatsCards';
-import { useEmployeeStore } from '../store/useEmployeeStore';
+import { useEmployees } from '../hooks/useEmployees';
+import { useEmployeeStats } from '../hooks/useEmployeeStats';
 import { FilterState } from '../types';
 
 export default function EmployeeManagement() {
-  const {
-    employees: data,
-    stats,
-    isLoading,
-    fetchEmployees,
-  } = useEmployeeStore();
-
-  useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
-
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
 
@@ -34,57 +24,49 @@ export default function EmployeeManagement() {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 14; // Matches the long list in screenshot
+  const itemsPerPage = 14;
 
-  // Filter Logic
-  const filteredData = useMemo(() => {
-    return data.filter((emp) => {
-      // Search
-      const searchLower = filters.searchTerm.toLowerCase();
-      const matchesSearch =
-        emp.fullName.toLowerCase().includes(searchLower) ||
-        emp.workEmail.toLowerCase().includes(searchLower) ||
-        emp.id.toLowerCase().includes(searchLower);
+  // Fetch employees with React Query
+  const {
+    data: employeesData,
+    isLoading: isLoadingEmployees,
+  } = useEmployees({
+    filters,
+    page: currentPage,
+    pageSize: itemsPerPage,
+  });
 
-      // Status
-      const matchesStatus =
-        filters.status.length === 0 || filters.status.includes(emp.status);
+  // Fetch stats with React Query
+  const { data: stats, isLoading: isLoadingStats } = useEmployeeStats();
 
-      // Multi-select Filters
-      const matchesDepartment =
-        filters.department.length === 0 ||
-        filters.department.includes(emp.department);
-      const matchesPosition =
-        filters.position.length === 0 ||
-        filters.position.includes(emp.position);
-      const matchesJobLevel =
-        filters.jobLevel.length === 0 ||
-        filters.jobLevel.includes(emp.jobLevel);
-      const matchesEmployment =
-        filters.employmentType.length === 0 ||
-        filters.employmentType.includes(emp.employmentType);
-      const matchesTimeType =
-        filters.timeType.length === 0 ||
-        filters.timeType.includes(emp.timeType);
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    filters.searchTerm,
+    filters.status,
+    filters.department,
+    filters.position,
+    filters.jobLevel,
+    filters.employmentType,
+    filters.timeType,
+  ]);
 
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesDepartment &&
-        matchesPosition &&
-        matchesJobLevel &&
-        matchesEmployment &&
-        matchesTimeType
-      );
-    });
-  }, [data, filters]);
+  const data = employeesData?.data ?? [];
+  const pagination = employeesData?.pagination;
+  const isLoading = isLoadingEmployees || isLoadingStats;
 
-  // Pagination Logic
-  const totalItems = filteredData.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentData = filteredData.slice(startIndex, endIndex);
+  const totalItems = pagination?.totalItems ?? 0;
+  const totalPages = pagination?.totalPages ?? 0;
+  const startIndex = pagination
+    ? (pagination.currentPage - 1) * pagination.pageSize
+    : 0;
+  const endIndex = pagination
+    ? Math.min(startIndex + pagination.pageSize, totalItems)
+    : 0;
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -158,7 +140,7 @@ export default function EmployeeManagement() {
       </header>
 
       {/* Stats Cards */}
-      <StatsCards stats={stats} isLoading={isLoading} />
+      <StatsCards stats={stats ?? null} isLoading={isLoading} />
 
       {/* Filter Bar */}
       <FilterSection
@@ -169,7 +151,7 @@ export default function EmployeeManagement() {
       />
 
       {/* Data Table */}
-      <EmployeeTable data={currentData} isLoading={isLoading} />
+      <EmployeeTable data={data} isLoading={isLoading} />
 
       {/* Footer / Pagination */}
       {!isLoading && totalItems > 0 && totalPages > 1 && (

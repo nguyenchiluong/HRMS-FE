@@ -9,16 +9,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import type {
-  EmployeeType,
-  InitialProfileFormData,
-  JobLevel,
-  TimeType,
-} from '@/types/employee';
+import type { InitialProfileFormData } from '@/types/employee';
 import { useFormik } from 'formik';
 import { Loader2, X } from 'lucide-react';
-import { usePositions } from '../hooks/usePositions';
 import { useDepartments } from '../hooks/useDepartments';
+import { useEmploymentTypes } from '../hooks/useEmploymentTypes';
+import { useJobLevels } from '../hooks/useJobLevels';
+import { usePositions } from '../hooks/usePositions';
+import { useTimeTypes } from '../hooks/useTimeTypes';
 import { useCreateInitialProfile } from '../hooks/useCreateInitialProfile';
 import * as Yup from 'yup';
 
@@ -26,96 +24,96 @@ interface OnboardEmployeeModalProps {
   onClose: () => void;
 }
 
-const JOB_LEVELS: JobLevel[] = [
-  'Intern',
-  'Fresher',
-  'Junior',
-  'Middle',
-  'Senior',
-  'Lead',
-  'Manager',
-];
-const EMPLOYEE_TYPES: EmployeeType[] = [
-  'FullTime',
-  'PartTime',
-  'Contract',
-  'Intern',
-];
-const TIME_TYPES: TimeType[] = ['OnSite', 'Remote', 'Hybrid'];
-
-const initialProfileSchema = Yup.object().shape({
-  fullName: Yup.string()
-    .required('Full name is required')
-    .min(2, 'Full name must be at least 2 characters'),
-  personalEmail: Yup.string()
-    .required('Personal email is required')
-    .email('Invalid email format'),
-  positionId: Yup.number()
-    .required('Position is required')
-    .positive('Please select a position'),
-  jobLevel: Yup.string()
-    .required('Job level is required')
-    .oneOf(
-      ['Intern', 'Fresher', 'Junior', 'Middle', 'Senior', 'Lead', 'Manager'],
-      'Invalid job level',
-    ),
-  departmentId: Yup.number()
-    .required('Department is required')
-    .positive('Please select a department'),
-  employeeType: Yup.string()
-    .required('Employee type is required')
-    .oneOf(
-      ['FullTime', 'PartTime', 'Contract', 'Intern'],
-      'Invalid employee type',
-    ),
-  timeType: Yup.string()
-    .required('Time type is required')
-    .oneOf(['OnSite', 'Remote', 'Hybrid'], 'Invalid time type'),
-  startDate: Yup.string()
-    .required('Start date is required')
-    .test('not-in-past', 'Start date cannot be in the past', (value) => {
-      if (!value) return true;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const selectedDate = new Date(value);
-      return selectedDate >= today;
-    }),
-});
+const createInitialProfileSchema = (
+  jobLevelIds: number[],
+  employmentTypeIds: number[],
+  timeTypeIds: number[],
+) =>
+  Yup.object().shape({
+    fullName: Yup.string()
+      .required('Full name is required')
+      .min(2, 'Full name must be at least 2 characters'),
+    personalEmail: Yup.string()
+      .required('Personal email is required')
+      .email('Invalid email format'),
+    positionId: Yup.number()
+      .required('Position is required')
+      .positive('Please select a position'),
+    jobLevelId: Yup.number()
+      .required('Job level is required')
+      .oneOf(jobLevelIds, 'Invalid job level'),
+    departmentId: Yup.number()
+      .required('Department is required')
+      .positive('Please select a department'),
+    employmentTypeId: Yup.number()
+      .required('Employment type is required')
+      .oneOf(employmentTypeIds, 'Invalid employment type'),
+    timeTypeId: Yup.number()
+      .required('Time type is required')
+      .oneOf(timeTypeIds, 'Invalid time type'),
+    startDate: Yup.string()
+      .required('Start date is required')
+      .test('not-in-past', 'Start date cannot be in the past', (value) => {
+        if (!value) return true;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(value);
+        return selectedDate >= today;
+      }),
+  });
 
 export default function OnboardEmployeeModal({
   onClose,
 }: OnboardEmployeeModalProps) {
   const { data: positions, isLoading: positionsLoading } = usePositions();
   const { data: departments, isLoading: departmentsLoading } = useDepartments();
+  const { data: jobLevels, isLoading: jobLevelsLoading } = useJobLevels();
+  const { data: employmentTypes, isLoading: employmentTypesLoading } =
+    useEmploymentTypes();
+  const { data: timeTypes, isLoading: timeTypesLoading } = useTimeTypes();
   const createMutation = useCreateInitialProfile({ onSuccess: onClose });
+
+  const jobLevelIds = jobLevels?.map((level) => level.id) ?? [];
+  const employmentTypeIds = employmentTypes?.map((type) => type.id) ?? [];
+  const timeTypeIds = timeTypes?.map((type) => type.id) ?? [];
 
   const formik = useFormik<InitialProfileFormData>({
     initialValues: {
       fullName: '',
       personalEmail: '',
       positionId: '',
-      jobLevel: '',
+      jobLevelId: '',
       departmentId: '',
-      employeeType: '',
-      timeType: '',
+      employmentTypeId: '',
+      timeTypeId: '',
       startDate: '',
     },
-    validationSchema: initialProfileSchema,
+    validationSchema: createInitialProfileSchema(
+      jobLevelIds,
+      employmentTypeIds,
+      timeTypeIds,
+    ),
+    enableReinitialize: true,
     onSubmit: (values) => {
       createMutation.mutate({
         fullName: values.fullName,
         personalEmail: values.personalEmail,
         positionId: Number(values.positionId),
-        jobLevel: values.jobLevel as string,
+        jobLevelId: Number(values.jobLevelId),
         departmentId: Number(values.departmentId),
-        employeeType: values.employeeType as string,
-        timeType: values.timeType as string,
+        employmentTypeId: Number(values.employmentTypeId),
+        timeTypeId: Number(values.timeTypeId),
         startDate: values.startDate,
       });
     },
   });
 
-  const isLoading = positionsLoading || departmentsLoading;
+  const isLoading =
+    positionsLoading ||
+    departmentsLoading ||
+    jobLevelsLoading ||
+    employmentTypesLoading ||
+    timeTypesLoading;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -221,16 +219,16 @@ export default function OnboardEmployeeModal({
 
             {/* Job Level */}
             <div className="space-y-2">
-              <Label htmlFor="jobLevel">Job Level *</Label>
+              <Label htmlFor="jobLevelId">Job Level *</Label>
               <Select
-                value={formik.values.jobLevel}
+                value={formik.values.jobLevelId.toString()}
                 onValueChange={(value) =>
-                  formik.setFieldValue('jobLevel', value)
+                  formik.setFieldValue('jobLevelId', Number(value))
                 }
               >
                 <SelectTrigger
                   className={
-                    formik.touched.jobLevel && formik.errors.jobLevel
+                    formik.touched.jobLevelId && formik.errors.jobLevelId
                       ? 'border-red-500'
                       : ''
                   }
@@ -238,15 +236,17 @@ export default function OnboardEmployeeModal({
                   <SelectValue placeholder="Select job level" />
                 </SelectTrigger>
                 <SelectContent>
-                  {JOB_LEVELS.map((level) => (
-                    <SelectItem key={level} value={level}>
-                      {level}
+                  {jobLevels?.map((level) => (
+                    <SelectItem key={level.id} value={level.id.toString()}>
+                      {level.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {formik.touched.jobLevel && formik.errors.jobLevel && (
-                <p className="text-sm text-red-500">{formik.errors.jobLevel}</p>
+              {formik.touched.jobLevelId && formik.errors.jobLevelId && (
+                <p className="text-sm text-red-500">
+                  {formik.errors.jobLevelId}
+                </p>
               )}
             </div>
 
@@ -286,51 +286,53 @@ export default function OnboardEmployeeModal({
               )}
             </div>
 
-            {/* Employee Type */}
+            {/* Employment Type */}
             <div className="space-y-2">
-              <Label htmlFor="employeeType">Employee Type *</Label>
+              <Label htmlFor="employmentTypeId">Employment Type *</Label>
               <Select
-                value={formik.values.employeeType}
+                value={formik.values.employmentTypeId.toString()}
                 onValueChange={(value) =>
-                  formik.setFieldValue('employeeType', value)
+                  formik.setFieldValue('employmentTypeId', Number(value))
                 }
               >
                 <SelectTrigger
                   className={
-                    formik.touched.employeeType && formik.errors.employeeType
+                    formik.touched.employmentTypeId &&
+                    formik.errors.employmentTypeId
                       ? 'border-red-500'
                       : ''
                   }
                 >
-                  <SelectValue placeholder="Select employee type" />
+                  <SelectValue placeholder="Select employment type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {EMPLOYEE_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                  {employmentTypes?.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {formik.touched.employeeType && formik.errors.employeeType && (
-                <p className="text-sm text-red-500">
-                  {formik.errors.employeeType}
-                </p>
-              )}
+              {formik.touched.employmentTypeId &&
+                formik.errors.employmentTypeId && (
+                  <p className="text-sm text-red-500">
+                    {formik.errors.employmentTypeId}
+                  </p>
+                )}
             </div>
 
             {/* Time Type */}
             <div className="space-y-2">
-              <Label htmlFor="timeType">Time Type *</Label>
+              <Label htmlFor="timeTypeId">Time Type *</Label>
               <Select
-                value={formik.values.timeType}
+                value={formik.values.timeTypeId.toString()}
                 onValueChange={(value) =>
-                  formik.setFieldValue('timeType', value)
+                  formik.setFieldValue('timeTypeId', Number(value))
                 }
               >
                 <SelectTrigger
                   className={
-                    formik.touched.timeType && formik.errors.timeType
+                    formik.touched.timeTypeId && formik.errors.timeTypeId
                       ? 'border-red-500'
                       : ''
                   }
@@ -338,15 +340,17 @@ export default function OnboardEmployeeModal({
                   <SelectValue placeholder="Select time type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIME_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                  {timeTypes?.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {formik.touched.timeType && formik.errors.timeType && (
-                <p className="text-sm text-red-500">{formik.errors.timeType}</p>
+              {formik.touched.timeTypeId && formik.errors.timeTypeId && (
+                <p className="text-sm text-red-500">
+                  {formik.errors.timeTypeId}
+                </p>
               )}
             </div>
 
