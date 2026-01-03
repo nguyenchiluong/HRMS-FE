@@ -1,35 +1,13 @@
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCurrentEmployee } from "../hooks/useCurrentEmployee";
 
 interface InfoRow {
   label: string;
   value: string;
   hasVisibilityToggle?: boolean;
 }
-
-const basicInfo: InfoRow[] = [
-  { label: "Legal Full Name", value: "Nguyen Tuan Kiet" },
-  { label: "Nationality", value: "Vietnam" },
-];
-
-const nationalID: InfoRow[] = [
-  { label: "Identification #", value: "715900132", hasVisibilityToggle: true },
-  { label: "Issued Date", value: "22/04/2021" },
-  { label: "Expiration Date", value: "25/09/2028" },
-  {
-    label: "Issued By",
-    value: "Director General of The Police Department for Administrative Management of Social Order",
-  },
-];
-
-const socialInsurance: InfoRow[] = [
-  { label: "Identification #", value: "5220031234" },
-];
-
-const taxID: InfoRow[] = [
-  { label: "Identification #", value: "5220031234" },
-];
 
 function InfoRowComponent({ label, value, hasVisibilityToggle }: InfoRow) {
   const [isVisible, setIsVisible] = useState(false);
@@ -62,8 +40,101 @@ function InfoRowComponent({ label, value, hasVisibilityToggle }: InfoRow) {
 }
 
 export default function IDsContent() {
-  const editPageUrl = "/profile/edit";
+  const editPageUrl = "/employee/profile/ids/edit";
   const navigate = useNavigate();
+  const { data: employee, isLoading, isError, error } = useCurrentEmployee();
+
+  // Format date for display
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: '2-digit', 
+      day: '2-digit', 
+      year: 'numeric' 
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-[25px] p-6 lg:p-[45px] flex flex-col gap-2.5">
+        <h2 className="text-[25px] font-semibold mb-2.5">Your IDs</h2>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="bg-white rounded-[25px] p-6 lg:p-[45px] flex flex-col gap-2.5">
+        <h2 className="text-[25px] font-semibold mb-2.5">Your IDs</h2>
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <p className="text-red-500">Error loading employee data</p>
+          <p className="text-gray-600 text-sm">{error instanceof Error ? error.message : 'Unknown error'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="bg-white rounded-[25px] p-6 lg:p-[45px] flex flex-col gap-2.5">
+        <h2 className="text-[25px] font-semibold mb-2.5">Your IDs</h2>
+        <div className="flex items-center justify-center py-12">
+          <p className="text-gray-600">No employee data available</p>
+        </div>
+      </div>
+    );
+  }
+
+  const basicInfo: InfoRow[] = [
+    { 
+      label: "Legal Full Name", 
+      value: `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || "N/A" 
+    },
+    { 
+      label: "Nationality", 
+      value: employee.nationalIdCountry || "N/A" 
+    },
+  ];
+
+  const nationalID: InfoRow[] = [
+    { 
+      label: "Identification #", 
+      value: employee.nationalIdNumber || "N/A", 
+      hasVisibilityToggle: !!employee.nationalIdNumber 
+    },
+    { 
+      label: "Issued Date", 
+      value: formatDate(employee.nationalIdIssuedDate) 
+    },
+    { 
+      label: "Expiration Date", 
+      value: formatDate(employee.nationalIdExpirationDate) 
+    },
+    {
+      label: "Issued By",
+      value: employee.nationalIdIssuedBy || "N/A",
+    },
+  ];
+
+  const socialInsurance: InfoRow[] = [
+    { 
+      label: "Identification #", 
+      value: employee.socialInsuranceNumber || "N/A",
+      hasVisibilityToggle: !!employee.socialInsuranceNumber 
+    },
+  ];
+
+  const taxID: InfoRow[] = [
+    { 
+      label: "Identification #", 
+      value: employee.taxId || "N/A",
+      hasVisibilityToggle: !!employee.taxId 
+    },
+  ];
 
   return (
     <div className="bg-white rounded-[25px] p-6 lg:p-[45px] flex flex-col gap-2.5">

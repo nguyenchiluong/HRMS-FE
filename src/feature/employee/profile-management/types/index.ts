@@ -77,3 +77,27 @@ export interface EmployeeProfileResponse {
   data: EmployeeDto;
   message?: string;
 }
+
+// Education Types
+export interface EducationRecordDto {
+  id: number;
+  employeeId: number;
+  degree: string;
+  fieldOfStudy?: string | null;
+  gpa?: number | null;
+  country?: string | null;
+}
+
+export interface CreateEducationDto {
+  degree: string;
+  fieldOfStudy?: string | null;
+  gpa?: number | null;
+  country?: string | null;
+}
+
+export interface UpdateEducationDto {
+  degree?: string | null;
+  fieldOfStudy?: string | null;
+  gpa?: number | null;
+  country?: string | null;
+}
