@@ -1,3 +1,5 @@
+import EditPersonalInfo from '@/feature/employee/profile-management/pages/EditPersonalInfo';
+import WorkingHistory from '@/feature/employee/profile-management/pages/WorkingHistory';
 import { lazy } from 'react';
 import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import Placeholder from './components/Placeholder';
@@ -6,10 +8,11 @@ import PublicRoute from './components/PublicRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
-import EditPersonalInfo from '@/feature/employee/profile-management/pages/EditPersonalInfo';
-import WorkingHistory from '@/feature/employee/profile-management/pages/WorkingHistory';
 
 const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
+const ForgotPassword = lazy(
+  () => import('@/feature/shared/auth/pages/ForgotPassword'),
+);
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
@@ -124,7 +127,7 @@ const routes: RouteObject[] = [
       { path: '/login', element: <Login /> },
       {
         path: '/forgot-password',
-        element: <Placeholder title="Forgot Password" />,
+        element: <ForgotPassword />,
       },
       {
         path: '/reset-password/:token',
@@ -227,12 +230,13 @@ const routes: RouteObject[] = [
               },
             ],
           },
-          { path: 'job-details',
+          {
+            path: 'job-details',
             children: [
               { index: true, element: <Navigate to="info" replace /> },
               { path: 'info', element: <JobDetails /> },
               { path: 'working-history', element: <WorkingHistory /> },
-            ]
+            ],
           },
           // ... (Rest of Employee Sub-routes kept as is, just ensured nesting)
           {

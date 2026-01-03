@@ -1,6 +1,12 @@
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -8,17 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 import type { InitialProfileFormData } from '@/types/employee';
 import { useFormik } from 'formik';
-import { Loader2, X } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, X } from 'lucide-react';
+import * as Yup from 'yup';
+import { useCreateInitialProfile } from '../hooks/useCreateInitialProfile';
 import { useDepartments } from '../hooks/useDepartments';
 import { useEmploymentTypes } from '../hooks/useEmploymentTypes';
 import { useJobLevels } from '../hooks/useJobLevels';
 import { usePositions } from '../hooks/usePositions';
 import { useTimeTypes } from '../hooks/useTimeTypes';
-import { useCreateInitialProfile } from '../hooks/useCreateInitialProfile';
-import * as Yup from 'yup';
 
 interface OnboardEmployeeModalProps {
   onClose: () => void;
@@ -116,17 +124,15 @@ export default function OnboardEmployeeModal({
     timeTypesLoading;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative z-50 mx-4 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border bg-white p-6 shadow-lg">
+      <div className="relative z-50 mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border bg-white p-6 shadow-lg">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between border-b pb-4">
-          <h3 className="text-xl font-bold text-[#253D90]">
-            Onboard New Employee
-          </h3>
+          <h3 className="text-xl font-semibold">Onboard New Employee</h3>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
@@ -134,7 +140,7 @@ export default function OnboardEmployeeModal({
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-[#253D90]" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
           <form onSubmit={formik.handleSubmit} className="space-y-4">
@@ -177,7 +183,9 @@ export default function OnboardEmployeeModal({
                 }
               />
               {formik.touched.personalEmail && formik.errors.personalEmail && (
-                <p className="text-sm text-red-500">{formik.errors.personalEmail}</p>
+                <p className="text-sm text-red-500">
+                  {formik.errors.personalEmail}
+                </p>
               )}
             </div>
 
@@ -357,19 +365,50 @@ export default function OnboardEmployeeModal({
             {/* Start Date */}
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date *</Label>
-              <Input
-                id="startDate"
-                name="startDate"
-                type="date"
-                value={formik.values.startDate}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={
-                  formik.touched.startDate && formik.errors.startDate
-                    ? 'border-red-500'
-                    : ''
-                }
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !formik.values.startDate && 'text-muted-foreground',
+                      formik.touched.startDate && formik.errors.startDate
+                        ? 'border-red-500'
+                        : '',
+                    )}
+                    type="button"
+                    onBlur={() => formik.setFieldTouched('startDate', true)}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                    <span className="truncate">
+                      {formik.values.startDate
+                        ? format(new Date(formik.values.startDate), 'PPP')
+                        : 'Select start date'}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={
+                      formik.values.startDate
+                        ? new Date(formik.values.startDate)
+                        : undefined
+                    }
+                    onSelect={(date) => {
+                      if (date) {
+                        const formattedDate = format(date, 'yyyy-MM-dd');
+                        formik.setFieldValue('startDate', formattedDate);
+                      }
+                    }}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today;
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
               {formik.touched.startDate && formik.errors.startDate && (
                 <p className="text-sm text-red-500">
                   {formik.errors.startDate}
@@ -384,7 +423,7 @@ export default function OnboardEmployeeModal({
               </Button>
               <Button
                 type="submit"
-                className="bg-[#253D90] hover:bg-[#1a2d6b]"
+                className="bg-primary hover:bg-primary/90"
                 disabled={createMutation.isPending}
               >
                 {createMutation.isPending ? (

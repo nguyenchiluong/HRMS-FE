@@ -1,7 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
-import { NotificationDropdown } from '@/feature/shared/notifications/components/NotificationDropdown';
-import { Notification } from '@/feature/shared/notifications/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +6,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
+import { NotificationDropdown } from '@/feature/shared/notifications/components/NotificationDropdown';
+import { Notification } from '@/feature/shared/notifications/types';
 import {
   CheckCircle2,
   ChevronDown,
@@ -79,14 +79,12 @@ export default function EmployeeNavBar() {
 
   const navItems = [
     { path: '/employee/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/employee/profile', label: 'Profile', icon: User },
     { path: '/employee/time', label: 'Time Management', icon: Clock },
     {
       path: '/employee/approve-requests',
       label: 'Request Approval',
       icon: CheckCircle2,
     },
-    { path: '/employee/settings', label: 'Settings', icon: Settings },
   ];
 
   const isActive = (path: string) =>
