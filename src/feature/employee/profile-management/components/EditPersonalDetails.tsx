@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { List, Calendar, Pencil } from "lucide-react";
+import { List, Calendar, Pencil, Loader2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCurrentEmployee } from "../hooks/useCurrentEmployee";
+import { updateCurrentEmployee } from "../api";
+import { UpdateProfileDto } from "../types";
+import toast from "react-hot-toast";
 
 interface FormRowProps {
   label: string;
@@ -88,26 +93,68 @@ interface PersonalDetailsForm {
   phoneNumber1: string;
   phoneNumber2: string;
   preferredName: string;
+  firstName: string;
+  lastName: string;
 }
-
-const initialData: PersonalDetailsForm = {
-  sex: "Male",
-  dateOfBirth: "2003-07-02",
-  maritalStatus: "Single",
-  pronoun: "he/him",
-  personalEmail: "kietnguyennumber1@gmail.com",
-  permanentAddress: "713 An Duong Vuong, Binh Tan District, Ho Chi Minh City",
-  currentAddress: "713 An Duong Vuong, Binh Tan District, Ho Chi Minh City",
-  phoneNumber1: "+84 89 949 6257",
-  phoneNumber2: "(empty)",
-  preferredName: "Nguyen Kid (Nguyen Tuan Kiet)",
-};
 
 export default function EditPersonalDetails() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<PersonalDetailsForm>(initialData);
+  const queryClient = useQueryClient();
+  const { data: employee, isLoading: isLoadingEmployee } = useCurrentEmployee();
+  
+  const [formData, setFormData] = useState<PersonalDetailsForm>({
+    sex: "",
+    dateOfBirth: "",
+    maritalStatus: "",
+    pronoun: "",
+    personalEmail: "",
+    permanentAddress: "",
+    currentAddress: "",
+    phoneNumber1: "",
+    phoneNumber2: "",
+    preferredName: "",
+    firstName: "",
+    lastName: "",
+  });
+  
   const [editingField, setEditingField] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof PersonalDetailsForm, string>>>({});
+
+  // Load employee data into form
+  useEffect(() => {
+    if (employee) {
+      setFormData({
+        sex: employee.sex || "",
+        dateOfBirth: employee.dateOfBirth || "",
+        maritalStatus: employee.maritalStatus || "",
+        pronoun: employee.pronoun || "",
+        personalEmail: employee.personalEmail || "",
+        permanentAddress: employee.permanentAddress || "",
+        currentAddress: employee.currentAddress || "",
+        phoneNumber1: employee.phone || "",
+        phoneNumber2: employee.phone2 || "",
+        preferredName: employee.preferredName || "",
+        firstName: employee.firstName || "",
+        lastName: employee.lastName || "",
+      });
+    }
+  }, [employee]);
+
+  // Mutation for updating profile
+  const updateMutation = useMutation({
+    mutationFn: (data: UpdateProfileDto) => updateCurrentEmployee(data),
+    onSuccess: (data) => {
+      // Update cache with new data
+      queryClient.setQueryData(['currentEmployee'], data);
+      toast.success("Profile updated successfully!");
+      navigate(-1);
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to update profile";
+      toast.error(errorMessage);
+      console.error("Update error:", error);
+    },
+  });
 
   const handleFieldChange = (field: keyof PersonalDetailsForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -162,17 +209,27 @@ export default function EditPersonalDetails() {
 
   const handleUpdateChanges = () => {
     if (!validateForm()) {
-      alert("Please fix the errors in the form before submitting.");
+      toast.error("Please fix the errors in the form before submitting.");
       return;
     }
 
-    // TODO: Add API call to save changes
-    console.log("Saving changes:", formData);
-    setEditingField(null);
-    
-    // Show success message and navigate back
-    alert("Changes updated successfully!");
-    navigate(-1);
+    // Prepare update data - only include modified fields
+    const updateData: UpdateProfileDto = {
+      firstName: formData.firstName || undefined,
+      lastName: formData.lastName || undefined,
+      preferredName: formData.preferredName || undefined,
+      sex: formData.sex || undefined,
+      dateOfBirth: formData.dateOfBirth || undefined,
+      maritalStatus: formData.maritalStatus || undefined,
+      pronoun: formData.pronoun || undefined,
+      personalEmail: formData.personalEmail || undefined,
+      phone: formData.phoneNumber1 || undefined,
+      phone2: formData.phoneNumber2 || undefined,
+      permanentAddress: formData.permanentAddress || undefined,
+      currentAddress: formData.currentAddress || undefined,
+    };
+
+    updateMutation.mutate(updateData);
   };
 
   const handleCancel = () => {
@@ -180,9 +237,36 @@ export default function EditPersonalDetails() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB").replace(/\//g, "/");
   };
+
+  if (isLoadingEmployee) {
+    return (
+      <div className="flex flex-col px-6 lg:px-[45px] py-6 lg:py-[30px] gap-6 lg:gap-[35px] rounded-2xl lg:rounded-[25px] bg-white">
+        <h2 className="text-xl lg:text-[25px] font-semibold text-black">
+          Edit Personal Details
+        </h2>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="flex flex-col px-6 lg:px-[45px] py-6 lg:py-[30px] gap-6 lg:gap-[35px] rounded-2xl lg:rounded-[25px] bg-white">
+        <h2 className="text-xl lg:text-[25px] font-semibold text-black">
+          Edit Personal Details
+        </h2>
+        <div className="flex items-center justify-center py-12">
+          <p className="text-gray-600">No employee data available</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col px-6 lg:px-[45px] py-6 lg:py-[30px] gap-6 lg:gap-[35px] rounded-2xl lg:rounded-[25px] bg-white">
@@ -279,13 +363,16 @@ export default function EditPersonalDetails() {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-start gap-4 lg:gap-[50px]">
         <button 
           onClick={handleUpdateChanges}
-          className="w-full lg:w-auto px-6 lg:px-[38px] py-3 lg:py-[15px] rounded-[25px] bg-hrms-primary text-white font-medium text-lg lg:text-xl hover:bg-hrms-primary/90 transition-colors"
+          disabled={updateMutation.isPending}
+          className="w-full lg:w-auto px-6 lg:px-[38px] py-3 lg:py-[15px] rounded-[25px] bg-hrms-primary text-white font-medium text-lg lg:text-xl hover:bg-hrms-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          Update Changes
+          {updateMutation.isPending && <Loader2 className="w-5 h-5 animate-spin" />}
+          {updateMutation.isPending ? "Updating..." : "Update Changes"}
         </button>
         <button 
           onClick={handleCancel}
-          className="w-full lg:w-auto px-6 lg:px-12 py-3 lg:py-[15px] rounded-[25px] bg-hrms-bg-light text-hrms-text-primary font-medium text-lg lg:text-xl hover:bg-hrms-bg-light/80 transition-colors"
+          disabled={updateMutation.isPending}
+          className="w-full lg:w-auto px-6 lg:px-12 py-3 lg:py-[15px] rounded-[25px] bg-hrms-bg-light text-hrms-text-primary font-medium text-lg lg:text-xl hover:bg-hrms-bg-light/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>

@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/pages/employeeProfileManagement/components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   ChevronDown,
   ClipboardCheck,

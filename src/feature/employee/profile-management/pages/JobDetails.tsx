@@ -1,9 +1,9 @@
-import NavigationBar from "@/pages/employeeProfileManagement/components/NavigationBar";
-import EmployeeSidebar from "@/pages/employeeProfileManagement/components/EmployeeSidebar";
+import NavigationBar from "@/feature/employee/profile-management/components/NavigationBar";
+import EmployeeSidebar from "@/feature/employee/profile-management/components/EmployeeSidebar";
 import JobDetailsTab from "../components/JobDetailsTab";
-import WorkingHistoryContent from "../components/WorkingHistoryContent";
+import JobDetailsContent from "../components/JobDetailsContent";
 
-export default function WorkingHistory() {
+export default function JobDetails() {
   return (
     <div className="min-h-screen bg-white">
       <NavigationBar />
@@ -14,7 +14,7 @@ export default function WorkingHistory() {
         <main className="flex-1 bg-hrms-bg-page min-h-[calc(100vh-85px)] p-4 lg:p-[30px]">
           <div className="flex flex-col gap-[30px] max-w-[1177px]">
             <JobDetailsTab />
-            <WorkingHistoryContent />
+            <JobDetailsContent />
           </div>
         </main>
       </div>

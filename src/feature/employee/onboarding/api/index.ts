@@ -35,4 +35,3 @@ export const saveOnboardingProgress = async (
   );
   return response.data;
 };
-

@@ -1,8 +1,8 @@
-import NavigationBar from "@/pages/employeeProfileManagement/components/NavigationBar";
-import EmployeeSidebar from "@/pages/employeeProfileManagement/components/EmployeeSidebar";
-import ProfileTabs from "@/pages/employeeProfileManagement/components/ProfileTabs";
-import IDsContent from "@/pages/employeeProfileManagement/components/IDsContent";
-import ChangeRequestsHistory from "@/pages/employeeProfileManagement/components/ChangeRequestsHistory";
+import NavigationBar from "@/feature/employee/profile-management/components/NavigationBar";
+import EmployeeSidebar from "@/feature/employee/profile-management/components/EmployeeSidebar";
+import ProfileTabs from "@/feature/employee/profile-management/components/ProfileTabs";
+import IDsContent from "@/feature/employee/profile-management/components/IDsContent";
+import ChangeRequestsHistory from "@/feature/employee/profile-management/components/ChangeRequestsHistory";
 import "./EmployeeIDs.standalone.css";
 
 export default function EmployeeIDs() {
