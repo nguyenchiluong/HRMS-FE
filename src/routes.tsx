@@ -101,7 +101,7 @@ const OnboardingSuccess = lazy(
 const BonusSettings = lazy(
   () => import('./pages/AdminBonusSettings/BonusSettings'),
 );
-
+const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
 const routes: RouteObject[] = [
   // =================================================================
   // 0. Token-based Routes (Accessible by anyone with valid token)
@@ -240,6 +240,15 @@ const routes: RouteObject[] = [
             children: [
               { index: true, element: <Placeholder title="My Requests" /> },
               // ...
+            ],
+          },
+          {
+            path: 'campaigns',
+            children: [
+              { index: true, element: <EmployeeCampaignHub /> },
+              { path: 'my-history', element: <Placeholder title="My Campaign History" /> },
+              // Detail page for a specific campaign if needed
+              { path: ':id', element: <Placeholder title="Campaign Details" /> },
             ],
           },
           { path: 'settings', element: <AccountSettings /> },
