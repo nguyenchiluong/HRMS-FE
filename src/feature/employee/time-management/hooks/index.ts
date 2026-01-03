@@ -6,7 +6,7 @@ export * from './useTimesheet';
 export * from './useRequestTypes';
 export * from './useLeaveBalances';
 export * from './useTimeOffRequests';
+export * from './useAttendance';
 
-// Note: File upload hooks are now in @/hooks/useFileUpload
-// The deprecated re-export in ./useFileUpload.ts is kept for backward compatibility
+// Note: File upload hooks are available at @/hooks/useFileUpload
 

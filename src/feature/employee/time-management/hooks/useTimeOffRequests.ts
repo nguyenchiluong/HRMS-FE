@@ -10,6 +10,44 @@ import type {
   TimeOffRequestResponse,
 } from '../types';
 
+// ==================== Utility Functions ====================
+
+/**
+ * Extract error message from axios error
+ */
+const getErrorMessage = (error: unknown, defaultMessage: string): string => {
+  if (isAxiosError(error)) {
+    return (
+      error.response?.data?.message ||
+      error.response?.data?.error?.message ||
+      error.message ||
+      defaultMessage
+    );
+  }
+  return defaultMessage;
+};
+
+/**
+ * Handle mutation error with toast notification
+ */
+const handleMutationError = (error: unknown, defaultMessage: string) => {
+  console.error(error);
+  const message = getErrorMessage(error, defaultMessage);
+  toast.error(message);
+};
+
+// ==================== Query Keys ====================
+
+export const timeOffKeys = {
+  all: ['timeOffRequests'] as const,
+  list: (params?: {
+    page?: number;
+    limit?: number;
+    status?: 'pending' | 'approved' | 'rejected' | 'cancelled';
+    type?: string;
+  }) => [...timeOffKeys.all, params] as const,
+};
+
 /**
  * Convert API response to frontend LeaveRequest format
  */
@@ -31,6 +69,9 @@ const convertToLeaveRequest = (
 
 /**
  * Hook to fetch time-off request history
+ * 
+ * Note: Query errors are available via the returned `error` property.
+ * Use React Query's built-in error handling in components.
  */
 export const useTimeOffRequests = (params?: {
   page?: number;
@@ -49,7 +90,7 @@ export const useTimeOffRequests = (params?: {
       totalPages: number;
     };
   }>({
-    queryKey: ['timeOffRequests', params],
+    queryKey: timeOffKeys.list(params),
     queryFn: async () => {
       const response = await getTimeOffRequests(params);
       return {
@@ -60,7 +101,6 @@ export const useTimeOffRequests = (params?: {
     enabled: isAuthenticated,
     staleTime: 1 * 60 * 1000, // 1 minute
     retry: (failureCount, error) => {
-      // Don't retry on 401 errors
       if (isAxiosError(error) && error.response?.status === 401) {
         return false;
       }
@@ -69,38 +109,51 @@ export const useTimeOffRequests = (params?: {
   });
 };
 
+interface UseSubmitTimeOffRequestOptions {
+  onSuccess?: (response: Awaited<ReturnType<typeof submitTimeOffRequest>>) => void;
+  onError?: (error: unknown) => void;
+}
+
 /**
  * Hook to submit a time-off request
+ * 
+ * Leverages React Query's onSuccess and onError callbacks.
+ * Errors are automatically handled with toast notifications.
  */
-export const useSubmitTimeOffRequest = () => {
+export const useSubmitTimeOffRequest = (options?: UseSubmitTimeOffRequestOptions) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (request: SubmitTimeOffRequest) => {
-      return await submitTimeOffRequest(request);
-    },
+    mutationFn: submitTimeOffRequest,
     onSuccess: (response) => {
       toast.success(response.message || 'Time-off request submitted successfully!');
-      // Invalidate and refetch time-off requests
-      queryClient.invalidateQueries({ queryKey: ['timeOffRequests'] });
+      // Invalidate and refetch time-off requests and leave balances
+      queryClient.invalidateQueries({ 
+        queryKey: timeOffKeys.all,
+        exact: false, // Match all time-off request queries regardless of params
+      });
       queryClient.invalidateQueries({ queryKey: ['leaveBalances'] });
+      options?.onSuccess?.(response);
     },
     onError: (error) => {
-      console.error(error);
-      if (isAxiosError(error)) {
-        const message = error.response?.data?.message || error.message;
-        toast.error(message || 'Failed to submit time-off request. Please try again.');
-      } else {
-        toast.error('Failed to submit time-off request. Please try again.');
-      }
+      handleMutationError(error, 'Failed to submit time-off request. Please try again.');
+      options?.onError?.(error);
     },
   });
 };
 
+interface UseCancelTimeOffRequestOptions {
+  onSuccess?: (response: Awaited<ReturnType<typeof cancelTimeOffRequest>>) => void;
+  onError?: (error: unknown) => void;
+}
+
 /**
  * Hook to cancel a time-off request
+ * 
+ * Leverages React Query's onSuccess and onError callbacks.
+ * Errors are automatically handled with toast notifications.
  */
-export const useCancelTimeOffRequest = () => {
+export const useCancelTimeOffRequest = (options?: UseCancelTimeOffRequestOptions) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -115,18 +168,17 @@ export const useCancelTimeOffRequest = () => {
     },
     onSuccess: (response) => {
       toast.success(response.message || 'Time-off request cancelled successfully!');
-      // Invalidate and refetch time-off requests
-      queryClient.invalidateQueries({ queryKey: ['timeOffRequests'] });
+      // Invalidate and refetch time-off requests and leave balances
+      queryClient.invalidateQueries({ 
+        queryKey: timeOffKeys.all,
+        exact: false, // Match all time-off request queries regardless of params
+      });
       queryClient.invalidateQueries({ queryKey: ['leaveBalances'] });
+      options?.onSuccess?.(response);
     },
     onError: (error) => {
-      console.error(error);
-      if (isAxiosError(error)) {
-        const message = error.response?.data?.message || error.message;
-        toast.error(message || 'Failed to cancel time-off request. Please try again.');
-      } else {
-        toast.error('Failed to cancel time-off request. Please try again.');
-      }
+      handleMutationError(error, 'Failed to cancel time-off request. Please try again.');
+      options?.onError?.(error);
     },
   });
 };

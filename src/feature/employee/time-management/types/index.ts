@@ -280,3 +280,10 @@ export interface AttendanceRecord {
 }
 
 export type ClockStatus = 'clocked-out' | 'clocked-in';
+
+export interface CurrentClockStatusResponse {
+  status: ClockStatus;
+  clockInTime: string | null; // ISO 8601 timestamp
+  currentWorkingMinutes: number | null;
+  todayRecordId: string | null;
+}

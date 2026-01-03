@@ -8,6 +8,7 @@ import type {
   AdjustTimesheetRequest,
   ApproveTimesheetRequest,
   CancelTimeOffRequest,
+  CurrentClockStatusResponse,
   LeaveBalance,
   PaginatedResponse,
   RejectTimesheetRequest,
@@ -21,6 +22,7 @@ import type {
 
 const BASE_URL = '/api/v1/timesheet';
 const TIME_OFF_BASE_URL = '/api/time-off';
+const ATTENDANCE_BASE_URL = '/api/v1/attendance';
 
 // ==================== Task Management ====================
 
@@ -266,6 +268,73 @@ export const getRequestTypes = async (): Promise<{
       requiresApproval: boolean;
     }>;
   }>('/api/v1/request-types');
+  return response.data;
+};
+
+// ==================== Attendance APIs ====================
+
+/**
+ * API response format for attendance records (dates as ISO strings)
+ */
+interface AttendanceRecordApiResponse {
+  id: string;
+  date: string; // ISO date string
+  clockInTime: string | null; // ISO timestamp or null
+  clockOutTime: string | null; // ISO timestamp or null
+  totalWorkingMinutes: number | null;
+}
+
+/**
+ * Get current clock status for the authenticated employee
+ */
+export const getCurrentClockStatus =
+  async (): Promise<CurrentClockStatusResponse> => {
+    const response = await dotnetApi.get<CurrentClockStatusResponse>(
+      `${ATTENDANCE_BASE_URL}/status`,
+    );
+    return response.data;
+  };
+
+/**
+ * Clock in for the authenticated employee
+ */
+export const clockIn = async (): Promise<{
+  message: string;
+  data: AttendanceRecordApiResponse;
+}> => {
+  const response = await dotnetApi.post<{
+    message: string;
+    data: AttendanceRecordApiResponse;
+  }>(`${ATTENDANCE_BASE_URL}/clock-in`, {});
+  return response.data;
+};
+
+/**
+ * Clock out for the authenticated employee
+ */
+export const clockOut = async (): Promise<{
+  message: string;
+  data: AttendanceRecordApiResponse;
+}> => {
+  const response = await dotnetApi.post<{
+    message: string;
+    data: AttendanceRecordApiResponse;
+  }>(`${ATTENDANCE_BASE_URL}/clock-out`, {});
+  return response.data;
+};
+
+/**
+ * Get attendance history with pagination
+ */
+export const getAttendanceHistory = async (params?: {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+}): Promise<PaginatedResponse<AttendanceRecordApiResponse>> => {
+  const response = await dotnetApi.get<
+    PaginatedResponse<AttendanceRecordApiResponse>
+  >(`${ATTENDANCE_BASE_URL}/history`, { params });
   return response.data;
 };
 
