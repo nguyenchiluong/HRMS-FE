@@ -12,7 +12,7 @@ export interface NationalIdDto {
 
 export interface EmployeeDto {
   id: number;
-  fullName?: string;
+  fullName: string;
   firstName?: string | null;
   lastName?: string | null;
   preferredName?: string | null;
@@ -34,25 +34,15 @@ export interface EmployeeDto {
   socialInsuranceNumber?: string | null;
   taxId?: string | null;
   startDate?: string | null;
-  positionTitle?: string | null;
-  departmentName?: string | null;
-  jobLevel?: string | null;
-  employeeType?: string | null;
-  timeType?: string | null;
+  positionId?: number | null;
+  departmentId?: number | null;
+  jobLevelId?: number | null;
+  employmentTypeId?: number | null;
+  timeTypeId?: number | null;
+  managerId?: number | null;
   status?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
-  // Legacy fields for backward compatibility
-  hireDate?: string;
-  departmentId?: number | null;
-  positionId?: number | null;
-  positionName?: string | null;
-  jobLevelId?: number | null;
-  jobLevelName?: string | null;
-  employmentTypeId?: number | null;
-  employmentTypeName?: string | null;
-  timeTypeId?: number | null;
-  timeTypeName?: string | null;
 }
 
 export interface UpdateProfileDto {
@@ -120,7 +110,4 @@ export interface UpdateBankAccountDto {
   accountNumber?: string | null;
   bankName?: string | null;
   accountName?: string | null;
-}
-  gpa?: number | null;
-  country?: string | null;
 }

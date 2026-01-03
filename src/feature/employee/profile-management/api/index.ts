@@ -15,6 +15,13 @@ import {
   CreateBankAccountDto,
   UpdateBankAccountDto
 } from '../types';
+import type {
+  Department,
+  Position,
+  JobLevel,
+  EmploymentType,
+  TimeType,
+} from '@/types/employee';
 
 /**
  * Gets the current authenticated employee's information from JWT token
@@ -166,4 +173,51 @@ export const deleteMyBankAccount = async (
   await dotnetApi.delete(
     `/api/bankaccount/me/${encodeURIComponent(accountNumber)}/${encodeURIComponent(bankName)}`
   );
+};
+
+// Lookup APIs for reference data
+
+/**
+ * Gets all departments
+ * @returns Promise with array of departments
+ */
+export const getDepartments = async (): Promise<Department[]> => {
+  const response = await dotnetApi.get<Department[]>('/api/Departments');
+  return response.data;
+};
+
+/**
+ * Gets all positions
+ * @returns Promise with array of positions
+ */
+export const getPositions = async (): Promise<Position[]> => {
+  const response = await dotnetApi.get<Position[]>('/api/Positions');
+  return response.data;
+};
+
+/**
+ * Gets all job levels
+ * @returns Promise with array of job levels
+ */
+export const getJobLevels = async (): Promise<JobLevel[]> => {
+  const response = await dotnetApi.get<JobLevel[]>('/api/JobLevels');
+  return response.data;
+};
+
+/**
+ * Gets all employment types
+ * @returns Promise with array of employment types
+ */
+export const getEmploymentTypes = async (): Promise<EmploymentType[]> => {
+  const response = await dotnetApi.get<EmploymentType[]>('/api/EmploymentTypes');
+  return response.data;
+};
+
+/**
+ * Gets all time types
+ * @returns Promise with array of time types
+ */
+export const getTimeTypes = async (): Promise<TimeType[]> => {
+  const response = await dotnetApi.get<TimeType[]>('/api/TimeTypes');
+  return response.data;
 };
