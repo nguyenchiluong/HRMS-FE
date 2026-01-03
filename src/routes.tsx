@@ -6,8 +6,8 @@ import PublicRoute from './components/PublicRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
-import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
-import WorkingHistory from './pages/employeeProfileManagement/pages/WorkingHistory';
+import EditPersonalInfo from '@/feature/employee/profile-management/pages/EditPersonalInfo';
+import WorkingHistory from '@/feature/employee/profile-management/pages/WorkingHistory';
 
 const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -16,22 +16,22 @@ const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
 const EmployeeIDs = lazy(
-  () => import('./pages/employeeProfileManagement/pages/EmployeeIDs'),
+  () => import('@/feature/employee/profile-management/pages/EmployeeIDs'),
 );
 const EmployeeEditIDs = lazy(
-  () => import('./pages/employeeProfileManagement/pages/EmployeeEditID'),
+  () => import('@/feature/employee/profile-management/pages/EmployeeEditID'),
 );
 const PersonalInfo = lazy(
-  () => import('./pages/employeeProfileManagement/pages/PersonalInfo'),
+  () => import('@/feature/employee/profile-management/pages/PersonalInfo'),
 );
 const Education = lazy(
-  () => import('./pages/employeeProfileManagement/pages/EmployeeEducation'),
+  () => import('@/feature/employee/profile-management/pages/EmployeeEducation'),
 );
 const Financial = lazy(
-  () => import('./pages/employeeProfileManagement/pages/Financial'),
+  () => import('@/feature/employee/profile-management/pages/Financial'),
 );
 const JobDetails = lazy(
-  () => import('./pages/employeeProfileManagement/pages/JobDetails'),
+  () => import('@/feature/employee/profile-management/pages/JobDetails'),
 );
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));

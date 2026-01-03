@@ -1,37 +1,25 @@
 import { useState, useRef, useEffect } from "react";
-import { BookOpen, X, File, Image, FileText } from "lucide-react";
+import { BookOpen, X, File, Image, FileText, Loader2, Trash2, Edit } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage, useField } from "formik";
 import type { FormikProps } from "formik";
 import * as Yup from "yup";
-import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
-import { Label } from "./ui/label";
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-
-interface EducationEntry {
-  id: string;
-  school: string;
-  country: string;
-  degree: string;
-  fieldOfStudy: string;
-  average: string;
-  startYear: string;
-  endYear: string;
-}
+} from '@/components/ui/select';
+import { useMyEducations, useCreateEducation, useUpdateEducation, useDeleteEducation } from '../hooks/useEducation';
+import { CreateEducationDto, UpdateEducationDto } from '../types';
 
 interface EducationFormValues {
   country: string;
-  school: string;
   degree: string;
   fieldOfStudy: string;
-  startYear: string;
-  endYear: string;
   averageGrade: string;
   comment: string;
   attachments: FileList | null;
@@ -108,14 +96,6 @@ const countryOptions = [
   { value: "Singapore", label: "Singapore" },
 ];
 
-const schoolOptions = [
-  { value: "University of Science, Vietnam National University Ho Chi Minh", label: "University of Science, National University..." },
-  { value: "RMIT University", label: "RMIT University" },
-  { value: "FPT University", label: "FPT University" },
-  { value: "Hanoi University of Technology", label: "Hanoi University of Technology" },
-  { value: "Other", label: "Other" },
-];
-
 const degreeOptions = [
   { value: "High School", label: "High School" },
   { value: "Associate", label: "Associate" },
@@ -133,19 +113,15 @@ const fieldOfStudyOptions = [
   { value: "Other", label: "Other" },
 ];
 
-const yearOptions = Array.from({ length: 30 }, (_, i) => {
-  const year = (2030 - i).toString();
-  return { value: year, label: year };
-});
 
 const validationSchema = Yup.object({
-  country: Yup.string().required("Country is required"),
-  school: Yup.string().required("School is required"),
-  degree: Yup.string().required("Degree is required"),
-  fieldOfStudy: Yup.string(),
-  startYear: Yup.string().required("Start year is required"),
-  endYear: Yup.string().required("End year is required"),
-  averageGrade: Yup.string(),
+  country: Yup.string(),
+  degree: Yup.string().required("Degree is required").max(200, "Degree must not exceed 200 characters"),
+  fieldOfStudy: Yup.string().max(200, "Field of study must not exceed 200 characters"),
+  averageGrade: Yup.number()
+    .nullable()
+    .min(0.0, "GPA must be at least 0.0")
+    .max(4.0, "GPA must not exceed 4.0"),
   comment: Yup.string(),
 });
 
@@ -156,9 +132,10 @@ interface EducationModalProps {
   submitLabel: string;
   initialValues: EducationFormValues;
   onSubmit: (values: EducationFormValues) => void;
+  isLoading?: boolean;
 }
 
-function EducationModal({ isOpen, onClose, title, submitLabel, initialValues, onSubmit }: EducationModalProps) {
+function EducationModal({ isOpen, onClose, title, submitLabel, initialValues, onSubmit, isLoading = false }: EducationModalProps) {
   const fileUrlsRef = useRef<Map<File, string>>(new Map());
 
   useEffect(() => {
@@ -199,13 +176,10 @@ function EducationModal({ isOpen, onClose, title, submitLabel, initialValues, on
             <Form className="flex flex-col gap-1.5">
               {/* Form Fields */}
               <div className="py-2.5">
-                <FormField label="Country" name="country" required type="select" options={countryOptions} />
-                <FormField label="School" name="school" required type="select" options={schoolOptions} />
+                <FormField label="Country" name="country" type="select" options={countryOptions} />
                 <FormField label="Degree" name="degree" required type="select" options={degreeOptions} />
                 <FormField label="Field of Study" name="fieldOfStudy" type="select" options={fieldOfStudyOptions} />
-                <FormField label="Start Year" name="startYear" required type="select" options={yearOptions} />
-                <FormField label="End Year" name="endYear" required type="select" options={yearOptions} />
-                <FormField label="Average Grade" name="averageGrade" type="text" placeholder="3.65" />
+                <FormField label="Average Grade (GPA)" name="averageGrade" type="text" placeholder="3.65" />
               </div>
 
               {/* Attachments */}
@@ -326,13 +300,14 @@ function EducationModal({ isOpen, onClose, title, submitLabel, initialValues, on
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-8 py-[12px] rounded-[25px] text-black text-lg font-medium hover:bg-gray-100"
+                  disabled={isLoading}
+                  className="px-8 py-[12px] rounded-[25px] text-black text-lg font-medium hover:bg-gray-100 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoading}
                   onClick={async () => {
                     // Validate the form first
                     const validationErrors = await validationSchema.validate(values).catch((err) => err);
@@ -344,8 +319,9 @@ function EducationModal({ isOpen, onClose, title, submitLabel, initialValues, on
                     console.log("Submitting with values:", values);
                     onSubmit(values);
                   }}
-                  className="flex-1 px-6 py-[12px] bg-hrms-primary rounded-[25px] text-white text-lg font-medium hover:bg-hrms-primary/90 disabled:opacity-50"
+                  className="flex-1 px-6 py-[12px] bg-hrms-primary rounded-[25px] text-white text-lg font-medium hover:bg-hrms-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   {submitLabel}
                 </button>
               </div>
@@ -360,91 +336,103 @@ function EducationModal({ isOpen, onClose, title, submitLabel, initialValues, on
 export default function EducationContent() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingEducationId, setEditingEducationId] = useState<string | null>(null);
+  const [editingEducationId, setEditingEducationId] = useState<number | null>(null);
   
-  const [educationList, setEducationList] = useState<EducationEntry[]>([
-    {
-      id: "1",
-      school: "University of Science, Vietnam National University Ho Chi Minh",
-      country: "Vietnam",
-      degree: "Bachelor",
-      fieldOfStudy: "Information Technology",
-      average: "3.65/4.0",
-      startYear: "2021",
-      endYear: "2025",
-    },
-  ]);
+  const { data: educations, isLoading, isError, error } = useMyEducations();
+  const createMutation = useCreateEducation();
+  const updateMutation = useUpdateEducation();
+  const deleteMutation = useDeleteEducation();
 
-  const getEditInitialValues = (education: EducationEntry): EducationFormValues => ({
-    country: education.country,
-    school: education.school,
-    degree: education.degree,
-    fieldOfStudy: education.fieldOfStudy,
-    startYear: education.startYear,
-    endYear: education.endYear,
-    averageGrade: education.average.split("/")[0],
-    comment: "",
-    attachments: null,
-  });
+  const handleAddSubmit = (values: EducationFormValues) => {
+    const data: CreateEducationDto = {
+      degree: values.degree,
+      fieldOfStudy: values.fieldOfStudy || null,
+      gpa: values.averageGrade ? parseFloat(values.averageGrade) : null,
+      country: values.country || null,
+    };
+
+    createMutation.mutate(data, {
+      onSuccess: () => {
+        setShowAddModal(false);
+      },
+    });
+  };
+
+  const handleEditSubmit = (values: EducationFormValues) => {
+    if (!editingEducationId) return;
+
+    const data: UpdateEducationDto = {
+      degree: values.degree,
+      fieldOfStudy: values.fieldOfStudy || null,
+      gpa: values.averageGrade ? parseFloat(values.averageGrade) : null,
+      country: values.country || null,
+    };
+
+    updateMutation.mutate(
+      { id: editingEducationId, data },
+      {
+        onSuccess: () => {
+          setShowEditModal(false);
+          setEditingEducationId(null);
+        },
+      }
+    );
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this education record?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleEdit = (id: number) => {
+    setEditingEducationId(id);
+    setShowEditModal(true);
+  };
+
+  const getEditInitialValues = (): EducationFormValues => {
+    const education = educations?.find(e => e.id === editingEducationId);
+    return {
+      country: education?.country || "",
+      degree: education?.degree || "",
+      fieldOfStudy: education?.fieldOfStudy || "",
+      averageGrade: education?.gpa?.toString() || "",
+      comment: "",
+      attachments: null,
+    };
+  };
 
   const addInitialValues: EducationFormValues = {
-    country: "Vietnam",
-    school: "",
+    country: "",
     degree: "",
     fieldOfStudy: "",
-    startYear: "",
-    endYear: "",
     averageGrade: "",
     comment: "",
     attachments: null,
   };
 
-  const handleEditClick = (educationId: string) => {
-    setEditingEducationId(educationId);
-    setShowEditModal(true);
-  };
-
-  const handleEditSubmit = (values: EducationFormValues) => {
-    console.log("Editing education with values:", values);
-    if (!editingEducationId) return;
-    
-    setEducationList((prev) =>
-      prev.map((edu) =>
-        edu.id === editingEducationId
-          ? {
-              ...edu,
-              country: values.country,
-              school: values.school,
-              degree: values.degree,
-              fieldOfStudy: values.fieldOfStudy,
-              startYear: values.startYear,
-              endYear: values.endYear,
-              average: values.averageGrade ? `${values.averageGrade}/4.0` : edu.average,
-            }
-          : edu
-      )
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-[25px] shadow-md p-6 lg:p-10">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+        </div>
+      </div>
     );
+  }
 
-    setShowEditModal(false);
-    setEditingEducationId(null);
-  };
+  if (isError) {
+    return (
+      <div className="bg-white rounded-[25px] shadow-md p-6 lg:p-10">
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <p className="text-red-500">Error loading education records</p>
+          <p className="text-gray-600 text-sm">{error instanceof Error ? error.message : 'Unknown error'}</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleAddSubmit = (values: EducationFormValues) => {
-    const newEducation: EducationEntry = {
-      id: Date.now().toString(),
-      country: values.country,
-      school: values.school,
-      degree: values.degree,
-      fieldOfStudy: values.fieldOfStudy,
-      average: values.averageGrade ? `${values.averageGrade}/4.0` : "",
-      startYear: values.startYear,
-      endYear: values.endYear,
-    };
-    setEducationList((prev) => [...prev, newEducation]);
-    setShowAddModal(false);
-  };
 
-  const editingEducation = educationList.find((edu) => edu.id === editingEducationId);
 
   return (
     <div className="flex-1">
@@ -453,51 +441,69 @@ export default function EducationContent() {
         
         {/* Education List */}
         <div className="flex flex-col gap-6">
-          {educationList.map((education) => (
-            <div key={education.id} className="flex flex-col gap-0 pb-[20px] pt-2.5 border-b border-gray-200 last:border-b-0">
-              {/* Education Entry Header */}
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start px-2.5 py-[5px] gap-2">
-                <h3 className="text-black text-base lg:text-[17px] font-medium max-w-[541px]">
-                  {education.school}
-                </h3>
-                <span className="text-hrms-text-secondary text-base lg:text-[17px] font-normal whitespace-nowrap">
-                  {education.startYear} - {education.endYear}
-                </span>
-              </div>
-              
-              {/* Education Details */}
-              <div className="flex flex-col">
-                <div className="flex items-start gap-4 lg:gap-[45px] px-2.5 py-[3px]">
-                  <span className="text-black text-sm lg:text-[15px] font-normal w-[120px] lg:w-[150px] flex-shrink-0">Country</span>
-                  <span className="text-hrms-text-secondary text-sm lg:text-[15px] font-normal">{education.country}</span>
-                </div>
-                <div className="flex items-start gap-4 lg:gap-[45px] px-2.5 py-[3px]">
-                  <span className="text-black text-sm lg:text-[15px] font-normal w-[120px] lg:w-[150px] flex-shrink-0">Degree</span>
-                  <span className="text-hrms-text-secondary text-sm lg:text-[15px] font-normal">{education.degree}</span>
-                </div>
-                <div className="flex items-start gap-4 lg:gap-[45px] px-2.5 py-[3px]">
-                  <span className="text-black text-sm lg:text-[15px] font-normal w-[120px] lg:w-[150px] flex-shrink-0">Field of Study</span>
-                  <span className="text-hrms-text-secondary text-sm lg:text-[15px] font-normal">{education.fieldOfStudy}</span>
-                </div>
-                {education.average && (
-                  <div className="flex items-start gap-4 lg:gap-[45px] px-2.5 py-[3px]">
-                    <span className="text-black text-sm lg:text-[15px] font-normal w-[120px] lg:w-[150px] flex-shrink-0">Average</span>
-                    <span className="text-hrms-text-secondary text-sm lg:text-[15px] font-normal">{education.average}</span>
+          {educations && educations.length > 0 ? (
+            educations.map((education) => (
+              <div key={education.id} className="flex flex-col gap-0 pb-[20px] pt-2.5 border-b border-gray-200 last:border-b-0">
+                {/* Education Entry Header */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start px-2.5 py-[5px] gap-2">
+                  <h3 className="text-black text-base lg:text-[17px] font-medium max-w-[541px]">
+                    {education.degree}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEdit(education.id)}
+                      className="text-sky-500 hover:text-sky-600 p-1"
+                      title="Edit education"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(education.id)}
+                      className="text-red-500 hover:text-red-600 p-1"
+                      title="Delete education"
+                      disabled={deleteMutation.isPending}
+                    >
+                      {deleteMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
-                )}
+                </div>
+                
+                {/* Education Details */}
+                <div className="flex flex-col">
+                  {education.country && (
+                    <div className="flex items-start gap-4 lg:gap-[45px] px-2.5 py-[3px]">
+                      <span className="text-black text-sm lg:text-[15px] font-normal w-[120px] lg:w-[150px] flex-shrink-0">Country</span>
+                      <span className="text-hrms-text-secondary text-sm lg:text-[15px] font-normal">{education.country}</span>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-4 lg:gap-[45px] px-2.5 py-[3px]">
+                    <span className="text-black text-sm lg:text-[15px] font-normal w-[120px] lg:w-[150px] flex-shrink-0">Degree</span>
+                    <span className="text-hrms-text-secondary text-sm lg:text-[15px] font-normal">{education.degree}</span>
+                  </div>
+                  {education.fieldOfStudy && (
+                    <div className="flex items-start gap-4 lg:gap-[45px] px-2.5 py-[3px]">
+                      <span className="text-black text-sm lg:text-[15px] font-normal w-[120px] lg:w-[150px] flex-shrink-0">Field of Study</span>
+                      <span className="text-hrms-text-secondary text-sm lg:text-[15px] font-normal">{education.fieldOfStudy}</span>
+                    </div>
+                  )}
+                  {education.gpa && (
+                    <div className="flex items-start gap-4 lg:gap-[45px] px-2.5 py-[3px]">
+                      <span className="text-black text-sm lg:text-[15px] font-normal w-[120px] lg:w-[150px] flex-shrink-0">GPA</span>
+                      <span className="text-hrms-text-secondary text-sm lg:text-[15px] font-normal">{education.gpa.toFixed(2)}/4.0</span>
+                    </div>
+                  )}
+                </div>
               </div>
-
-              {/* Edit Button for each entry */}
-              <div className="mt-4 px-2.5">
-                <button 
-                  onClick={() => handleEditClick(education.id)}
-                  className="w-[120px] lg:w-[140px] px-0 py-[10px] lg:py-[12px] bg-hrms-bg-light rounded-[25px] text-black text-base lg:text-lg font-medium hover:bg-[#d4e3f3] transition-colors"
-                >
-                  EDIT
-                </button>
-              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No education records found. Click "Add New" to add one.
             </div>
-          ))}
+          )}
         </div>
 
         {/* Add Education Link */}
@@ -513,19 +519,18 @@ export default function EducationContent() {
       </div>
 
       {/* Edit Education Modal */}
-      {editingEducation && (
-        <EducationModal
-          isOpen={showEditModal}
-          onClose={() => {
-            setShowEditModal(false);
-            setEditingEducationId(null);
-          }}
-          title="Edit Education"
-          submitLabel="Update Changes"
-          initialValues={getEditInitialValues(editingEducation)}
-          onSubmit={handleEditSubmit}
-        />
-      )}
+      <EducationModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingEducationId(null);
+        }}
+        title="Edit Education"
+        submitLabel="Update Changes"
+        initialValues={getEditInitialValues()}
+        onSubmit={handleEditSubmit}
+        isLoading={updateMutation.isPending}
+      />
 
       {/* Add Education Modal */}
       <EducationModal
@@ -535,8 +540,10 @@ export default function EducationContent() {
         submitLabel="Add Education"
         initialValues={addInitialValues}
         onSubmit={handleAddSubmit}
+        isLoading={createMutation.isPending}
       />
     </div>
   );
 }
+
 

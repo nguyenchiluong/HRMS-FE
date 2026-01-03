@@ -1,19 +1,24 @@
-import { Edit, List, Calendar, X, File, Image, FileText } from "lucide-react";
+import { Edit, List, Calendar, X, File, Image, FileText, Loader2 } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage, useField } from "formik";
 import type { FormikProps } from "formik";
 import * as Yup from "yup";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
-import { Label } from "./ui/label";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCurrentEmployee } from "../hooks/useCurrentEmployee";
+import { updateCurrentEmployee } from "../api";
+import { UpdateProfileDto } from "../types";
+import toast from "react-hot-toast";
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
+} from '@/components/ui/select';
 
 interface FormFieldRowProps {
   label: string;
@@ -94,7 +99,8 @@ function SelectFieldRow({ label, name, icon = "list", options }: SelectFieldRowP
 }
 
 interface FormValues {
-  legalFullName: string;
+  firstName: string;
+  lastName: string;
   nationality: string;
   nationalIdNumber: string;
   nationalIdIssuedDate: string;
@@ -107,9 +113,12 @@ interface FormValues {
 }
 
 const validationSchema = Yup.object({
-  legalFullName: Yup.string()
-    .required("Legal full name is required")
-    .min(2, "Legal full name must be at least 2 characters"),
+  firstName: Yup.string()
+    .required("First name is required")
+    .min(2, "First name must be at least 2 characters"),
+  lastName: Yup.string()
+    .required("Last name is required")
+    .min(2, "Last name must be at least 2 characters"),
   nationality: Yup.string()
     .required("Nationality is required"),
   nationalIdNumber: Yup.string()
@@ -157,30 +166,73 @@ const nationalityOptions = [
   { value: "Malaysia", label: "Malaysia" },
 ];
 
-const initialValues: FormValues = {
-  legalFullName: "Nguyen Tuan Kiet",
-  nationality: "Vietnam",
-  nationalIdNumber: "715900132",
-  nationalIdIssuedDate: "2021-04-22",
-  nationalIdExpirationDate: "2028-09-25",
-  nationalIdIssuedBy: "Director General of The Police Department",
-  socialInsuranceNumber: "5220031234",
-  taxIdNumber: "5220031234",
-  comment: "",
-  attachments: null,
-};
-
 export default function EditIDsContent() {
   const fileUrlsRef = useRef<Map<File, string>>(new Map());
   const navigate = useNavigate();
-  const handleSubmit = (values: FormValues) => {
-    console.log("Form submitted:", values);
-    // Handle form submission here
-    // You can add API call or other logic
+  const queryClient = useQueryClient();
+  const { data: employee, isLoading } = useCurrentEmployee();
 
-    // Navigate back to the previous page after successful submission
-    navigate(-1);
+  // Mutation for updating profile
+  const updateMutation = useMutation({
+    mutationFn: (data: UpdateProfileDto) => updateCurrentEmployee(data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['currentEmployee'], data);
+      toast.success("IDs updated successfully!");
+      navigate(-1);
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to update IDs";
+      toast.error(errorMessage);
+      console.error("Update error:", error);
+    },
+  });
+
+  const handleSubmit = (values: FormValues) => {
+    const updateData: UpdateProfileDto = {
+      firstName: values.firstName,
+      lastName: values.lastName,
+      nationalId: {
+        country: values.nationality,
+        number: values.nationalIdNumber,
+        issuedDate: values.nationalIdIssuedDate,
+        expirationDate: values.nationalIdExpirationDate,
+        issuedBy: values.nationalIdIssuedBy,
+      },
+      socialInsuranceNumber: values.socialInsuranceNumber,
+      taxId: values.taxIdNumber,
+    };
+
+    updateMutation.mutate(updateData);
   };
+
+  const initialValues: FormValues = {
+    firstName: employee?.firstName || "",
+    lastName: employee?.lastName || "",
+    nationality: employee?.nationalIdCountry || "",
+    nationalIdNumber: employee?.nationalIdNumber || "",
+    nationalIdIssuedDate: employee?.nationalIdIssuedDate || "",
+    nationalIdExpirationDate: employee?.nationalIdExpirationDate || "",
+    nationalIdIssuedBy: employee?.nationalIdIssuedBy || "",
+    socialInsuranceNumber: employee?.socialInsuranceNumber || "",
+    taxIdNumber: employee?.taxId || "",
+    comment: "",
+    attachments: null,
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 bg-hrms-bg-page">
+        <div className="bg-white rounded-[25px] px-4 lg:px-[45px] py-4 lg:py-[30px] pb-8 lg:pb-12">
+          <h2 className="text-hrms-text-primary text-xl lg:text-[25px] font-semibold mb-2.5">
+            Edit Your IDs
+          </h2>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -208,8 +260,13 @@ export default function EditIDsContent() {
             <Form className="pb-4">
               <div className="flex flex-col gap-2.5 pb-[30px] mb-2.5">
                 <FormFieldRow
-                  label="Legal Full Name"
-                  name="legalFullName"
+                  label="First Name"
+                  name="firstName"
+                  icon="edit"
+                />
+                <FormFieldRow
+                  label="Last Name"
+                  name="lastName"
                   icon="edit"
                 />
                 <SelectFieldRow
@@ -420,14 +477,17 @@ export default function EditIDsContent() {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 lg:gap-[50px] mt-6 lg:mt-8 mb-4 px-2.5">
                 <button
                   type="submit"
-                  className="px-6 lg:px-[38px] py-3 lg:py-[15px] bg-hrms-primary rounded-[25px] text-white text-base lg:text-xl font-medium hover:bg-hrms-primary/90 transition-colors w-full sm:w-auto"
+                  disabled={updateMutation.isPending}
+                  className="px-6 lg:px-[38px] py-3 lg:py-[15px] bg-hrms-primary rounded-[25px] text-white text-base lg:text-xl font-medium hover:bg-hrms-primary/90 transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Request Changes
+                  {updateMutation.isPending && <Loader2 className="w-5 h-5 animate-spin" />}
+                  {updateMutation.isPending ? "Updating..." : "Request Changes"}
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
-                  className="px-8 lg:px-12 py-3 lg:py-[15px] bg-hrms-bg-light rounded-[25px] text-hrms-text-primary text-base lg:text-xl font-medium hover:bg-hrms-bg-light/80 transition-colors w-full sm:w-auto"
+                  disabled={updateMutation.isPending}
+                  className="px-8 lg:px-12 py-3 lg:py-[15px] bg-hrms-bg-light rounded-[25px] text-hrms-text-primary text-base lg:text-xl font-medium hover:bg-hrms-bg-light/80 transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>

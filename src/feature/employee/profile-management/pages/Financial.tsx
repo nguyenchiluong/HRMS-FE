@@ -1,6 +1,6 @@
-import NavigationBar from "@/pages/employeeProfileManagement/components/NavigationBar";
-import EmployeeSidebar from "@/pages/employeeProfileManagement/components/EmployeeSidebar";
-import ProfileTabs from "@/pages/employeeProfileManagement/components/ProfileTabs";
+import NavigationBar from "@/feature/employee/profile-management/components/NavigationBar";
+import EmployeeSidebar from "@/feature/employee/profile-management/components/EmployeeSidebar";
+import ProfileTabs from "@/feature/employee/profile-management/components/ProfileTabs";
 import FinancialDetails from "../components/FinancialDetails";
 
 export default function Financial() {
