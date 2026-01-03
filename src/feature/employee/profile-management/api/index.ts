@@ -5,7 +5,16 @@
  */
 
 import { dotnetApi } from '@/api';
-import { EmployeeDto, UpdateProfileDto, EducationRecordDto, CreateEducationDto, UpdateEducationDto } from '../types';
+import { 
+  EmployeeDto, 
+  UpdateProfileDto, 
+  EducationRecordDto, 
+  CreateEducationDto, 
+  UpdateEducationDto,
+  BankAccountRecordDto,
+  CreateBankAccountDto,
+  UpdateBankAccountDto
+} from '../types';
 
 /**
  * Gets the current authenticated employee's information from JWT token
@@ -83,4 +92,78 @@ export const updateMyEducation = async (
  */
 export const deleteMyEducation = async (id: number): Promise<void> => {
   await dotnetApi.delete(`/api/education/me/${id}`);
+};
+
+// Bank Account API
+
+/**
+ * Gets all bank accounts for the authenticated user
+ * @returns Promise with array of bank account records
+ */
+export const getMyBankAccounts = async (): Promise<BankAccountRecordDto[]> => {
+  const response = await dotnetApi.get<BankAccountRecordDto[]>('/api/bankaccount/me');
+  return response.data;
+};
+
+/**
+ * Gets a specific bank account by account number and bank name
+ * @param accountNumber The bank account number
+ * @param bankName The bank name
+ * @returns Promise with bank account record
+ */
+export const getMyBankAccount = async (
+  accountNumber: string,
+  bankName: string
+): Promise<BankAccountRecordDto> => {
+  const response = await dotnetApi.get<BankAccountRecordDto>(
+    `/api/bankaccount/me/${encodeURIComponent(accountNumber)}/${encodeURIComponent(bankName)}`
+  );
+  return response.data;
+};
+
+/**
+ * Creates a new bank account
+ * @param data Bank account data to create
+ * @returns Promise with created bank account record
+ */
+export const createMyBankAccount = async (
+  data: CreateBankAccountDto
+): Promise<BankAccountRecordDto> => {
+  const response = await dotnetApi.post<BankAccountRecordDto>('/api/bankaccount/me', data);
+  return response.data;
+};
+
+/**
+ * Updates an existing bank account
+ * Note: Changing accountNumber or bankName will delete the old record and create a new one
+ * @param accountNumber The current account number
+ * @param bankName The current bank name
+ * @param data Bank account data to update
+ * @returns Promise with updated bank account record
+ */
+export const updateMyBankAccount = async (
+  accountNumber: string,
+  bankName: string,
+  data: UpdateBankAccountDto
+): Promise<BankAccountRecordDto> => {
+  const response = await dotnetApi.put<BankAccountRecordDto>(
+    `/api/bankaccount/me/${encodeURIComponent(accountNumber)}/${encodeURIComponent(bankName)}`,
+    data
+  );
+  return response.data;
+};
+
+/**
+ * Deletes a bank account
+ * @param accountNumber The account number to delete
+ * @param bankName The bank name to delete
+ * @returns Promise<void>
+ */
+export const deleteMyBankAccount = async (
+  accountNumber: string,
+  bankName: string
+): Promise<void> => {
+  await dotnetApi.delete(
+    `/api/bankaccount/me/${encodeURIComponent(accountNumber)}/${encodeURIComponent(bankName)}`
+  );
 };

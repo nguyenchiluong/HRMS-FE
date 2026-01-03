@@ -101,3 +101,26 @@ export interface UpdateEducationDto {
   gpa?: number | null;
   country?: string | null;
 }
+
+// Bank Account Types
+export interface BankAccountRecordDto {
+  accountNumber: string;
+  bankName: string;
+  accountName?: string | null;
+  employeeId: number;
+}
+
+export interface CreateBankAccountDto {
+  accountNumber: string;
+  bankName: string;
+  accountName?: string | null;
+}
+
+export interface UpdateBankAccountDto {
+  accountNumber?: string | null;
+  bankName?: string | null;
+  accountName?: string | null;
+}
+  gpa?: number | null;
+  country?: string | null;
+}
