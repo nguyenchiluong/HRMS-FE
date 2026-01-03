@@ -22,34 +22,24 @@ export default function TimeOffRequests() {
   const { data: balances, isLoading: balancesLoading } =
     useLeaveBalances(currentYear);
 
-  // Fetch time-off requests
+  // Fetch time-off requests - React Query handles errors automatically
   const {
     data: requestsData,
     isLoading: requestsLoading,
-    refetch: refetchRequests,
   } = useTimeOffRequests({
     page: currentPage,
     limit: 10,
     status: statusFilter,
   });
 
+  // Mutations handle errors/success via onSuccess/onError callbacks in hooks
   const cancelMutation = useCancelTimeOffRequest();
 
-  const handleCancelRequest = async (request: { id: string }) => {
-    try {
-      await cancelMutation.mutateAsync({
-        requestId: request.id,
-      });
-      // Data will be refetched automatically via query invalidation
-    } catch (error) {
-      // Error is handled by the mutation hook
-      console.error('Failed to cancel request:', error);
-    }
-  };
-
-  const handleSubmitSuccess = () => {
-    // Data will be refetched automatically via query invalidation
-    refetchRequests();
+  const handleCancelRequest = (request: { id: string }) => {
+    // Error handling is done automatically in the hook via onError callback
+    cancelMutation.mutate({
+      requestId: request.id,
+    });
   };
 
   return (
@@ -90,7 +80,6 @@ export default function TimeOffRequests() {
       <SubmitTimeOffRequestModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        onSuccess={handleSubmitSuccess}
       />
     </div>
   );
