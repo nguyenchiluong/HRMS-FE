@@ -35,6 +35,10 @@ const JobDetails = lazy(
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 
+// Approvals (Admin) 
+const ApprovalsDashboard = lazy(() => import('@/pages/admin/approvals/ApprovalsDashboard'));
+const CampaignReviewPage = lazy(() => import('@/pages/admin/approvals/CampaignReviewPage'));
+
 const EmployeeManagement = lazy(
   () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
 );
@@ -309,6 +313,13 @@ const routes: RouteObject[] = [
             children: [
               { index: true, element: <CampaignsPage /> },
               { path: 'new', element: <CreateCampaign /> },
+              {
+                path: 'approvals',
+                children: [
+                  { index: true, element: <ApprovalsDashboard /> }, // URL: /admin/campaigns/approvals
+                  { path: ':campaignId', element: <CampaignReviewPage /> } // URL: /admin/campaigns/approvals/:id
+                ]
+              },
               {
                 path: ':id',
                 children: [

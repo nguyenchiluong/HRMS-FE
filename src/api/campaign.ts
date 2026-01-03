@@ -18,7 +18,7 @@ const formatTime = (time?: string) => {
   return time.length === 5 ? `${time}:00` : time;
 };
 
-// Helper: Upload ảnh lên S3 (Logic cũ của bạn, nhưng dùng api của Leader để xin link)
+// Helper: Upload ảnh lên S3 
 export const uploadImageToS3 = async (file: File): Promise<string> => {
   try {
     
@@ -115,6 +115,18 @@ export const getCampaigns = async (search?: string): Promise<Campaign[]> => {
   } catch (error) {
     console.error('Error fetching campaigns:', error);
     return [];
+  }
+};
+
+// Lấy chi tiết Campaign theo ID
+export const getCampaignById = async (id: string): Promise<Campaign> => {
+  try {
+    const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${id}`);
+    // Reuse hàm transform để map dữ liệu cho khớp frontend
+    return transformBackendToFrontend(response.data);
+  } catch (error) {
+    console.error(`Error fetching campaign details for id ${id}:`, error);
+    throw error;
   }
 };
 
@@ -254,4 +266,39 @@ export const submitActivity = async (data: ActivitySubmissionData): Promise<any>
 export const getMyCampaignActivities = async (campaignId: string): Promise<EmployeeActivity[]> => {
   const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${campaignId}/activities/me`);
   return response.data;
+};
+
+
+// DELETE Activity Submission
+export const deleteActivityApi = async (activityId: string | number): Promise<void> => {
+  await springApi.delete(`${CAMPAIGN_ENDPOINT}/activities/${activityId}`);
+};
+
+// UPDATE Activity Submission
+export const updateActivityApi = async (activityId: string | number, data: ActivitySubmissionData): Promise<any> => {
+  try {
+    let imageUrl = "";
+    
+    // Nếu có file ảnh mới thì upload, nếu không thì thôi
+    if (data.imageFile) {
+        imageUrl = await uploadImageToS3(data.imageFile);
+    } 
+    // Backend logic: nếu proofImage gửi lên là rỗng/null thì giữ nguyên ảnh cũ.
+    // Frontend logic: ActivitySubmissionData yêu cầu imageFile, nhưng ở đây ta xử lý linh hoạt.
+
+    const payload = {
+      activityDate: data.activityDate,
+      proofImage: imageUrl, // Gửi link mới (hoặc rỗng nếu không update ảnh)
+      metrics: JSON.stringify({
+        distance: data.distance
+      })
+      // Status backend tự giữ nguyên pending
+    };
+
+    const response = await springApi.put(`${CAMPAIGN_ENDPOINT}/activities/${activityId}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating activity:', error);
+    throw error;
+  }
 };

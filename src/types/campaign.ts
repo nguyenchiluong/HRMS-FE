@@ -39,5 +39,7 @@ export interface EmployeeActivity {
   proofImage: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string; 
+
+  rejectionReason?: string;
 }
 

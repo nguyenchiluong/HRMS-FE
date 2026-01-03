@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Campaign } from '@/types/campaign';
 
 export default function CampaignsPage() {
   const navigate = useNavigate();
@@ -12,12 +13,12 @@ export default function CampaignsPage() {
     navigate('/admin/campaigns/new');
   };
 
-  const handleViewCampaign = (campaign: any) => {
+  const handleViewCampaign = (campaign: Campaign) => {
     navigate(`/admin/campaigns/${campaign.id}`);
   };
 
-  const handleViewFinalRankings = (campaign: any) => {
-    navigate(`/admin/campaigns/${campaign.id}/results`);
+  const handleViewFinalRankings = (campaign: Campaign) => {
+    navigate(`/admin/campaigns/${campaign.id}/leaderboard`);
   };
 
   const handleViewApprovals = () => {
@@ -39,9 +40,6 @@ export default function CampaignsPage() {
           <div className="text-center">
             <p className="text-lg font-medium text-destructive">
               Failed to load campaigns
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please try again later
             </p>
           </div>
         </CardContent>

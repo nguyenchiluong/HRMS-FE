@@ -12,12 +12,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"; // <--- Import mới
+} from "@/components/ui/alert-dialog";
 import { Edit2, Eye, Trophy, Plus, CheckCircle, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import EditCampaignModal from "./EditCampaignModal";
 import type { Campaign, CampaignListItem } from "@/types/campaign";
 import { usePublishCampaign } from "@/hooks/useCampaigns";
+// 👇 IMPORT MỚI: Hook lấy dữ liệu pending thật từ backend
+import { usePendingCampaigns } from "@/hooks/useApprovals"; 
 import toast from "react-hot-toast";
 
 interface CampaignListProps {
@@ -49,7 +51,7 @@ const getPrimaryMetric = (activityType: string) => {
 
 const getStatusVariant = (status: string) => {
   switch (status) {
-    case "active": return "success"; // Hoặc "default" nếu theme chưa có success
+    case "active": return "success"; 
     case "draft": return "secondary";
     case "completed": return "outline";
     default: return "outline";
@@ -58,18 +60,14 @@ const getStatusVariant = (status: string) => {
 
 const getStatusDisplay = (status: string) => {
   switch (status) {
-    case 'active':
-      return 'Active';
-    case 'draft':
-      return 'Draft';
-    case 'completed':
-      return 'Completed';
-    default:
-      return status;
+    case 'active': return 'Active';
+    case 'draft': return 'Draft';
+    case 'completed': return 'Completed';
+    default: return status;
   }
 };
 
-// --- COMPONENT PublishButton (Giao diện Modal xịn xò) ---
+// --- COMPONENT PublishButton ---
 const PublishButton = ({ campaignId }: { campaignId: string }) => {
   const publishMutation = usePublishCampaign();
 
@@ -88,9 +86,9 @@ const PublishButton = ({ campaignId }: { campaignId: string }) => {
         <Button
           variant="default"
           size="sm"
-          className="gap-2 bg-green-600 hover:bg-green-700 text-white" // Style màu xanh lá
+          className="gap-2 bg-green-600 hover:bg-green-700 text-white"
           disabled={publishMutation.isPending}
-          onClick={(e) => e.stopPropagation()} // Chặn click lan ra Card
+          onClick={(e) => e.stopPropagation()}
         >
           {publishMutation.isPending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -135,12 +133,23 @@ export default function CampaignList({
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
+  // GỌI API: Lấy danh sách approval thực tế từ server
+  const { data: pendingCampaignsData } = usePendingCampaigns();
+
+  // Tổng số lượng pending từ dữ liệu thật
+  const totalPendingSubmissions = pendingCampaignsData?.reduce(
+    (sum, item) => sum + (item.pendingCount || 0), 
+    0
+  ) || 0;
+
+  // Logic cũ (Mock data cho Card list) giữ nguyên để hiển thị giao diện đẹp
   const enhancedCampaigns: CampaignListItem[] = campaigns.map((campaign, index) => ({
     ...campaign,
     primaryMetric: getPrimaryMetric(campaign.activityType),
     participants: Math.floor(Math.random() * 50) + 10,
     totalDistance: Math.floor(Math.random() * 3000) + 500,
-    pendingSubmissions: Math.floor(Math.random() * 10),
+    // pendingSubmissions: Math.floor(Math.random() * 10), // Xóa dòng này đi nếu muốn clean, hoặc để lại làm fake UI cho card
+    pendingSubmissions: 0, // Tạm để 0 cho card, ưu tiên hiển thị badge tổng ở trên
     image: campaign.imageUrl || MOCK_IMAGES[index % MOCK_IMAGES.length]
   }));
 
@@ -148,11 +157,6 @@ export default function CampaignList({
     (campaign) =>
       campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const totalPendingSubmissions = enhancedCampaigns.reduce(
-    (sum, campaign) => sum + (campaign.pendingSubmissions || 0),
-    0,
   );
 
   return (
@@ -178,10 +182,11 @@ export default function CampaignList({
                 <CheckCircle className="h-4 w-4" />
                 View Approvals
               </Button>
+              
               {totalPendingSubmissions > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
+                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs animate-in zoom-in"
                 >
                   {totalPendingSubmissions}
                 </Badge>
@@ -280,7 +285,7 @@ export default function CampaignList({
 
                   {/* NÚT BẤM */}
                   <div className="flex gap-2 mt-4 flex-wrap">
-                    {/* Nút Publish hiện đại - Chỉ hiện khi Draft */}
+                    {/* Nút Publish */}
                     {campaign.status === 'draft' && (
                       <PublishButton campaignId={campaign.id} />
                     )}

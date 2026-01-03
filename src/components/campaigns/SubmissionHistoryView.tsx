@@ -13,10 +13,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/pages/employeeProfileManagement/components/ui/table";
-import { useMyCampaignActivities } from "@/hooks/useCampaigns";
-import { ArrowLeft, CheckCircle2, Clock, Edit, Loader2, RefreshCw, Trash2, X, XCircle } from "lucide-react";
+// 👇 IMPORT MỚI: hooks
+import { useMyCampaignActivities, useDeleteActivity } from "@/hooks/useCampaigns";
+import { ArrowLeft, CheckCircle2, Clock, Edit, Loader2, Trash2, X, XCircle } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+// 👇 IMPORT MỚI: EditModal và Alert Dialog
+import EditActivityModal from "./EditActivityModal";
+import { 
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+import { EmployeeActivity } from "@/types/campaign";
 
 interface SubmissionHistoryViewProps {
   campaign: any;
@@ -25,7 +40,11 @@ interface SubmissionHistoryViewProps {
 
 export default function SubmissionHistoryView({ campaign, onBack }: SubmissionHistoryViewProps) {
   const { data: submissions = [], isLoading, error } = useMyCampaignActivities(campaign.id);
+  const deleteMutation = useDeleteActivity(); // Hook xóa
+
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  // State quản lý việc sửa
+  const [editingActivity, setEditingActivity] = useState<EmployeeActivity | null>(null);
 
   const getMetrics = (jsonString: string) => {
     try {
@@ -44,15 +63,15 @@ export default function SubmissionHistoryView({ campaign, onBack }: SubmissionHi
     });
   };
 
-  const handleDelete = (id: string) => {
-    toast("Delete feature coming soon (Need Backend API)", { icon: "🚧" });
-  };
-
-  // Hàm xử lý Resubmit
-  const handleResubmit = (activity: any) => {
-    // Logic sau này: Mở lại SubmitDialog với dữ liệu cũ điền sẵn
-    console.log("Resubmitting activity:", activity);
-    toast("Edit & Resubmit feature coming soon!", { icon: "✏️" });
+  // 👇 Hàm xử lý xóa thật
+  const handleDelete = async (id: string | number) => {
+    try {
+        await deleteMutation.mutateAsync(id);
+        toast.success("Activity deleted successfully");
+    } catch (error: any) {
+        const msg = error?.response?.data || "Failed to delete activity";
+        toast.error(msg);
+    }
   };
 
   const total = submissions.length;
@@ -84,7 +103,7 @@ export default function SubmissionHistoryView({ campaign, onBack }: SubmissionHi
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* HEADER */}
+      {/* HEADER & STATS (Giữ nguyên) */}
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={onBack} className="h-10 w-10 rounded-full border-slate-300">
             <ArrowLeft className="h-5 w-5 text-slate-600" />
@@ -95,7 +114,6 @@ export default function SubmissionHistoryView({ campaign, onBack }: SubmissionHi
         </div>
       </div>
 
-      {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -176,37 +194,58 @@ export default function SubmissionHistoryView({ campaign, onBack }: SubmissionHi
                             {item.status === 'approved' && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1"/> Approved</Badge>}
                             {item.status === 'rejected' && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="w-3 h-3 mr-1"/> Rejected</Badge>}
                             
-                            {item.status === 'rejected' && (
-                                <p className="text-[10px] text-red-600 mt-1 max-w-[150px] leading-tight">Reason: Invalid proof image</p>
+                            {/* Hiển thị lý do từ chối nếu có */}
+                            {item.status === 'rejected' && item.rejectionReason && (
+                                <p className="text-[10px] text-red-600 mt-1 max-w-[150px] leading-tight">Reason: {item.rejectionReason}</p>
                             )}
                         </TableCell>
                         <TableCell className="text-right">
                             {/* CASE 1: PENDING - Cho phép Edit / Delete */}
                             {item.status === 'pending' && (
                                 <div className="flex justify-end gap-2">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <Edit className="w-4 h-4 text-slate-500" />
+                                    {/* Edit Button */}
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                        onClick={() => setEditingActivity(item)}
+                                    >
+                                        <Edit className="w-4 h-4" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-50" onClick={() => handleDelete(item.activityId)}>
-                                        <Trash2 className="w-4 h-4 text-red-500" />
-                                    </Button>
+
+                                    {/* Delete Button with Confirmation */}
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-50">
+                                                {deleteMutation.isPending && deleteMutation.variables === item.activityId ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                                                ) : (
+                                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                                )}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This pending submission will be permanently removed.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction 
+                                                    onClick={() => handleDelete(item.activityId)}
+                                                    className="bg-red-600 hover:bg-red-700 text-white"
+                                                >
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             )}
 
-                            {/* 👇 CASE 2: REJECTED - Cho phép Edit & Resubmit */}
-                            {item.status === 'rejected' && (
-                                <div className="flex justify-end">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      className="h-8 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
-                                      onClick={() => handleResubmit(item)}
-                                    >
-                                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                                        Edit & Resubmit
-                                    </Button>
-                                </div>
-                            )}
+                            {/* CASE 2: REJECTED - (Tạm thời chưa xử lý edit resubmit, có thể ẩn hoặc để nút disabled) */}
                         </TableCell>
                     </TableRow>
                 )
@@ -249,6 +288,15 @@ export default function SubmissionHistoryView({ campaign, onBack }: SubmissionHi
            </div>
         </DialogContent>
       </Dialog>
+
+      {/* MODAL EDIT - Thêm vào cuối */}
+      {editingActivity && (
+        <EditActivityModal 
+            activity={editingActivity}
+            campaign={campaign}
+            onClose={() => setEditingActivity(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,6 @@
-import { createCampaign, getCampaigns, updateCampaign, publishCampaign, getActiveCampaigns, registerForCampaign, getMyCampaigns, submitActivity, getMyCampaignActivities } from '@/api/campaign';
+import { createCampaign, getCampaigns, updateCampaign, publishCampaign, 
+getActiveCampaigns, registerForCampaign, getMyCampaigns, submitActivity, 
+getMyCampaignActivities, getCampaignById, deleteActivityApi, updateActivityApi} from '@/api/campaign';
 import type { Campaign, CampaignFormData, ActivitySubmissionData } from '@/types/campaign';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -105,5 +107,43 @@ export const useMyCampaignActivities = (campaignId: string) => {
     queryKey: ['campaign-activities', campaignId], // Key định danh cache
     queryFn: () => getMyCampaignActivities(campaignId), 
     enabled: !!campaignId, // Chỉ chạy khi có campaignId
+  });
+};
+
+// Hook: Lấy chi tiết một chiến dịch theo ID
+export const useCampaignDetail = (id: string) => {
+  return useQuery({
+    queryKey: ['campaign', id],
+    queryFn: () => getCampaignById(id),
+    enabled: !!id, // Chỉ chạy khi có id
+  });
+};
+
+// Hook: Delete Activity
+export const useDeleteActivity = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (activityId: string | number) => deleteActivityApi(activityId),
+    onSuccess: () => {
+      // Invalidate để refresh lại list
+      queryClient.invalidateQueries({ queryKey: ['campaign-activities'] });
+      // Refresh dashboard stats nếu cần
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+    },
+  });
+};
+
+// Hook: Update Activity
+export const useUpdateActivity = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string | number; data: ActivitySubmissionData }) => 
+      updateActivityApi(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaign-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+    },
   });
 };
