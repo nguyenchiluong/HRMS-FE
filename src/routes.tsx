@@ -7,8 +7,9 @@ import RoleBasedRedirect from './components/RoleBasedRedirect';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EditPersonalInfo from './pages/employeeProfileManagement/pages/EditPersonalInfo';
+import WorkingHistory from './pages/employeeProfileManagement/pages/WorkingHistory';
 
-const Login = lazy(() => import('@/feature/auth/pages/Login'));
+const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
@@ -36,38 +37,63 @@ const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 
 const EmployeeManagement = lazy(
-  () => import('@/feature/admin/manage-employee/pages/EmployeeManagement'),
+  () => import('@/feature/admin/employee-management/pages/EmployeeManagement'),
+);
+
+// Profile Change Requests
+const ProfileChangeRequests = lazy(
+  () => import('@/feature/admin/profile-requests/pages/ProfileChangeRequests'),
 );
 
 const EmployeeHome = lazy(
   () => import('@/feature/employee/homepage/pages/EmployeeHome'),
 );
 
-const TimeOffRequest = lazy(
-  () => import('@/feature/employee/time-management/pages/TimeOffRequest'),
-);
-
 const Timesheet = lazy(
   () => import('@/feature/employee/time-management/pages/Timesheet'),
 );
 
-const MyRequests = lazy(
-  () => import('@/feature/employee/time-management/pages/MyRequests'),
+const TimeOffRequests = lazy(
+  () => import('@/feature/employee/time-management/pages/TimeOffRequests'),
 );
 
 const MyAttendance = lazy(
   () => import('@/feature/employee/time-management/pages/MyAttendance'),
 );
 
+const AccountSettings = lazy(
+  () => import('@/feature/shared/account-settings/pages/AccountSettings'),
+);
+
+const NotificationsPage = lazy(
+  () => import('@/feature/shared/notifications/pages/NotificationsPage'),
+);
+
+const NotificationDetailPage = lazy(
+  () => import('@/feature/shared/notifications/pages/NotificationDetailPage'),
+);
+
 const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
 
+// Approve Requests
+const ApproveRequestsLayout = lazy(
+  () =>
+    import('@/feature/employee/approve-requests/layout/ApproveRequestsLayout'),
+);
+const ApproveTimesheet = lazy(
+  () => import('@/feature/employee/approve-requests/pages/ApproveTimesheet'),
+);
+const ApproveTimeOff = lazy(
+  () => import('@/feature/employee/approve-requests/pages/ApproveTimeOff'),
+);
+
 const EmployeeOnboarding = lazy(
-  () => import('@/feature/onboarding/pages/EmployeeOnboarding'),
+  () => import('@/feature/employee/onboarding/pages/EmployeeOnboarding'),
 );
 const OnboardingSuccess = lazy(
-  () => import('@/feature/onboarding/pages/OnboardingSuccess'),
+  () => import('@/feature/employee/onboarding/pages/OnboardingSuccess'),
 );
 
 // Bonus Management
@@ -140,11 +166,20 @@ const routes: RouteObject[] = [
                 element: <MyAttendance />,
               },
               { path: 'timesheet', element: <Timesheet /> },
-              { path: 'time-off-request', element: <TimeOffRequest /> },
               {
                 path: 'my-requests',
-                element: <MyRequests />,
+                element: <TimeOffRequests />,
               },
+            ],
+          },
+          // Approve Requests Routes
+          {
+            path: 'approve-requests',
+            element: <ApproveRequestsLayout />,
+            children: [
+              { index: true, element: <Navigate to="timesheet" replace /> },
+              { path: 'timesheet', element: <ApproveTimesheet /> },
+              { path: 'time-off', element: <ApproveTimeOff /> },
             ],
           },
           {
@@ -190,8 +225,14 @@ const routes: RouteObject[] = [
                 path: 'change-requests',
                 element: <Placeholder title="Profile Change Requests" />,
               },
-              { path: 'job-details', element: <JobDetails /> },
             ],
+          },
+          { path: 'job-details',
+            children: [
+              { index: true, element: <Navigate to="info" replace /> },
+              { path: 'info', element: <JobDetails /> },
+              { path: 'working-history', element: <WorkingHistory /> },
+            ]
           },
           // ... (Rest of Employee Sub-routes kept as is, just ensured nesting)
           {
@@ -208,6 +249,14 @@ const routes: RouteObject[] = [
               { path: 'my-history', element: <Placeholder title="My Campaign History" /> },
               // Detail page for a specific campaign if needed
               { path: ':id', element: <Placeholder title="Campaign Details" /> },
+            ],
+          },
+          { path: 'settings', element: <AccountSettings /> },
+          {
+            path: 'notifications',
+            children: [
+              { index: true, element: <NotificationsPage /> },
+              { path: ':id', element: <NotificationDetailPage /> },
             ],
           },
         ],
@@ -245,6 +294,14 @@ const routes: RouteObject[] = [
           {
             path: 'change-password',
             element: <Placeholder title="Change Password" />,
+          },
+          { path: 'settings', element: <AccountSettings /> },
+          {
+            path: 'notifications',
+            children: [
+              { index: true, element: <NotificationsPage /> },
+              { path: ':id', element: <NotificationDetailPage /> },
+            ],
           },
 
           // Nested Admin Features
@@ -293,7 +350,7 @@ const routes: RouteObject[] = [
             children: [
               {
                 index: true,
-                element: <Placeholder title="Profile Requests" />,
+                element: <ProfileChangeRequests />,
               },
               { path: ':id', element: <Placeholder title="Request Detail" /> },
             ],
@@ -344,10 +401,6 @@ const routes: RouteObject[] = [
 
       { path: '/settings', element: <Placeholder title="Settings" /> },
       { path: '/help', element: <Placeholder title="Help Center" /> },
-      {
-        path: '/notifications',
-        element: <Placeholder title="Notifications" />,
-      },
     ],
   },
 

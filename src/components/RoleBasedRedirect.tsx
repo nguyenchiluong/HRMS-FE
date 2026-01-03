@@ -1,11 +1,11 @@
-import { useAuthStore } from '@/feature/auth/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { Navigate } from 'react-router-dom';
 
 const RoleBasedRedirect = () => {
   const { user } = useAuthStore();
 
   // If user has ADMIN role, go to admin dashboard
-  if (user?.roles.includes('ADMIN')) {
+  if (user?.roles && user?.roles.includes('ADMIN')) {
     return <Navigate to="/admin" replace />;
   }
 

@@ -1,5 +1,7 @@
 import NavigationBar from "@/pages/employeeProfileManagement/components/NavigationBar";
 import EmployeeSidebar from "@/pages/employeeProfileManagement/components/EmployeeSidebar";
+import JobDetailsTab from "../components/JobDetailsTab";
+import JobDetailsContent from "../components/JobDetailsContent";
 
 export default function JobDetails() {
   return (
@@ -11,10 +13,8 @@ export default function JobDetails() {
         
         <main className="flex-1 bg-hrms-bg-page min-h-[calc(100vh-85px)] p-4 lg:p-[30px]">
           <div className="flex flex-col gap-[30px] max-w-[1177px]">
-            <div className="bg-white rounded-[20px] p-[30px]">
-              <h2 className="text-2xl font-semibold mb-4">Job Details</h2>
-              <p className="text-gray-600">Job details content coming soon...</p>
-            </div>
+            <JobDetailsTab />
+            <JobDetailsContent />
           </div>
         </main>
       </div>

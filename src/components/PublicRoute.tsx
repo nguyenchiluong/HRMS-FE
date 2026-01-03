@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/feature/auth/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { Navigate, Outlet } from 'react-router-dom';
 
 const PublicRoute = () => {
@@ -9,7 +9,7 @@ const PublicRoute = () => {
   }
 
   // Redirect based on role
-  if (user?.roles.includes('ADMIN')) {
+  if (user?.roles?.includes('ADMIN')) {
     return <Navigate to="/admin" replace />;
   }
 
