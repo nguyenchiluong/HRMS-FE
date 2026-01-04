@@ -1,11 +1,5 @@
 import { cn } from '@/lib/utils';
-import {
-  Calendar,
-  ClipboardList,
-  Clock,
-  FileText,
-  History,
-} from 'lucide-react';
+import { Calendar, ClipboardList, Clock } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 interface SidebarItem {
@@ -26,26 +20,25 @@ const sidebarItems: SidebarItem[] = [
     icon: ClipboardList,
   },
   {
-    path: '/employee/time/timesheet-history',
-    label: 'Timesheet History',
-    icon: History,
-  },
-  {
-    path: '/employee/time/time-off-request',
-    label: 'Time Off Request',
-    icon: Calendar,
-  },
-  {
     path: '/employee/time/my-requests',
-    label: 'My Requests',
-    icon: FileText,
+    label: 'Time Off Requests',
+    icon: Calendar,
   },
 ];
 
 export default function TimeLayout() {
   const location = useLocation();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    // Special case: highlight "My Attendance" for both /employee/time and /employee/time/attendance
+    if (path === '/employee/time/attendance') {
+      return (
+        location.pathname === '/employee/time' ||
+        location.pathname === '/employee/time/attendance'
+      );
+    }
+    return location.pathname === path;
+  };
 
   return (
     <div className="fixed inset-0 top-16 flex">
