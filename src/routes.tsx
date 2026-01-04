@@ -8,6 +8,7 @@ import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EditPersonalInfo from '@/feature/employee/profile-management/pages/EditPersonalInfo';
 import WorkingHistory from '@/feature/employee/profile-management/pages/WorkingHistory';
+import EmployeeBonusPage from './pages/employeeBonus/page/EmployeeBonusPage';
 
 const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -102,6 +103,10 @@ const BonusSettings = lazy(
   () => import('./pages/AdminBonusSettings/BonusSettings'),
 );
 const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
+const ViewBonus = lazy(
+  () => import('./pages//employeeBonus/page/EmployeeBonusPage'),
+);
+
 const routes: RouteObject[] = [
   // =================================================================
   // 0. Token-based Routes (Accessible by anyone with valid token)
@@ -133,7 +138,7 @@ const routes: RouteObject[] = [
       // Test
       {
         path: '/test',
-        element: <BonusSettings />,
+        element: <EmployeeBonusPage />,
       },
     ],
   },
@@ -259,6 +264,13 @@ const routes: RouteObject[] = [
               { path: ':id', element: <NotificationDetailPage /> },
             ],
           },
+          {
+            path: 'credits',
+            children: [
+              { index: true,
+                element: <ViewBonus/> },
+            ]
+          }
         ],
       },
 

@@ -4,7 +4,7 @@ import BonusSettingsView from "./BonusSettingsView";
 import BonusSettingsEdit from "./BonusSettingsEdit";
 import { toast } from "sonner"
 
-const API_URL = "http://localhost:8080/api/bonus-settings";
+const API_URL = "http://localhost:8080/api/credits/settings";
 
 export default function BonusCreditPage() {
   const [isEditing, setIsEditing] = useState(false);
