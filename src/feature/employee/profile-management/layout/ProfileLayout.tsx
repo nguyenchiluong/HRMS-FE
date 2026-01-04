@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Calendar, ClipboardList, Clock } from 'lucide-react';
+import { Briefcase, FileText, GraduationCap, User } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 interface SidebarItem {
@@ -10,34 +10,45 @@ interface SidebarItem {
 
 const sidebarItems: SidebarItem[] = [
   {
-    path: '/employee/time/attendance',
-    label: 'My Attendance',
-    icon: Clock,
+    path: '/employee/profile',
+    label: 'Personal Information',
+    icon: User,
   },
   {
-    path: '/employee/time/timesheet',
-    label: 'Timesheet',
-    icon: ClipboardList,
+    path: '/employee/profile/ids',
+    label: 'IDs',
+    icon: FileText,
   },
   {
-    path: '/employee/time/my-requests',
-    label: 'Time Off Requests',
-    icon: Calendar,
+    path: '/employee/profile/education',
+    label: 'Education',
+    icon: GraduationCap,
+  },
+  {
+    path: '/employee/profile/financial',
+    label: 'Financial',
+    icon: Briefcase,
+  },
+  {
+    path: '/employee/profile/job-details',
+    label: 'Job Details',
+    icon: Briefcase,
   },
 ];
 
-export default function TimeLayout() {
+export default function ProfileLayout() {
   const location = useLocation();
 
   const isActive = (path: string) => {
-    // Special case: highlight "My Attendance" for both /employee/time and /employee/time/attendance
-    if (path === '/employee/time/attendance') {
+    // Special case: highlight "Personal Information" for both /employee/profile and /employee/profile/personal-info
+    if (path === '/employee/profile') {
       return (
-        location.pathname === '/employee/time' ||
-        location.pathname === '/employee/time/attendance'
+        location.pathname === '/employee/profile' ||
+        location.pathname === '/employee/profile/personal-info' ||
+        location.pathname.startsWith('/employee/profile/personal-info')
       );
     }
-    return location.pathname === path;
+    return location.pathname.startsWith(path);
   };
 
   return (
@@ -47,7 +58,7 @@ export default function TimeLayout() {
         <aside className="w-80 shrink-0 px-8 py-6">
           <div className="h-full rounded-xl border bg-white p-4 shadow">
             <h2 className="mb-6 text-lg font-semibold text-slate-800">
-              Time Management
+              Profile Management
             </h2>
             <nav className="space-y-1">
               {sidebarItems.map((item) => (
