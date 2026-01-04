@@ -5,6 +5,7 @@ export interface TokenPayload {
   sub: string;
   mail: string;
   roles: Role[];
+  empId?: number;
   iat: number;
   exp: number;
 }
