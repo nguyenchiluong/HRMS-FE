@@ -1,11 +1,15 @@
 import { Button } from '@/components/ui/button';
-import { Clock, TrendingUp } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface WelcomeSectionProps {
   userName?: string;
 }
 
 export default function WelcomeSection({ userName }: WelcomeSectionProps) {
+
+  const navigate = useNavigate();
+  
   return (
     <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
       <div>
@@ -17,14 +21,14 @@ export default function WelcomeSection({ userName }: WelcomeSectionProps) {
         </p>
       </div>
       <div className="flex gap-2">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={() => navigate('/employee/time/attendance')}>
           <Clock className="mr-2 h-4 w-4" />
           Clock In
         </Button>
-        <Button size="sm">
+        {/* <Button size="sm">
           <TrendingUp className="mr-2 h-4 w-4" />
           View Payslip
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
