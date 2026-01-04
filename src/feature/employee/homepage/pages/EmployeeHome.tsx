@@ -15,10 +15,11 @@ import {
   MessageSquare,
   TrendingUp,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function EmployeeHome() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   // Mock data for quick actions
   const quickActions = [
@@ -94,14 +95,18 @@ export default function EmployeeHome() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/employee/time/attendance')}
+          >
             <Clock className="mr-2 h-4 w-4" />
             Clock In
           </Button>
-          <Button size="sm">
+          {/* <Button size="sm">
             <TrendingUp className="mr-2 h-4 w-4" />
             View Payslip
-          </Button>
+          </Button> */}
         </div>
       </div>
 
