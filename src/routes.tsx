@@ -106,6 +106,9 @@ const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
 const ViewBonus = lazy(
   () => import('./pages//employeeBonus/page/EmployeeBonusPage'),
 );
+const TransferBonus = lazy(
+  () => import('./pages/employeeTransferBonus/page/EmployeeTransferBonusPage'),
+);
 
 const routes: RouteObject[] = [
   // =================================================================
@@ -122,7 +125,7 @@ const routes: RouteObject[] = [
   // Test
   {
     path: '/test',
-    element: <EmployeeBonusPage />,
+    element: <TransferBonus />,
   },
 
   // =================================================================
@@ -271,6 +274,10 @@ const routes: RouteObject[] = [
               {
                 index: true,
                 element: <ViewBonus />
+              },
+              {
+                path: 'transfer',
+                element: <TransferBonus />,
               },
             ]
           }
