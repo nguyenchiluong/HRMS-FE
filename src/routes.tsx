@@ -1,5 +1,4 @@
 import EditPersonalInfo from '@/feature/employee/profile-management/pages/PersonalInformation/EditPersonalInfo';
-import WorkingHistory from '@/feature/employee/profile-management/pages/WorkingHistory';
 import { lazy } from 'react';
 import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import Placeholder from './components/Placeholder';
@@ -30,13 +29,13 @@ const PersonalInfo = lazy(
     import('@/feature/employee/profile-management/pages/PersonalInformation/PersonalInfo'),
 );
 const Education = lazy(
-  () => import('@/feature/employee/profile-management/pages/EmployeeEducation'),
+  () => import('@/feature/employee/profile-management/pages/Education'),
 );
 const Financial = lazy(
   () => import('@/feature/employee/profile-management/pages/Financial'),
 );
-const JobDetails = lazy(
-  () => import('@/feature/employee/profile-management/pages/JobDetails'),
+const JobInformation = lazy(
+  () => import('@/feature/employee/profile-management/pages/JobInformation'),
 );
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
@@ -235,15 +234,10 @@ const routes: RouteObject[] = [
                 path: 'change-requests',
                 element: <Placeholder title="Profile Change Requests" />,
               },
-            ],
-          },
-          {
-            path: 'job-details',
-            element: <JobDetails />,
-            children: [
-              { index: true, element: <Navigate to="info" replace /> },
-              { path: 'info', element: <JobDetails /> },
-              { path: 'working-history', element: <WorkingHistory /> },
+              {
+                path: 'job-details',
+                element: <JobInformation />,
+              },
             ],
           },
           // ... (Rest of Employee Sub-routes kept as is, just ensured nesting)

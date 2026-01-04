@@ -9,7 +9,7 @@ export default function EmployeeHome() {
   const { user } = useAuthStore();
 
   return (
-    <div className="space-y-8 p-10">
+    <div className="space-y-8 px-20 py-10">
       <WelcomeSection userName={user?.name} />
       <StatsCards pendingTasksCount={3} />
       <QuickActions />

@@ -41,42 +41,44 @@ export default function TimeLayout() {
   };
 
   return (
-    <div className="fixed inset-0 top-16 flex">
-      {/* Sidebar */}
-      <aside className="w-84 shrink-0 border-r bg-white">
-        <div className="mx-6 p-4">
-          <h2 className="mb-6 mt-4 text-lg font-semibold text-slate-800">
-            Time Management
-          </h2>
-          <nav className="space-y-1">
-            {sidebarItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                  isActive(item.path)
-                    ? 'font-regular bg-black text-white'
-                    : 'font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                )}
-              >
-                <item.icon
+    <div className="flex h-[calc(100vh-4rem)] justify-center">
+      <div className="flex w-full max-w-[2400px]">
+        {/* Sidebar */}
+        <aside className="w-80 shrink-0 px-8 py-6">
+          <div className="h-full rounded-xl border bg-white p-4 shadow">
+            <h2 className="mb-6 text-lg font-semibold text-slate-800">
+              Time Management
+            </h2>
+            <nav className="space-y-1">
+              {sidebarItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
                   className={cn(
-                    'h-5 w-5',
-                    isActive(item.path) ? 'text-white' : 'text-slate-400',
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
+                    isActive(item.path)
+                      ? 'font-regular bg-black text-white'
+                      : 'font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                   )}
-                />
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </aside>
+                >
+                  <item.icon
+                    className={cn(
+                      'h-5 w-5',
+                      isActive(item.path) ? 'text-white' : 'text-slate-400',
+                    )}
+                  />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-slate-50 p-6 px-8">
-        <Outlet />
-      </main>
+        {/* Main Content */}
+        <main className="w-full flex-1 overflow-auto p-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

@@ -30,7 +30,7 @@ const sidebarItems: SidebarItem[] = [
     icon: Briefcase,
   },
   {
-    path: '/employee/job-details',
+    path: '/employee/profile/job-details',
     label: 'Job Details',
     icon: Briefcase,
   },

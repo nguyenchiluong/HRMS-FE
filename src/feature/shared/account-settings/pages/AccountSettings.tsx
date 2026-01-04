@@ -105,7 +105,7 @@ export default function AccountSettings() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="h-full w-full space-y-6 px-20 py-10">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">

@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { SubmitTimeOffRequestModal } from '../components/time-off/SubmitTimeOffRequestModal';
 import { LeaveBalanceCards } from '../components/my-requests/LeaveBalanceCards';
 import { RequestHistoryTable } from '../components/my-requests/RequestHistoryTable';
+import { SubmitTimeOffRequestModal } from '../components/time-off/SubmitTimeOffRequestModal';
 import {
   useCancelTimeOffRequest,
   useLeaveBalances,
@@ -53,10 +53,10 @@ export default function TimeOffRequests() {
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-8 py-5">
       {/* Header with Submit Button */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Time Off Requests</h1>
+        <h1 className="text-xl font-medium text-gray-900">Time Off Requests</h1>
         <Button onClick={() => setIsModalOpen(true)} size="lg">
           <Plus className="mr-2 h-4 w-4" />
           Submit New Request
@@ -65,11 +65,15 @@ export default function TimeOffRequests() {
 
       {/* Leave Balance Section */}
       {balancesLoading ? (
-        <div className="text-center text-gray-500">Loading leave balances...</div>
+        <div className="text-center text-gray-500">
+          Loading leave balances...
+        </div>
       ) : balances ? (
         <LeaveBalanceCards balances={balances} />
       ) : (
-        <div className="text-center text-gray-500">No leave balance data available</div>
+        <div className="text-center text-gray-500">
+          No leave balance data available
+        </div>
       )}
 
       {/* Request History Section */}

@@ -11,8 +11,8 @@ import {
   useDeleteBankAccount,
   useMyBankAccounts,
   useUpdateBankAccount,
-} from '../hooks/useBankAccount';
-import { CreateBankAccountDto, UpdateBankAccountDto } from '../types';
+} from '../../hooks/useBankAccount';
+import { CreateBankAccountDto, UpdateBankAccountDto } from '../../types';
 
 // Form values interface
 interface FinancialFormValues {
@@ -190,7 +190,7 @@ export default function FinancialDetails() {
   if (isLoading) {
     return (
       <Card className="p-6">
-        <h1 className="mb-6 text-2xl font-semibold text-gray-900">
+        <h1 className="mb-6 text-xl font-medium text-gray-900">
           Financial Details
         </h1>
         <div className="flex items-center justify-center py-12">
@@ -203,7 +203,7 @@ export default function FinancialDetails() {
   if (isError) {
     return (
       <Card className="p-6">
-        <h1 className="mb-6 text-2xl font-semibold text-gray-900">
+        <h1 className="mb-6 text-xl font-medium text-gray-900">
           Financial Details
         </h1>
         <div className="flex flex-col items-center justify-center gap-4 py-12">
@@ -236,7 +236,7 @@ export default function FinancialDetails() {
 
     return (
       <Card className="p-6">
-        <h1 className="mb-6 text-2xl font-semibold text-gray-900">
+        <h1 className="mb-6 text-xl font-medium text-gray-900">
           {isAdding ? 'Add Bank Account' : 'Edit Bank Account'}
         </h1>
 
@@ -312,9 +312,7 @@ export default function FinancialDetails() {
   return (
     <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Financial Details
-        </h1>
+        <h1 className="text-xl font-medium text-gray-900">Financial Details</h1>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
           Add Bank Account
