@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { useEmployeeStore } from '@/store/useStore';
 import { Briefcase, DollarSign, TrendingUp, Users } from 'lucide-react';
 
@@ -54,8 +54,8 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
-        <p className="mt-2 text-muted-foreground">
+        <h1 className="text-3xl font-semibold">Welcome back, {user?.name}!</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Here's what's happening with your organization today.
         </p>
       </div>

@@ -19,6 +19,14 @@ interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
   children: React.ReactNode
 }
 
+interface DialogDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
+  children: React.ReactNode
+}
+
+interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode
+}
+
 const DialogContext = React.createContext<{
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -85,4 +93,26 @@ const DialogTitle = React.forwardRef<HTMLHeadingElement, DialogTitleProps>(
 )
 DialogTitle.displayName = "DialogTitle"
 
-export { Dialog, DialogContent, DialogHeader, DialogTitle }
+const DialogDescription = React.forwardRef<HTMLParagraphElement, DialogDescriptionProps>(
+  ({ className, ...props }, ref) => (
+    <p
+      ref={ref}
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+)
+DialogDescription.displayName = "DialogDescription"
+
+const DialogFooter = React.forwardRef<HTMLDivElement, DialogFooterProps>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
+      {...props}
+    />
+  )
+)
+DialogFooter.displayName = "DialogFooter"
+
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter }

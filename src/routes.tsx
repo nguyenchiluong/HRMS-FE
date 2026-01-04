@@ -3,51 +3,118 @@ import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import Placeholder from './components/Placeholder';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import RoleBasedRedirect from './components/RoleBasedRedirect';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
+import EditPersonalInfo from '@/feature/employee/profile-management/pages/EditPersonalInfo';
+import WorkingHistory from '@/feature/employee/profile-management/pages/WorkingHistory';
 
-const Login = lazy(() => import('@/pages/Login'));
+const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 
 const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
 const EmployeeIDs = lazy(
-  () => import('./pages/employeeProfileManagement/pages/EmployeeIDs'),
+  () => import('@/feature/employee/profile-management/pages/EmployeeIDs'),
 );
 const EmployeeEditIDs = lazy(
-  () => import('./pages/employeeProfileManagement/pages/EmployeeEditID'),
+  () => import('@/feature/employee/profile-management/pages/EmployeeEditID'),
 );
 const PersonalInfo = lazy(
-  () => import('./pages/employeeProfileManagement/pages/PersonalInfo'),
+  () => import('@/feature/employee/profile-management/pages/PersonalInfo'),
 );
 const Education = lazy(
-  () => import('./pages/employeeProfileManagement/pages/Education'),
+  () => import('@/feature/employee/profile-management/pages/EmployeeEducation'),
 );
 const Financial = lazy(
-  () => import('./pages/employeeProfileManagement/pages/Financial'),
+  () => import('@/feature/employee/profile-management/pages/Financial'),
 );
 const JobDetails = lazy(
-  () => import('./pages/employeeProfileManagement/pages/JobDetails'),
+  () => import('@/feature/employee/profile-management/pages/JobDetails'),
 );
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 
-const ViewEmployeeList = lazy(
-  () => import('@/pages/ViewEmployeeList/pages/ViewEmployeeList'),
+const EmployeeManagement = lazy(
+  () => import('@/feature/admin/employee-management/pages/EmployeeManagement'),
+);
+
+// Profile Change Requests
+const ProfileChangeRequests = lazy(
+  () => import('@/feature/admin/profile-requests/pages/ProfileChangeRequests'),
+);
+
+const EmployeeHome = lazy(
+  () => import('@/feature/employee/homepage/pages/EmployeeHome'),
+);
+
+const Timesheet = lazy(
+  () => import('@/feature/employee/time-management/pages/Timesheet'),
+);
+
+const TimeOffRequests = lazy(
+  () => import('@/feature/employee/time-management/pages/TimeOffRequests'),
+);
+
+const MyAttendance = lazy(
+  () => import('@/feature/employee/time-management/pages/MyAttendance'),
+);
+
+const AccountSettings = lazy(
+  () => import('@/feature/shared/account-settings/pages/AccountSettings'),
+);
+
+const NotificationsPage = lazy(
+  () => import('@/feature/shared/notifications/pages/NotificationsPage'),
+);
+
+const NotificationDetailPage = lazy(
+  () => import('@/feature/shared/notifications/pages/NotificationDetailPage'),
+);
+
+const TimeLayout = lazy(
+  () => import('@/feature/employee/time-management/layout/TimeLayout'),
+);
+
+// Approve Requests
+const ApproveRequestsLayout = lazy(
+  () =>
+    import('@/feature/employee/approve-requests/layout/ApproveRequestsLayout'),
+);
+const ApproveTimesheet = lazy(
+  () => import('@/feature/employee/approve-requests/pages/ApproveTimesheet'),
+);
+const ApproveTimeOff = lazy(
+  () => import('@/feature/employee/approve-requests/pages/ApproveTimeOff'),
 );
 
 const EmployeeOnboarding = lazy(
-  () => import('@/onboarding/pages/EmployeeOnboarding'),
+  () => import('@/feature/employee/onboarding/pages/EmployeeOnboarding'),
+);
+const OnboardingSuccess = lazy(
+  () => import('@/feature/employee/onboarding/pages/OnboardingSuccess'),
 );
 
-// Bonus Management 
+// Bonus Management
 
 const BonusSettings = lazy(
-  () => import('./pages/AdminBonusSettings/BonusSettings')
+  () => import('./pages/AdminBonusSettings/BonusSettings'),
 );
-
+const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
 const routes: RouteObject[] = [
+  // =================================================================
+  // 0. Token-based Routes (Accessible by anyone with valid token)
+  // =================================================================
+  {
+    path: '/onboarding',
+    element: <EmployeeOnboarding />,
+  },
+  {
+    path: '/onboarding/success',
+    element: <OnboardingSuccess />,
+  },
+
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
   // =================================================================
@@ -63,9 +130,10 @@ const routes: RouteObject[] = [
         path: '/reset-password/:token',
         element: <Placeholder title="Reset Password" />,
       },
+      // Test
       {
-        path: '/onboarding/:token',
-        element: <Placeholder title="Onboarding" />,
+        path: '/test',
+        element: <BonusSettings />,
       },
       // Test
       {
@@ -74,10 +142,6 @@ const routes: RouteObject[] = [
       }
     ],
   },
-  {
-    path: '/onboarding/employee',
-    element: <EmployeeOnboarding />,
-  },
 
   // =================================================================
   // 2. Protected Routes (Only accessible when Logged in)
@@ -85,27 +149,55 @@ const routes: RouteObject[] = [
   {
     element: <ProtectedRoute />,
     children: [
-      // A. Root Redirect Logic
-      // If a logged-in user hits '/', send them to the admin dashboard (or employee dashboard)
-      { path: '/', element: <Navigate to="/admin" replace /> },
+      // A. Root Redirect Logic (role-based)
+      { path: '/', element: <RoleBasedRedirect /> },
 
       // B. Employee Routes
       {
         path: '/employee',
         element: <EmployeeLayout />,
         children: [
+          // Employee Dashboard/Home
+          { index: true, element: <EmployeeHome /> },
+          { path: 'dashboard', element: <EmployeeHome /> },
+          // Time Management Routes
+          {
+            path: 'time',
+            element: <TimeLayout />,
+            children: [
+              { index: true, element: <MyAttendance /> },
+              {
+                path: 'attendance',
+                element: <MyAttendance />,
+              },
+              { path: 'timesheet', element: <Timesheet /> },
+              {
+                path: 'my-requests',
+                element: <TimeOffRequests />,
+              },
+            ],
+          },
+          // Approve Requests Routes
+          {
+            path: 'approve-requests',
+            element: <ApproveRequestsLayout />,
+            children: [
+              { index: true, element: <Navigate to="timesheet" replace /> },
+              { path: 'timesheet', element: <ApproveTimesheet /> },
+              { path: 'time-off', element: <ApproveTimeOff /> },
+            ],
+          },
           {
             path: 'profile',
             children: [
-              { index: true, element: <EmployeeIDs /> },
-              { path: 'edit', element: <EmployeeEditIDs /> },
+              { index: true, element: <Navigate to="ids" replace /> },
               {
                 path: 'personal-info',
                 children: [
                   { index: true, element: <PersonalInfo /> },
                   {
                     path: 'edit',
-                    element: <Placeholder title="Edit Personal Info" />,
+                    element: <EditPersonalInfo />,
                   },
                   {
                     path: 'contact',
@@ -127,6 +219,7 @@ const routes: RouteObject[] = [
                 path: 'ids',
                 children: [
                   { index: true, element: <EmployeeIDs /> },
+                  { path: 'edit', element: <EmployeeEditIDs /> },
                   {
                     path: 'request-update',
                     element: <Placeholder title="Request ID Update" />,
@@ -137,8 +230,14 @@ const routes: RouteObject[] = [
                 path: 'change-requests',
                 element: <Placeholder title="Profile Change Requests" />,
               },
-              { path: 'job-details', element: <JobDetails /> },
             ],
+          },
+          { path: 'job-details',
+            children: [
+              { index: true, element: <Navigate to="info" replace /> },
+              { path: 'info', element: <JobDetails /> },
+              { path: 'working-history', element: <WorkingHistory /> },
+            ]
           },
           // ... (Rest of Employee Sub-routes kept as is, just ensured nesting)
           {
@@ -146,6 +245,23 @@ const routes: RouteObject[] = [
             children: [
               { index: true, element: <Placeholder title="My Requests" /> },
               // ...
+            ],
+          },
+          {
+            path: 'campaigns',
+            children: [
+              { index: true, element: <EmployeeCampaignHub /> },
+              { path: 'my-history', element: <Placeholder title="My Campaign History" /> },
+              // Detail page for a specific campaign if needed
+              { path: ':id', element: <Placeholder title="Campaign Details" /> },
+            ],
+          },
+          { path: 'settings', element: <AccountSettings /> },
+          {
+            path: 'notifications',
+            children: [
+              { index: true, element: <NotificationsPage /> },
+              { path: ':id', element: <NotificationDetailPage /> },
             ],
           },
         ],
@@ -175,7 +291,7 @@ const routes: RouteObject[] = [
           },
 
           // Legacy Routes
-          { path: 'employees', element: <ViewEmployeeList /> }, // /admin/employees
+          { path: 'employees', element: <EmployeeManagement /> }, // /admin/employees
           { path: 'add-employee', element: <AddEmployee /> }, // /admin/add-employee
 
           // Auth Actions
@@ -183,6 +299,14 @@ const routes: RouteObject[] = [
           {
             path: 'change-password',
             element: <Placeholder title="Change Password" />,
+          },
+          { path: 'settings', element: <AccountSettings /> },
+          {
+            path: 'notifications',
+            children: [
+              { index: true, element: <NotificationsPage /> },
+              { path: ':id', element: <NotificationDetailPage /> },
+            ],
           },
 
           // Nested Admin Features
@@ -231,7 +355,7 @@ const routes: RouteObject[] = [
             children: [
               {
                 index: true,
-                element: <Placeholder title="Profile Requests" />,
+                element: <ProfileChangeRequests />,
               },
               { path: ':id', element: <Placeholder title="Request Detail" /> },
             ],
@@ -275,17 +399,13 @@ const routes: RouteObject[] = [
             children: [
               { index: true, element: <BonusSettings /> },
               // { path: 'new', element: <CreateCampaign /> },
-            ]
-          }
+            ],
+          },
         ],
       },
 
       { path: '/settings', element: <Placeholder title="Settings" /> },
       { path: '/help', element: <Placeholder title="Help Center" /> },
-      {
-        path: '/notifications',
-        element: <Placeholder title="Notifications" />,
-      },
     ],
   },
 
