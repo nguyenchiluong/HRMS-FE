@@ -147,7 +147,7 @@ const routes: RouteObject[] = [
   // 2. Protected Routes (Only accessible when Logged in)
   // =================================================================
   {
-    element: <PublicRoute />, //TESTING
+    element: <ProtectedRoute />,
     children: [
       // A. Root Redirect Logic (role-based)
       { path: '/', element: <RoleBasedRedirect /> },
