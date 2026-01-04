@@ -8,8 +8,11 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useChangePassword } from '../hooks/useChangePassword';
 import { Eye, EyeOff, Lock, Shield } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 
 interface PasswordFormData {
   currentPassword: string;
@@ -17,92 +20,56 @@ interface PasswordFormData {
   confirmPassword: string;
 }
 
+const validationSchema = Yup.object().shape({
+  currentPassword: Yup.string().required('Current password is required'),
+  newPassword: Yup.string()
+    .required('New password is required')
+    .min(6, 'Password must be at least 6 characters')
+    .matches(
+      /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+    )
+    .test(
+      'different-from-current',
+      'New password must be different from current password',
+      function (value) {
+        return value !== this.parent.currentPassword;
+      },
+    ),
+  confirmPassword: Yup.string()
+    .required('Please confirm your new password')
+    .oneOf([Yup.ref('newPassword')], 'Passwords do not match'),
+});
+
 export default function AccountSettings() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<PasswordFormData>({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+  const resetFormRef = useRef<(() => void) | null>(null);
+
+  const { mutate: changePassword, isPending } = useChangePassword({
+    onSuccess: () => {
+      resetFormRef.current?.();
+    },
   });
-  const [errors, setErrors] = useState<Partial<PasswordFormData>>({});
-  const [successMessage, setSuccessMessage] = useState('');
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<PasswordFormData> = {};
-
-    if (!formData.currentPassword) {
-      newErrors.currentPassword = 'Current password is required';
-    }
-
-    if (!formData.newPassword) {
-      newErrors.newPassword = 'New password is required';
-    } else if (formData.newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.newPassword)) {
-      newErrors.newPassword =
-        'Password must contain at least one uppercase letter, one lowercase letter, and one number';
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your new password';
-    } else if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (formData.currentPassword === formData.newPassword) {
-      newErrors.newPassword =
-        'New password must be different from current password';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSuccessMessage('');
-    setErrors({});
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Simulate API success
-      setSuccessMessage('Password has been successfully updated!');
-      setFormData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
+  const formik = useFormik<PasswordFormData>({
+    initialValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+    validationSchema,
+    onSubmit: (values) => {
+      changePassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+        confirmPassword: values.confirmPassword,
       });
-    } catch {
-      setErrors({
-        currentPassword: 'Failed to update password. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+  });
 
-  const handleChange = (field: keyof PasswordFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error for this field when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-    // Clear success message when user starts typing
-    if (successMessage) {
-      setSuccessMessage('');
-    }
-  };
+  resetFormRef.current = formik.resetForm;
 
   return (
     <div className="h-full w-full space-y-6 px-20 py-10">
@@ -132,7 +99,7 @@ export default function AccountSettings() {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={formik.handleSubmit} className="space-y-6">
             {/* Current Password */}
             <div className="space-y-2">
               <Label htmlFor="currentPassword" className="font-regular text-sm">
@@ -141,14 +108,16 @@ export default function AccountSettings() {
               <div className="relative">
                 <Input
                   id="currentPassword"
+                  name="currentPassword"
                   type={showCurrentPassword ? 'text' : 'password'}
-                  value={formData.currentPassword}
-                  onChange={(e) =>
-                    handleChange('currentPassword', e.target.value)
-                  }
+                  value={formik.values.currentPassword}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   placeholder="Enter your current password"
                   className={`placeholder:text-xs ${
-                    errors.currentPassword ? 'border-red-500' : ''
+                    formik.touched.currentPassword && formik.errors.currentPassword
+                      ? 'border-red-500'
+                      : ''
                   }`}
                 />
                 <button
@@ -163,8 +132,10 @@ export default function AccountSettings() {
                   )}
                 </button>
               </div>
-              {errors.currentPassword && (
-                <p className="text-xs text-red-500">{errors.currentPassword}</p>
+              {formik.touched.currentPassword && formik.errors.currentPassword && (
+                <p className="text-xs text-red-500">
+                  {formik.errors.currentPassword}
+                </p>
               )}
             </div>
 
@@ -176,12 +147,16 @@ export default function AccountSettings() {
               <div className="relative">
                 <Input
                   id="newPassword"
+                  name="newPassword"
                   type={showNewPassword ? 'text' : 'password'}
-                  value={formData.newPassword}
-                  onChange={(e) => handleChange('newPassword', e.target.value)}
+                  value={formik.values.newPassword}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   placeholder="Enter your new password"
                   className={`placeholder:text-xs ${
-                    errors.newPassword ? 'border-red-500' : ''
+                    formik.touched.newPassword && formik.errors.newPassword
+                      ? 'border-red-500'
+                      : ''
                   }`}
                 />
                 <button
@@ -196,11 +171,11 @@ export default function AccountSettings() {
                   )}
                 </button>
               </div>
-              {errors.newPassword && (
-                <p className="text-xs text-red-500">{errors.newPassword}</p>
+              {formik.touched.newPassword && formik.errors.newPassword && (
+                <p className="text-xs text-red-500">{formik.errors.newPassword}</p>
               )}
               <p className="text-xs text-gray-500">
-                Password must be at least 8 characters and contain uppercase,
+                Password must be at least 6 characters and contain uppercase,
                 lowercase, and a number
               </p>
             </div>
@@ -213,14 +188,16 @@ export default function AccountSettings() {
               <div className="relative">
                 <Input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    handleChange('confirmPassword', e.target.value)
-                  }
+                  value={formik.values.confirmPassword}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   placeholder="Confirm your new password"
                   className={`placeholder:text-xs ${
-                    errors.confirmPassword ? 'border-red-500' : ''
+                    formik.touched.confirmPassword && formik.errors.confirmPassword
+                      ? 'border-red-500'
+                      : ''
                   }`}
                 />
                 <button
@@ -235,22 +212,17 @@ export default function AccountSettings() {
                   )}
                 </button>
               </div>
-              {errors.confirmPassword && (
-                <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+              {formik.touched.confirmPassword && formik.errors.confirmPassword && (
+                <p className="text-xs text-red-500">
+                  {formik.errors.confirmPassword}
+                </p>
               )}
             </div>
 
-            {/* Success Message */}
-            {successMessage && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                <p className="text-xs text-emerald-700">{successMessage}</p>
-              </div>
-            )}
-
             {/* Submit Button */}
             <div className="flex justify-end">
-              <Button type="submit" size="lg" disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button type="submit" size="lg" disabled={isPending}>
+                {isPending ? (
                   <>
                     <Shield className="mr-2 h-4 w-4 animate-spin" />
                     Updating...

@@ -20,6 +20,32 @@ import type {
   WeekRange,
 } from '../types';
 
+// ==================== Utility Functions ====================
+
+/**
+ * Extract error message from axios error
+ */
+const getErrorMessage = (error: unknown, defaultMessage: string): string => {
+  if (isAxiosError(error)) {
+    return (
+      error.response?.data?.message ||
+      error.response?.data?.error?.message ||
+      error.message ||
+      defaultMessage
+    );
+  }
+  return defaultMessage;
+};
+
+/**
+ * Handle mutation error with toast notification
+ */
+const handleMutationError = (error: unknown, defaultMessage: string) => {
+  console.error(error);
+  const message = getErrorMessage(error, defaultMessage);
+  toast.error(message);
+};
+
 // ==================== Query Keys ====================
 
 export const timesheetKeys = {
@@ -35,6 +61,9 @@ export const timesheetKeys = {
 
 /**
  * Hook to fetch active tasks
+ * 
+ * Note: Query errors are available via the returned `error` property.
+ * Use React Query's built-in error handling in components.
  */
 export const useActiveTasks = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -45,7 +74,6 @@ export const useActiveTasks = () => {
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
-      // Don't retry on 401 errors
       if (isAxiosError(error) && error.response?.status === 401) {
         return false;
       }
@@ -58,6 +86,9 @@ export const useActiveTasks = () => {
 
 /**
  * Hook to fetch my timesheets for a specific month
+ * 
+ * Note: Query errors are available via the returned `error` property.
+ * Use React Query's built-in error handling in components.
  */
 export const useMyTimesheets = (year: number, month: number) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -100,7 +131,6 @@ export const useMyTimesheets = (year: number, month: number) => {
     enabled: isAuthenticated,
     staleTime: 30 * 1000, // 30 seconds
     retry: (failureCount, error) => {
-      // Don't retry on 401 errors
       if (isAxiosError(error) && error.response?.status === 401) {
         return false;
       }
@@ -202,17 +232,21 @@ export const getWeekSubmissions = (
 
 // ==================== Timesheet Mutations ====================
 
-interface SubmitTimesheetOptions {
+interface UseSubmitTimesheetOptions {
   onSuccess?: (data: TimesheetResponse) => void;
+  onError?: (error: unknown) => void;
 }
 
 /**
  * Hook to submit a weekly timesheet
+ * 
+ * Leverages React Query's onSuccess and onError callbacks.
+ * Errors are automatically handled with toast notifications.
  */
 export const useSubmitTimesheet = (
   year: number,
   month: number,
-  options?: SubmitTimesheetOptions,
+  options?: UseSubmitTimesheetOptions,
 ) => {
   const queryClient = useQueryClient();
 
@@ -229,27 +263,27 @@ export const useSubmitTimesheet = (
       options?.onSuccess?.(response.data);
     },
     onError: (error) => {
-      console.error(error);
-      if (isAxiosError(error) && error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error('Failed to submit timesheet. Please try again.');
-      }
+      handleMutationError(error, 'Failed to submit timesheet. Please try again.');
+      options?.onError?.(error);
     },
   });
 };
 
-interface AdjustTimesheetOptions {
+interface UseAdjustTimesheetOptions {
   onSuccess?: (data: TimesheetResponse) => void;
+  onError?: (error: unknown) => void;
 }
 
 /**
  * Hook to adjust a rejected/pending timesheet
+ * 
+ * Leverages React Query's onSuccess and onError callbacks.
+ * Errors are automatically handled with toast notifications.
  */
 export const useAdjustTimesheet = (
   year: number,
   month: number,
-  options?: AdjustTimesheetOptions,
+  options?: UseAdjustTimesheetOptions,
 ) => {
   const queryClient = useQueryClient();
 
@@ -269,27 +303,27 @@ export const useAdjustTimesheet = (
       options?.onSuccess?.(response.data);
     },
     onError: (error) => {
-      console.error(error);
-      if (isAxiosError(error) && error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error('Failed to adjust timesheet. Please try again.');
-      }
+      handleMutationError(error, 'Failed to adjust timesheet. Please try again.');
+      options?.onError?.(error);
     },
   });
 };
 
-interface CancelTimesheetOptions {
+interface UseCancelTimesheetOptions {
   onSuccess?: (data: TimesheetResponse) => void;
+  onError?: (error: unknown) => void;
 }
 
 /**
  * Hook to cancel a pending timesheet
+ * 
+ * Leverages React Query's onSuccess and onError callbacks.
+ * Errors are automatically handled with toast notifications.
  */
 export const useCancelTimesheet = (
   year: number,
   month: number,
-  options?: CancelTimesheetOptions,
+  options?: UseCancelTimesheetOptions,
 ) => {
   const queryClient = useQueryClient();
 
@@ -303,12 +337,8 @@ export const useCancelTimesheet = (
       options?.onSuccess?.(response.data);
     },
     onError: (error) => {
-      console.error(error);
-      if (isAxiosError(error) && error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error('Failed to cancel timesheet. Please try again.');
-      }
+      handleMutationError(error, 'Failed to cancel timesheet. Please try again.');
+      options?.onError?.(error);
     },
   });
 };

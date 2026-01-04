@@ -12,6 +12,7 @@ import type {
   Position,
   TimeType,
 } from '@/types/employee';
+import type { EmployeeDto } from '@/feature/employee/profile-management/types';
 import type { Employee, EmployeeStats, FilterState } from '../types';
 
 export interface GetEmployeesParams {
@@ -111,5 +112,15 @@ export const createInitialProfile = async (
   data: InitialProfilePayload,
 ): Promise<void> => {
   await dotnetApi.post('/api/Employees/initial-profile', data);
+};
+
+/**
+ * Get a single employee by ID
+ * @param id Employee ID
+ * @returns Promise with employee data
+ */
+export const getEmployeeById = async (id: number): Promise<EmployeeDto> => {
+  const response = await dotnetApi.get<EmployeeDto>(`/api/employees/${id}`);
+  return response.data;
 };
 

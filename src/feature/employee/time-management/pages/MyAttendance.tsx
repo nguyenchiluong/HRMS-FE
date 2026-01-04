@@ -12,51 +12,15 @@ import {
   Timer,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { AttendanceRecord, ClockStatus } from '../types';
+import toast from 'react-hot-toast';
+import {
+  useAttendanceHistory,
+  useClockIn,
+  useClockOut,
+  useCurrentClockStatus,
+} from '../hooks';
 
 const ITEMS_PER_PAGE = 7;
-
-// Mock data for demonstration
-const generateMockAttendance = (): AttendanceRecord[] => {
-  const records: AttendanceRecord[] = [];
-  const today = new Date();
-
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-
-    // Skip weekends
-    if (date.getDay() === 0 || date.getDay() === 6) continue;
-
-    const clockIn = new Date(date);
-    clockIn.setHours(
-      8 + Math.floor(Math.random() * 2),
-      Math.floor(Math.random() * 60),
-      0,
-    );
-
-    const clockOut = new Date(date);
-    clockOut.setHours(
-      17 + Math.floor(Math.random() * 2),
-      Math.floor(Math.random() * 60),
-      0,
-    );
-
-    const totalMinutes = Math.round(
-      (clockOut.getTime() - clockIn.getTime()) / 60000,
-    );
-
-    records.push({
-      id: `ATT-${String(i + 1).padStart(4, '0')}`,
-      date,
-      clockInTime: i === 0 ? null : clockIn, // Today might not have clock in yet
-      clockOutTime: i <= 1 ? null : clockOut, // Today and yesterday might not have clock out
-      totalWorkingMinutes: i <= 1 ? null : totalMinutes,
-    });
-  }
-
-  return records;
-};
 
 const formatTime = (date: Date | null): string => {
   if (!date) return '--:--';
@@ -72,12 +36,24 @@ const formatDuration = (minutes: number | null): string => {
 
 export default function MyAttendance() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [clockStatus, setClockStatus] = useState<ClockStatus>('clocked-out');
-  const [clockInTime, setClockInTime] = useState<Date | null>(null);
-  const [attendanceRecords] = useState<AttendanceRecord[]>(
-    generateMockAttendance,
-  );
   const [currentPage, setCurrentPage] = useState(1);
+
+  // API hooks - React Query handles errors and success automatically via onSuccess/onError in hooks
+  const { data: clockStatusData, isLoading: isLoadingStatus } =
+    useCurrentClockStatus();
+  const { data: attendanceData, isLoading: isLoadingHistory } =
+    useAttendanceHistory({
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+    });
+  // Also fetch first page to check for today's record (most recent records)
+  const { data: firstPageData } = useAttendanceHistory({
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+  });
+  // Mutations handle errors/success via onSuccess/onError callbacks in hooks
+  const clockInMutation = useClockIn();
+  const clockOutMutation = useClockOut();
 
   // Update time every second
   useEffect(() => {
@@ -87,26 +63,53 @@ export default function MyAttendance() {
     return () => clearInterval(interval);
   }, []);
 
+  // Get clock status and working duration from API
+  const clockStatus = clockStatusData?.status || 'clocked-out';
+  const clockInTime = clockStatusData?.clockInTime
+    ? new Date(clockStatusData.clockInTime)
+    : null;
+  const workingDuration =
+    clockStatusData?.currentWorkingMinutes !== null &&
+    clockStatusData?.currentWorkingMinutes !== undefined
+      ? clockStatusData.currentWorkingMinutes
+      : clockInTime
+        ? Math.round((currentTime.getTime() - clockInTime.getTime()) / 60000)
+        : null;
+
+  // Pagination logic
+  const attendanceRecords = attendanceData?.data || [];
+  const pagination = attendanceData?.pagination;
+  const totalPages = pagination?.totalPages || 0;
+  const currentRecords = attendanceRecords;
+
+  // Check if already clocked in today - use multiple sources for reliability
+  const today = new Date();
+  const todayDateString = format(today, 'yyyy-MM-dd');
+  
+  // Check today's record from first page (most recent records)
+  const firstPageRecords = firstPageData?.data || [];
+  const todayRecord = firstPageRecords.find(
+    (record) => format(record.date, 'yyyy-MM-dd') === todayDateString,
+  );
+  
+  // Has clock in if: status says clocked-in OR today's record has a clock-in time
+  const hasClockInToday =
+    clockStatus === 'clocked-in' ||
+    (todayRecord?.clockInTime !== null && todayRecord?.clockInTime !== undefined);
+
   const handleClockIn = () => {
-    setClockStatus('clocked-in');
-    setClockInTime(new Date());
+    // Frontend validation: prevent multiple clock-ins per day
+    if (hasClockInToday) {
+      toast.error('You have already clocked in today. Only one clock-in per day is allowed.');
+      return;
+    }
+
+    clockInMutation.mutate();
   };
 
   const handleClockOut = () => {
-    setClockStatus('clocked-out');
-    setClockInTime(null);
+    clockOutMutation.mutate();
   };
-
-  // Calculate working duration if clocked in
-  const workingDuration = clockInTime
-    ? Math.round((currentTime.getTime() - clockInTime.getTime()) / 60000)
-    : null;
-
-  // Pagination logic
-  const totalPages = Math.ceil(attendanceRecords.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentRecords = attendanceRecords.slice(startIndex, endIndex);
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -217,32 +220,45 @@ export default function MyAttendance() {
 
             {/* Clock In/Out Buttons */}
             <div className="flex gap-4">
+              {/* Clock In button - disabled if already clocked in today (one clock-in per day) */}
               <Button
                 onClick={handleClockIn}
-                disabled={clockStatus === 'clocked-in'}
+                disabled={
+                  hasClockInToday || // Prevent double clock-in (one per day) - checks both status and today's record
+                  clockInMutation.isPending ||
+                  isLoadingStatus
+                }
                 className={cn(
                   'h-16 gap-3 px-8 text-lg font-semibold transition-all',
-                  clockStatus === 'clocked-in'
+                  hasClockInToday ||
+                    clockInMutation.isPending ||
+                    isLoadingStatus
                     ? 'cursor-not-allowed bg-slate-700 text-slate-500'
                     : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-500 hover:shadow-emerald-500/40',
                 )}
               >
                 <LogIn className="h-6 w-6" />
-                Clock In
+                {clockInMutation.isPending ? 'Clocking In...' : 'Clock In'}
               </Button>
 
               <Button
                 onClick={handleClockOut}
-                disabled={clockStatus === 'clocked-out'}
+                disabled={
+                  clockStatus === 'clocked-out' ||
+                  clockOutMutation.isPending ||
+                  isLoadingStatus
+                }
                 className={cn(
                   'h-16 gap-3 px-8 text-lg font-semibold transition-all',
-                  clockStatus === 'clocked-out'
+                  clockStatus === 'clocked-out' ||
+                    clockOutMutation.isPending ||
+                    isLoadingStatus
                     ? 'cursor-not-allowed bg-slate-700 text-slate-500'
                     : 'bg-rose-600 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-500 hover:shadow-rose-500/40',
                 )}
               >
                 <LogOut className="h-6 w-6" />
-                Clock Out
+                {clockOutMutation.isPending ? 'Clocking Out...' : 'Clock Out'}
               </Button>
             </div>
           </div>
@@ -255,124 +271,133 @@ export default function MyAttendance() {
           Attendance History
         </h2>
         <Card className="overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Clock In
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Clock Out
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Total Working Time
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {currentRecords.map((record) => {
-                const isToday =
-                  format(record.date, 'yyyy-MM-dd') ===
-                  format(new Date(), 'yyyy-MM-dd');
-
-                return (
-                  <tr
-                    key={record.id}
-                    className={cn(
-                      'hover:bg-gray-50',
-                      isToday && 'bg-blue-50/50',
-                    )}
-                  >
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={cn(
-                            'flex h-10 w-10 items-center justify-center rounded-lg text-sm font-semibold',
-                            isToday
-                              ? 'bg-slate-900 text-white'
-                              : 'bg-gray-100 text-gray-600',
-                          )}
-                        >
-                          {format(record.date, 'dd')}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {format(record.date, 'EEEE')}
-                            {isToday && (
-                              <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                                Today
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {format(record.date, 'MMMM dd, yyyy')}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-center">
-                      <div
-                        className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium',
-                          record.clockInTime
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-gray-100 text-gray-500',
-                        )}
-                      >
-                        <LogIn className="h-3.5 w-3.5" />
-                        {formatTime(record.clockInTime)}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-center">
-                      <div
-                        className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium',
-                          record.clockOutTime
-                            ? 'bg-rose-100 text-rose-700'
-                            : 'bg-gray-100 text-gray-500',
-                        )}
-                      >
-                        <LogOut className="h-3.5 w-3.5" />
-                        {formatTime(record.clockOutTime)}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-center">
-                      <div
-                        className={cn(
-                          'inline-flex items-center gap-1.5 text-sm font-medium',
-                          record.totalWorkingMinutes !== null
-                            ? record.totalWorkingMinutes >= 480
-                              ? 'text-emerald-600'
-                              : 'text-amber-600'
-                            : 'text-gray-400',
-                        )}
-                      >
-                        <Timer className="h-4 w-4" />
-                        {formatDuration(record.totalWorkingMinutes)}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          {attendanceRecords.length === 0 && (
+          {isLoadingHistory ? (
+            <div className="py-12 text-center text-gray-500">
+              Loading attendance records...
+            </div>
+          ) : attendanceRecords.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
               No attendance records found
             </div>
+          ) : (
+            <>
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Clock In
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Clock Out
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Total Working Time
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {currentRecords.map((record) => {
+                    const isToday =
+                      format(record.date, 'yyyy-MM-dd') ===
+                      format(new Date(), 'yyyy-MM-dd');
+
+                    return (
+                      <tr
+                        key={record.id}
+                        className={cn(
+                          'hover:bg-gray-50',
+                          isToday && 'bg-blue-50/50',
+                        )}
+                      >
+                        <td className="whitespace-nowrap px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={cn(
+                                'flex h-10 w-10 items-center justify-center rounded-lg text-sm font-semibold',
+                                isToday
+                                  ? 'bg-slate-900 text-white'
+                                  : 'bg-gray-100 text-gray-600',
+                              )}
+                            >
+                              {format(record.date, 'dd')}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {format(record.date, 'EEEE')}
+                                {isToday && (
+                                  <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                                    Today
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {format(record.date, 'MMMM dd, yyyy')}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4 text-center">
+                          <div
+                            className={cn(
+                              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium',
+                              record.clockInTime
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-gray-100 text-gray-500',
+                            )}
+                          >
+                            <LogIn className="h-3.5 w-3.5" />
+                            {formatTime(record.clockInTime)}
+                          </div>
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4 text-center">
+                          <div
+                            className={cn(
+                              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium',
+                              record.clockOutTime
+                                ? 'bg-rose-100 text-rose-700'
+                                : 'bg-gray-100 text-gray-500',
+                            )}
+                          >
+                            <LogOut className="h-3.5 w-3.5" />
+                            {formatTime(record.clockOutTime)}
+                          </div>
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4 text-center">
+                          <div
+                            className={cn(
+                              'inline-flex items-center gap-1.5 text-sm font-medium',
+                              record.totalWorkingMinutes !== null
+                                ? record.totalWorkingMinutes >= 480
+                                  ? 'text-emerald-600'
+                                  : 'text-amber-600'
+                                : 'text-gray-400',
+                            )}
+                          >
+                            <Timer className="h-4 w-4" />
+                            {formatDuration(record.totalWorkingMinutes)}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {!isLoadingHistory && totalPages > 1 && pagination && (
             <div className="flex items-center justify-between border-t bg-white px-6 py-4">
               <div className="text-sm text-gray-500">
-                Showing {startIndex + 1} to{' '}
-                {Math.min(endIndex, attendanceRecords.length)} of{' '}
-                {attendanceRecords.length} records
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+                {Math.min(
+                  currentPage * ITEMS_PER_PAGE,
+                  pagination.total,
+                )} of{' '}
+                {pagination.total} records
               </div>
               <div className="flex items-center gap-1">
                 <Button
