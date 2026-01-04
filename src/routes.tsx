@@ -119,6 +119,11 @@ const routes: RouteObject[] = [
     path: '/onboarding/success',
     element: <OnboardingSuccess />,
   },
+  // Test
+  {
+    path: '/test',
+    element: <EmployeeBonusPage />,
+  },
 
   // =================================================================
   // 1. Public Routes (Only accessible when NOT logged in)
@@ -134,12 +139,7 @@ const routes: RouteObject[] = [
       {
         path: '/reset-password/:token',
         element: <Placeholder title="Reset Password" />,
-      },
-      // Test
-      {
-        path: '/test',
-        element: <EmployeeBonusPage />,
-      },
+      }
     ],
   },
 
@@ -232,7 +232,8 @@ const routes: RouteObject[] = [
               },
             ],
           },
-          { path: 'job-details',
+          {
+            path: 'job-details',
             children: [
               { index: true, element: <Navigate to="info" replace /> },
               { path: 'info', element: <JobDetails /> },
@@ -267,8 +268,10 @@ const routes: RouteObject[] = [
           {
             path: 'credits',
             children: [
-              { index: true,
-                element: <ViewBonus/> },
+              {
+                index: true,
+                element: <ViewBonus />
+              },
             ]
           }
         ],
