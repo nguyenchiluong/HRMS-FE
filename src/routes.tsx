@@ -1,4 +1,4 @@
-import EditPersonalInfo from '@/feature/employee/profile-management/pages/EditPersonalInfo';
+import EditPersonalInfo from '@/feature/employee/profile-management/pages/PersonalInformation/EditPersonalInfo';
 import WorkingHistory from '@/feature/employee/profile-management/pages/WorkingHistory';
 import { lazy } from 'react';
 import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
@@ -19,13 +19,15 @@ const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
 const EmployeeIDs = lazy(
-  () => import('@/feature/employee/profile-management/pages/EmployeeIDs'),
+  () => import('@/feature/employee/profile-management/pages/IDs/EmployeeIDs'),
 );
 const EmployeeEditIDs = lazy(
-  () => import('@/feature/employee/profile-management/pages/EmployeeEditID'),
+  () =>
+    import('@/feature/employee/profile-management/pages/IDs/EditEmployeeID'),
 );
 const PersonalInfo = lazy(
-  () => import('@/feature/employee/profile-management/pages/PersonalInfo'),
+  () =>
+    import('@/feature/employee/profile-management/pages/PersonalInformation/PersonalInfo'),
 );
 const Education = lazy(
   () => import('@/feature/employee/profile-management/pages/EmployeeEducation'),
@@ -78,6 +80,10 @@ const NotificationDetailPage = lazy(
 
 const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
+);
+
+const ProfileLayout = lazy(
+  () => import('@/feature/employee/profile-management/layout/ProfileLayout'),
 );
 
 // Approve Requests
@@ -187,8 +193,9 @@ const routes: RouteObject[] = [
           },
           {
             path: 'profile',
+            element: <ProfileLayout />,
             children: [
-              { index: true, element: <Navigate to="ids" replace /> },
+              { index: true, element: <Navigate to="personal-info" replace /> },
               {
                 path: 'personal-info',
                 children: [
@@ -232,6 +239,7 @@ const routes: RouteObject[] = [
           },
           {
             path: 'job-details',
+            element: <JobDetails />,
             children: [
               { index: true, element: <Navigate to="info" replace /> },
               { path: 'info', element: <JobDetails /> },

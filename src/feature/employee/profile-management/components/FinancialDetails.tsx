@@ -1,9 +1,17 @@
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ErrorMessage, Field, Form, Formik, FormikHelpers } from 'formik';
 import { Edit, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import * as Yup from 'yup';
-import { Input } from '@/components/ui/input';
-import { useMyBankAccounts, useCreateBankAccount, useUpdateBankAccount, useDeleteBankAccount } from '../hooks/useBankAccount';
+import {
+  useCreateBankAccount,
+  useDeleteBankAccount,
+  useMyBankAccounts,
+  useUpdateBankAccount,
+} from '../hooks/useBankAccount';
 import { CreateBankAccountDto, UpdateBankAccountDto } from '../types';
 
 // Form values interface
@@ -21,8 +29,10 @@ const validationSchema = Yup.object({
   accountNumber: Yup.string()
     .required('Account number is required')
     .max(50, 'Account number must not exceed 50 characters'),
-  accountName: Yup.string()
-    .max(100, 'Account name must not exceed 100 characters'),
+  accountName: Yup.string().max(
+    100,
+    'Account name must not exceed 100 characters',
+  ),
 });
 
 // Form field component for edit mode
@@ -33,29 +43,33 @@ interface FormFieldRowProps {
   required?: boolean;
 }
 
-function FormFieldRow({ label, name, placeholder, required = false }: FormFieldRowProps) {
+function FormFieldRow({
+  label,
+  name,
+  placeholder,
+  required = false,
+}: FormFieldRowProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-start px-2.5 py-[5px] gap-4 md:gap-[45px]">
-      <label className="w-full md:w-[240px] text-black font-poppins text-[17px] font-medium flex-shrink-0">
+    <div className="space-y-2">
+      <Label htmlFor={name} className="text-sm font-medium">
         {label}
-        {required && <span className="text-red-600 ml-1">*</span>}
-      </label>
-      <div className="flex-1 flex flex-col gap-1">
-        <div className="flex items-center gap-2.5">
-          <Field
-            as={Input}
-            name={name}
-            placeholder={placeholder}
-            className="flex-1 text-hrms-text-secondary font-poppins text-[17px] font-normal"
-          />
-          <Edit className="w-6 h-6 flex-shrink-0 text-hrms-text-muted" />
-        </div>
-        <ErrorMessage
+        {required && <span className="ml-1 text-red-500">*</span>}
+      </Label>
+      <div className="flex items-center gap-2">
+        <Field
+          as={Input}
+          id={name}
           name={name}
-          component="div"
-          className="text-red-500 text-sm font-poppins"
+          placeholder={placeholder}
+          className="flex-1"
         />
+        <Edit className="h-4 w-4 text-gray-400" />
       </div>
+      <ErrorMessage
+        name={name}
+        component="div"
+        className="text-sm text-red-500"
+      />
     </div>
   );
 }
@@ -68,15 +82,11 @@ interface DisplayFieldRowProps {
 
 function DisplayFieldRow({ label, value }: DisplayFieldRowProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-start px-2.5 py-[5px] gap-4 md:gap-[45px]">
-      <label className="w-full md:w-[240px] text-black font-poppins text-[17px] font-medium flex-shrink-0">
+    <div className="flex flex-col gap-2 border-b border-gray-100 pb-4 last:border-0 md:flex-row md:items-start">
+      <div className="w-full text-sm font-medium text-gray-700 md:w-48 md:flex-shrink-0">
         {label}
-      </label>
-      <div className="flex-1 flex items-start md:items-center gap-2.5">
-        <p className="flex-1 text-hrms-text-secondary font-poppins text-[17px] font-normal break-words">
-          {value}
-        </p>
       </div>
+      <div className="flex-1 break-words text-sm text-gray-900">{value}</div>
     </div>
   );
 }
@@ -84,7 +94,10 @@ function DisplayFieldRow({ label, value }: DisplayFieldRowProps) {
 export default function FinancialDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<{ accountNumber: string; bankName: string } | null>(null);
+  const [editingAccount, setEditingAccount] = useState<{
+    accountNumber: string;
+    bankName: string;
+  } | null>(null);
 
   const { data: bankAccounts, isLoading, isError, error } = useMyBankAccounts();
   const createMutation = useCreateBankAccount();
@@ -116,7 +129,11 @@ export default function FinancialDetails() {
   };
 
   const handleDelete = (accountNumber: string, bankName: string) => {
-    if (window.confirm(`Are you sure you want to delete the bank account at ${bankName}?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the bank account at ${bankName}?`,
+      )
+    ) {
       deleteMutation.mutate({ accountNumber, bankName });
     }
   };
@@ -131,7 +148,7 @@ export default function FinancialDetails() {
         bankName: values.bankName,
         accountName: values.accountName || null,
       };
-      
+
       createMutation.mutate(data, {
         onSuccess: () => {
           resetForm();
@@ -148,7 +165,7 @@ export default function FinancialDetails() {
         bankName: values.bankName,
         accountName: values.accountName || null,
       };
-      
+
       updateMutation.mutate(
         {
           accountNumber: editingAccount.accountNumber,
@@ -165,42 +182,48 @@ export default function FinancialDetails() {
           onSettled: () => {
             setSubmitting(false);
           },
-        }
+        },
       );
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex flex-col p-[30px] md:p-[30px_45px] gap-[35px] rounded-[25px] bg-white">
-        <h1 className="text-black font-poppins text-[25px] font-semibold">
+      <Card className="p-6">
+        <h1 className="mb-6 text-2xl font-semibold text-gray-900">
           Financial Details
         </h1>
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </div>
+      </Card>
     );
   }
 
   if (isError) {
     return (
-      <div className="flex flex-col p-[30px] md:p-[30px_45px] gap-[35px] rounded-[25px] bg-white">
-        <h1 className="text-black font-poppins text-[25px] font-semibold">
+      <Card className="p-6">
+        <h1 className="mb-6 text-2xl font-semibold text-gray-900">
           Financial Details
         </h1>
-        <div className="flex flex-col items-center justify-center py-12 gap-4">
+        <div className="flex flex-col items-center justify-center gap-4 py-12">
           <p className="text-red-500">Error loading bank accounts</p>
-          <p className="text-gray-600 text-sm">{error instanceof Error ? error.message : 'Unknown error'}</p>
+          <p className="text-sm text-gray-600">
+            {error instanceof Error ? error.message : 'Unknown error'}
+          </p>
         </div>
-      </div>
+      </Card>
     );
   }
 
   // If adding or editing, show the form
   if (isAdding || (isEditing && editingAccount)) {
-    const currentAccount = editingAccount 
-      ? bankAccounts?.find(acc => acc.accountNumber === editingAccount.accountNumber && acc.bankName === editingAccount.bankName)
+    const currentAccount = editingAccount
+      ? bankAccounts?.find(
+          (acc) =>
+            acc.accountNumber === editingAccount.accountNumber &&
+            acc.bankName === editingAccount.bankName,
+        )
       : null;
 
     const initialValues: FinancialFormValues = currentAccount
@@ -212,8 +235,8 @@ export default function FinancialDetails() {
       : emptyFormValues;
 
     return (
-      <div className="flex flex-col p-[30px] md:p-[30px_45px] gap-[35px] rounded-[25px] bg-white">
-        <h1 className="text-black font-poppins text-[25px] font-semibold">
+      <Card className="p-6">
+        <h1 className="mb-6 text-2xl font-semibold text-gray-900">
           {isAdding ? 'Add Bank Account' : 'Edit Bank Account'}
         </h1>
 
@@ -224,121 +247,137 @@ export default function FinancialDetails() {
           enableReinitialize
         >
           {({ isSubmitting }) => (
-            <Form>
-              <div className="flex flex-col py-2.5 gap-2.5">
-                <FormFieldRow
-                  label="Bank Name"
-                  name="bankName"
-                  placeholder="Enter bank name"
-                  required
-                />
-                <FormFieldRow
-                  label="Account Number"
-                  name="accountNumber"
-                  placeholder="Enter account number"
-                  required
-                />
-                <FormFieldRow
-                  label="Account Name"
-                  name="accountName"
-                  placeholder="Enter account name"
-                />
-              </div>
+            <Form className="space-y-6">
+              <FormFieldRow
+                label="Bank Name"
+                name="bankName"
+                placeholder="Enter bank name"
+                required
+              />
+              <FormFieldRow
+                label="Account Number"
+                name="accountNumber"
+                placeholder="Enter account number"
+                required
+              />
+              <FormFieldRow
+                label="Account Name"
+                name="accountName"
+                placeholder="Enter account name"
+              />
 
-              <div className="mt-[35px]">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 sm:gap-[50px]">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
-                    className="flex items-center justify-center px-[38px] py-[15px] rounded-[25px] bg-hrms-primary hover:bg-hrms-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? (
-                      <Loader2 className="w-6 h-6 text-white animate-spin" />
-                    ) : (
-                      <span className="text-white font-poppins text-xl font-medium whitespace-nowrap">
-                        {isAdding ? 'Add Account' : 'Update Changes'}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
-                    className="flex items-center justify-center px-[48px] py-[15px] rounded-[25px] bg-hrms-bg-light hover:bg-hrms-bg-light/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="text-black font-poppins text-xl font-medium">
-                      Cancel
-                    </span>
-                  </button>
-                </div>
+              <div className="flex gap-4 pt-4">
+                <Button
+                  type="submit"
+                  disabled={
+                    isSubmitting ||
+                    createMutation.isPending ||
+                    updateMutation.isPending
+                  }
+                >
+                  {isSubmitting ||
+                  createMutation.isPending ||
+                  updateMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isAdding ? 'Adding...' : 'Updating...'}
+                    </>
+                  ) : isAdding ? (
+                    'Add Account'
+                  ) : (
+                    'Update Changes'
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  disabled={
+                    isSubmitting ||
+                    createMutation.isPending ||
+                    updateMutation.isPending
+                  }
+                >
+                  Cancel
+                </Button>
               </div>
             </Form>
           )}
         </Formik>
-      </div>
+      </Card>
     );
   }
 
   // Display view - show all bank accounts
   return (
-    <div className="flex flex-col p-[30px] md:p-[30px_45px] gap-[35px] rounded-[25px] bg-white">
-      <h1 className="text-black font-poppins text-[25px] font-semibold">
-        Financial Details
-      </h1>
+    <div className="w-full space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Financial Details
+        </h1>
+        <Button onClick={handleAdd}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Bank Account
+        </Button>
+      </div>
 
       {bankAccounts && bankAccounts.length > 0 ? (
-        <div className="flex flex-col gap-8">
+        <div className="space-y-6">
           {bankAccounts.map((account) => (
-            <div key={`${account.accountNumber}-${account.bankName}`} className="border-b border-gray-200 pb-6 last:border-b-0">
-              <div className="flex flex-col py-2.5 gap-2.5">
+            <Card
+              key={`${account.accountNumber}-${account.bankName}`}
+              className="p-6"
+            >
+              <div className="space-y-4">
                 <DisplayFieldRow label="Bank Name" value={account.bankName} />
-                <DisplayFieldRow label="Account Number" value={account.accountNumber} />
-                <DisplayFieldRow label="Account Name" value={account.accountName || 'N/A'} />
+                <DisplayFieldRow
+                  label="Account Number"
+                  value={account.accountNumber}
+                />
+                <DisplayFieldRow
+                  label="Account Name"
+                  value={account.accountName || 'N/A'}
+                />
               </div>
 
-              <div className="mt-[20px] flex items-center gap-4">
-                <button
+              <div className="mt-6 flex items-center gap-4">
+                <Button
                   type="button"
-                  onClick={() => handleEdit(account.accountNumber, account.bankName)}
-                  className="flex items-center justify-center w-full sm:w-[168px] py-[15px] rounded-[25px] bg-hrms-bg-light hover:bg-hrms-bg-light/80 transition-colors"
+                  variant="outline"
+                  onClick={() =>
+                    handleEdit(account.accountNumber, account.bankName)
+                  }
                 >
-                  <span className="text-black font-poppins text-xl font-medium">
-                    EDIT
-                  </span>
-                </button>
-                <button
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+                <Button
                   type="button"
-                  onClick={() => handleDelete(account.accountNumber, account.bankName)}
+                  variant="outline"
+                  onClick={() =>
+                    handleDelete(account.accountNumber, account.bankName)
+                  }
                   disabled={deleteMutation.isPending}
-                  className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                  title="Delete account"
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
                   {deleteMutation.isPending ? (
-                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <Trash2 className="w-6 h-6" />
+                    <Trash2 className="mr-2 h-4 w-4" />
                   )}
-                </button>
+                  Delete
+                </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500">
-          No bank accounts found. Click "Add Bank Account" to add one.
-        </div>
+        <Card className="p-6">
+          <div className="py-8 text-center text-gray-500">
+            No bank accounts found. Click "Add Bank Account" to add one.
+          </div>
+        </Card>
       )}
-
-      <div className="mt-4">
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-6 py-3 rounded-[25px] bg-hrms-primary hover:bg-hrms-primary/90 transition-colors text-white font-poppins text-lg font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          Add Bank Account
-        </button>
-      </div>
     </div>
   );
 }

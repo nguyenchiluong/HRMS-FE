@@ -5,8 +5,10 @@ export default function EmployeeLayout() {
   return (
     <div className="min-h-screen bg-background">
       <EmployeeNavBar />
-      <main className="container mx-auto px-4 py-8">
-        <Outlet />
+      <main className="flex items-center justify-center px-4">
+        <div className="w-full max-w-[2400px]">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
