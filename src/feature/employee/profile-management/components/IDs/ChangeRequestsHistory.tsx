@@ -81,20 +81,12 @@ const getActionForStatus = (status: string): string | null => {
   switch (status) {
     case 'Pending':
       return 'Cancel';
-    case 'Rejected':
-      return 'Resubmit';
     case 'Approved':
+    case 'Rejected':
     case 'Cancelled':
     default:
       return null;
   }
-};
-
-const formatDate = (date: Date): string => {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
 };
 
 export default function ChangeRequestsHistory() {
@@ -102,54 +94,34 @@ export default function ChangeRequestsHistory() {
     initialChangeRequests,
   );
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [actionType, setActionType] = useState<'cancel' | 'resubmit' | null>(
-    null,
-  );
   const [selectedRequest, setSelectedRequest] = useState<ChangeRequest | null>(
     null,
   );
 
-  const handleActionClick = (
-    request: ChangeRequest,
-    action: 'cancel' | 'resubmit',
-  ) => {
+  const handleActionClick = (request: ChangeRequest) => {
     setSelectedRequest(request);
-    setActionType(action);
     setDialogOpen(true);
   };
 
   const handleConfirm = () => {
-    if (!selectedRequest || !actionType) return;
+    if (!selectedRequest) return;
 
-    if (actionType === 'cancel') {
-      // Update status to Cancelled
-      setChangeRequests((prev) =>
-        prev.map((req) =>
-          req.id === selectedRequest.id
-            ? { ...req, status: 'Cancelled' as const }
-            : req,
-        ),
-      );
-    } else if (actionType === 'resubmit') {
-      // Add a new request with Pending status at the top of the list
-      const newRequest: ChangeRequest = {
-        id: Math.max(...changeRequests.map((r) => r.id)) + 1,
-        fieldChange: selectedRequest.fieldChange,
-        requestDate: formatDate(new Date()),
-        status: 'Pending',
-      };
-      setChangeRequests((prev) => [newRequest, ...prev]);
-    }
+    // Update status to Cancelled
+    setChangeRequests((prev) =>
+      prev.map((req) =>
+        req.id === selectedRequest.id
+          ? { ...req, status: 'Cancelled' as const }
+          : req,
+      ),
+    );
 
     setDialogOpen(false);
     setSelectedRequest(null);
-    setActionType(null);
   };
 
   const handleCancel = () => {
     setDialogOpen(false);
     setSelectedRequest(null);
-    setActionType(null);
   };
 
   return (
@@ -213,12 +185,7 @@ export default function ChangeRequestsHistory() {
                         <Button
                           variant="link"
                           className="h-auto p-0 text-primary underline hover:text-primary/80"
-                          onClick={() =>
-                            handleActionClick(
-                              request,
-                              action === 'Cancel' ? 'cancel' : 'resubmit',
-                            )
-                          }
+                          onClick={() => handleActionClick(request)}
                         >
                           {action}
                         </Button>
@@ -269,51 +236,28 @@ export default function ChangeRequestsHistory() {
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {actionType === 'cancel' ? 'Cancel Request' : 'Resubmit Request'}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Cancel Request</AlertDialogTitle>
             <AlertDialogDescription>
-              {actionType === 'cancel' ? (
-                <>
-                  Are you sure you want to cancel this change request? The
-                  status will be updated to &quot;Cancelled&quot;.
-                  {selectedRequest && (
-                    <div className="mt-4 rounded-lg border bg-gray-50 p-4">
-                      <div className="flex flex-col gap-4 text-sm">
-                        <div className="font-regular text-gray-900">
-                          Field: {selectedRequest.fieldChange}
-                        </div>
-                        <div className="text-gray-600">
-                          Date: {selectedRequest.requestDate}
-                        </div>
-                      </div>
+              Are you sure you want to cancel this change request? The status
+              will be updated to &quot;Cancelled&quot;.
+              {selectedRequest && (
+                <div className="mt-4 rounded-lg border bg-gray-50 p-4">
+                  <div className="flex flex-col gap-4 text-sm">
+                    <div className="font-regular text-gray-900">
+                      Field: {selectedRequest.fieldChange}
                     </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  Are you sure you want to resubmit this change request? A new
-                  request will be created with &quot;Pending&quot; status.
-                  {selectedRequest && (
-                    <div className="mt-4 rounded-lg border bg-gray-50 p-4">
-                      <div className="flex flex-col gap-4 text-sm">
-                        <div className="font-regular text-gray-900">
-                          Field: {selectedRequest.fieldChange}
-                        </div>
-                        <div className="text-gray-600">
-                          Original Date: {selectedRequest.requestDate}
-                        </div>
-                      </div>
+                    <div className="text-gray-600">
+                      Date: {selectedRequest.requestDate}
                     </div>
-                  )}
-                </>
+                  </div>
+                </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirm}>
-              {actionType === 'cancel' ? 'Confirm Cancel' : 'Confirm Resubmit'}
+              Confirm Cancel
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -88,26 +88,6 @@ export default function PersonalDetails() {
       value: formatDate(employee.startDate),
     },
     { label: 'Status', value: employee.status || 'N/A' },
-    {
-      label: 'Department ID',
-      value: employee.departmentId?.toString() || 'N/A',
-    },
-    {
-      label: 'Position ID',
-      value: employee.positionId?.toString() || 'N/A',
-    },
-    {
-      label: 'Job Level ID',
-      value: employee.jobLevelId?.toString() || 'N/A',
-    },
-    {
-      label: 'Employment Type ID',
-      value: employee.employmentTypeId?.toString() || 'N/A',
-    },
-    {
-      label: 'Time Type ID',
-      value: employee.timeTypeId?.toString() || 'N/A',
-    },
   ];
 
   return (
