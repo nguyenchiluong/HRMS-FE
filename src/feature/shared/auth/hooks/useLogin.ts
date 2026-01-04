@@ -36,7 +36,7 @@ export const useLogin = () => {
         }
       } else {
         // For accounts without empId (e.g., admin), use a descriptive name
-        userName = `Admin (${decoded.mail})`;
+        userName = 'HRMS Admin';
       }
 
       // Extract user info from token
