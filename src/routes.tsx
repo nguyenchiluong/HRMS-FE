@@ -14,9 +14,8 @@ const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const ForgotPassword = lazy(
   () => import('@/feature/shared/auth/pages/ForgotPassword'),
 );
-const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+const Dashboard = lazy(() => import('@/feature/admin/dashboard/pages/AdminDashboard'));
 
-const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
 const EmployeeIDs = lazy(
@@ -306,7 +305,6 @@ const routes: RouteObject[] = [
 
           // Legacy Routes
           { path: 'employees', element: <EmployeeManagement /> }, // /admin/employees
-          { path: 'add-employee', element: <AddEmployee /> }, // /admin/add-employee
 
           // Auth Actions
           { path: 'logout', element: <Placeholder title="Logout Logic" /> },
