@@ -28,7 +28,7 @@ export const useLogin = () => {
         try {
           // Fetch employee data to get the full name
           const employee = await getEmployeeById(decoded.empId);
-          userName = employee.fullName;
+          userName = employee.preferredName || employee.fullName;
         } catch (error) {
           // If fetching employee fails, fall back to email
           console.error('Failed to fetch employee data:', error);

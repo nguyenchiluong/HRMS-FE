@@ -109,6 +109,14 @@ export default function IDsInfo() {
         'N/A',
     },
     {
+      label: 'First Name',
+      value: employee.firstName || 'N/A',
+    },
+    {
+      label: 'Last Name',
+      value: employee.lastName || 'N/A',
+    },
+    {
       label: 'Nationality',
       value: employee.nationalIdCountry || 'N/A',
     },
