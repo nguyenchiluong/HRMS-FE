@@ -109,6 +109,9 @@ const ViewBonus = lazy(
 const TransferBonus = lazy(
   () => import('./pages/employeeTransferBonus/page/EmployeeTransferBonusPage'),
 );
+const RedeemBonus = lazy(
+  () => import('./pages/employeeCreditRedeem/page/EmployeeCreditRedeemPage'),
+);
 
 const routes: RouteObject[] = [
   // =================================================================
@@ -278,6 +281,10 @@ const routes: RouteObject[] = [
               {
                 path: 'transfer',
                 element: <TransferBonus />,
+              },
+              {
+                path: 'redeem',
+                element: <RedeemBonus />,
               },
             ]
           }
