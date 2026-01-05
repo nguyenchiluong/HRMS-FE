@@ -29,6 +29,7 @@ export default function EmployeeTransferBonusPage() {
         isGifting,
         deductCredits,
         isDeducting,
+        userRole,
     } = useTeamMembers();
 
     const { balance, isLoading: isBalanceLoading } = useBalance();
@@ -96,34 +97,38 @@ export default function EmployeeTransferBonusPage() {
                     isFetching={isFetching}
                     renderAction={(member) => (
                         <div className="flex justify-end gap-2">
-                            <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                    setSelectedMember(member);
-                                    setActionMode("gift");
-                                    setTransferModalOpen(true);
-                                }}
-                                disabled={isActionLoading || isLoading}
-                                className="gap-2"
-                            >
-                                <Gift className="h-4 w-4" />
-                                <span className="hidden sm:inline">Gift</span>
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                    setSelectedMember(member);
-                                    setActionMode("deduct");
-                                    setTransferModalOpen(true);
-                                }}
-                                disabled={isActionLoading || isLoading}
-                                className="gap-2"
-                            >
-                                <MinusCircle className="h-4 w-4" />
-                                <span className="hidden sm:inline">Deduct</span>
-                            </Button>
+                            {userRole === "MANAGER" && (
+                                <>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={() => {
+                                            setSelectedMember(member);
+                                            setActionMode("gift");
+                                            setTransferModalOpen(true);
+                                        }}
+                                        disabled={isActionLoading || isLoading}
+                                        className="gap-2"
+                                    >
+                                        <Gift className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Gift</span>
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setSelectedMember(member);
+                                            setActionMode("deduct");
+                                            setTransferModalOpen(true);
+                                        }}
+                                        disabled={isActionLoading || isLoading}
+                                        className="gap-2"
+                                    >
+                                        <MinusCircle className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Deduct</span>
+                                    </Button>
+                                </>
+                            )}
                             <Button
                                 size="sm"
                                 variant="default"

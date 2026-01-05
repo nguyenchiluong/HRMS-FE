@@ -90,5 +90,6 @@ export function useTeamMembers() {
         isGifting: giftMutation.isPending,
         deductCredits: deductMutation.mutate,
         isDeducting: deductMutation.isPending,
+        userRole: data?.role,
     };
 }

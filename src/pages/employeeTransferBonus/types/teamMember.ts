@@ -15,6 +15,7 @@ export type ViewTeamMembersRequest = {
 export type ViewTeamMembersResponse = {
     teamMembers: TeamMember[];
     totalRecords: number;
+    role: "USER" | "MANAGER" | "HR" | "ADMIN";
 };
 
 export type TransferCreditsRequest = {
