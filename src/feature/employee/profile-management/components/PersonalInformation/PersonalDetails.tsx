@@ -1,5 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  addMonths,
+  differenceInDays,
+  differenceInMonths,
+  differenceInYears,
+} from 'date-fns';
 import { Edit, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentEmployee } from '../../hooks/useCurrentEmployee';
@@ -21,6 +27,40 @@ export default function PersonalDetails() {
       day: '2-digit',
       year: 'numeric',
     });
+  };
+
+  // Calculate tenure (years, months, and days of service)
+  const calculateTenure = (startDate?: string | null) => {
+    if (!startDate) return 'N/A';
+    
+    const start = new Date(startDate);
+    const now = new Date();
+    
+    // Check if start date is in the future
+    if (start > now) return 'N/A';
+    
+    const totalYears = differenceInYears(now, start);
+    const totalMonths = differenceInMonths(now, start);
+    
+    // Calculate remaining months after years
+    const months = totalMonths - totalYears * 12;
+    
+    // Calculate remaining days after months
+    // Create a date that is totalMonths from start
+    const dateAfterMonths = addMonths(start, totalMonths);
+    const days = differenceInDays(now, dateAfterMonths);
+    
+    const parts: string[] = [];
+    // Always show years and months, even if 0
+    parts.push(`${totalYears} ${totalYears === 1 ? 'year' : 'years'}`);
+    parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
+    
+    // Only show days if greater than 0
+    if (days > 0) {
+      parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+    }
+    
+    return parts.join(', ');
   };
 
   if (isLoading) {
@@ -69,9 +109,11 @@ export default function PersonalDetails() {
     {
       label: 'Full Name',
       value:
-        `${employee.firstName || ''} ${employee.lastName || ''}`.trim() ||
+        `${employee.fullName}`.trim() ||
         'N/A',
     },
+    { label: 'First Name', value: employee.firstName || 'N/A' },
+    { label: 'Last Name', value: employee.lastName || 'N/A' },
     { label: 'Preferred Name', value: employee.preferredName || 'N/A' },
     { label: 'Email', value: employee.email },
     { label: 'Personal Email', value: employee.personalEmail || 'N/A' },
@@ -87,27 +129,11 @@ export default function PersonalDetails() {
       label: 'Hire Date',
       value: formatDate(employee.startDate),
     },
+    {
+      label: 'Years of Service',
+      value: calculateTenure(employee.startDate),
+    },
     { label: 'Status', value: employee.status || 'N/A' },
-    {
-      label: 'Department ID',
-      value: employee.departmentId?.toString() || 'N/A',
-    },
-    {
-      label: 'Position ID',
-      value: employee.positionId?.toString() || 'N/A',
-    },
-    {
-      label: 'Job Level ID',
-      value: employee.jobLevelId?.toString() || 'N/A',
-    },
-    {
-      label: 'Employment Type ID',
-      value: employee.employmentTypeId?.toString() || 'N/A',
-    },
-    {
-      label: 'Time Type ID',
-      value: employee.timeTypeId?.toString() || 'N/A',
-    },
   ];
 
   return (

@@ -163,13 +163,6 @@ export default function JobDetails() {
     },
   ];
 
-  const contactInfo = [
-    {
-      label: 'Work Email',
-      value: employee.email || 'N/A',
-    },
-  ];
-
   const serviceDates = [
     {
       label: 'Original Hiring Date',
@@ -198,26 +191,6 @@ export default function JobDetails() {
             Employee Information
           </h3>
           {jobDetailsData.map((item, index) => (
-            <div
-              key={index}
-              className="flex flex-col gap-2 border-b border-gray-100 pb-4 last:border-0 md:flex-row md:items-start"
-            >
-              <div className="font-regular w-full text-sm text-gray-700 md:w-56 md:flex-shrink-0">
-                {item.label}
-              </div>
-              <div className="flex-1 break-words text-sm text-gray-900">
-                {item.value}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Contact Information Section */}
-        <div className="space-y-4">
-          <h3 className="text-base font-medium text-gray-900">
-            Contact Information
-          </h3>
-          {contactInfo.map((item, index) => (
             <div
               key={index}
               className="flex flex-col gap-2 border-b border-gray-100 pb-4 last:border-0 md:flex-row md:items-start"

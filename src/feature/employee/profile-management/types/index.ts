@@ -46,6 +46,7 @@ export interface EmployeeDto {
 }
 
 export interface UpdateProfileDto {
+  fullName?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   preferredName?: string | null;

@@ -101,22 +101,42 @@ export default function IDsInfo() {
     );
   }
 
-  const basicInfo: InfoRow[] = [
+  const personalInfo: InfoRow[] = [
     {
       label: 'Legal Full Name',
       value:
-        `${employee.firstName || ''} ${employee.lastName || ''}`.trim() ||
+        `${employee.fullName || ''}`.trim() ||
         'N/A',
+    },
+    {
+      label: 'First Name',
+      value: employee.firstName || 'N/A',
+    },
+    {
+      label: 'Last Name',
+      value: employee.lastName || 'N/A',
     },
     {
       label: 'Nationality',
       value: employee.nationalIdCountry || 'N/A',
     },
+    {
+      label: 'Social Insurance Number',
+      value: employee.socialInsuranceNumber || 'N/A',
+      hasVisibilityToggle:
+        !!employee.socialInsuranceNumber &&
+        employee.socialInsuranceNumber !== 'N/A',
+    },
+    {
+      label: 'Tax ID Number',
+      value: employee.taxId || 'N/A',
+      hasVisibilityToggle: !!employee.taxId && employee.taxId !== 'N/A',
+    },
   ];
 
   const nationalID: InfoRow[] = [
     {
-      label: 'Identification #',
+      label: 'National ID Number',
       value: employee.nationalIdNumber || 'N/A',
       hasVisibilityToggle:
         !!employee.nationalIdNumber && employee.nationalIdNumber !== 'N/A',
@@ -135,24 +155,6 @@ export default function IDsInfo() {
     },
   ];
 
-  const socialInsurance: InfoRow[] = [
-    {
-      label: 'Identification #',
-      value: employee.socialInsuranceNumber || 'N/A',
-      hasVisibilityToggle:
-        !!employee.socialInsuranceNumber &&
-        employee.socialInsuranceNumber !== 'N/A',
-    },
-  ];
-
-  const taxID: InfoRow[] = [
-    {
-      label: 'Identification #',
-      value: employee.taxId || 'N/A',
-      hasVisibilityToggle: !!employee.taxId && employee.taxId !== 'N/A',
-    },
-  ];
-
   return (
     <Card className="flex w-full flex-col p-6">
       <div className="mb-6 flex shrink-0 items-center justify-between">
@@ -164,33 +166,17 @@ export default function IDsInfo() {
       </div>
 
       <div className="space-y-6">
-        {/* Basic Info Section */}
+        {/* Personal Information Section */}
         <div className="space-y-4">
-          {basicInfo.map((info, index) => (
+          {personalInfo.map((info, index) => (
             <InfoRowComponent key={index} {...info} />
           ))}
         </div>
 
         {/* National ID Section */}
         <div className="space-y-4">
-          <h3 className="text-base font-medium">National ID</h3>
+          <h3 className="text-base font-medium text-gray-900">National ID</h3>
           {nationalID.map((info, index) => (
-            <InfoRowComponent key={index} {...info} />
-          ))}
-        </div>
-
-        {/* Social Insurance Section */}
-        <div className="space-y-4">
-          <h3 className="text-base font-medium">Social Insurance Number ID</h3>
-          {socialInsurance.map((info, index) => (
-            <InfoRowComponent key={index} {...info} />
-          ))}
-        </div>
-
-        {/* Tax ID Section */}
-        <div className="space-y-4">
-          <h3 className="text-base font-medium">Tax ID</h3>
-          {taxID.map((info, index) => (
             <InfoRowComponent key={index} {...info} />
           ))}
         </div>

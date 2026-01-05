@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
+import { useLogout } from '@/feature/shared/auth/hooks/useLogout';
 import { NotificationDropdown } from '@/feature/shared/notifications/components/NotificationDropdown';
 import { Notification } from '@/feature/shared/notifications/types';
 import {
@@ -70,9 +71,10 @@ const generateMockNotifications = (): Notification[] => {
 };
 
 export default function EmployeeNavBar() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const { mutate: logout } = useLogout();
   const [notifications, setNotifications] = useState<Notification[]>(
     generateMockNotifications,
   );
