@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
     ViewTeamMembersRequest,
     ViewTeamMembersResponse,
@@ -12,10 +13,8 @@ import {
     giftCredits,
     deductCredits,
 } from "../api/teamMembers";
-import { useToast } from "@/hooks/use-toast";
 
 export function useTeamMembers() {
-    const { toast } = useToast();
     const queryClient = useQueryClient();
     const [page, setPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(10);
@@ -28,11 +27,7 @@ export function useTeamMembers() {
         });
 
     const onSuccess = (message?: string) => {
-        toast({
-            title: "Success",
-            description: message || "Action completed successfully",
-            variant: "default",
-        });
+        toast.success(message || "Action completed successfully");
         queryClient.invalidateQueries({
             queryKey: ["teamMembers"],
         });
@@ -42,29 +37,34 @@ export function useTeamMembers() {
     };
 
     const onError = (error: unknown, fallback = "Action failed") => {
-        toast({
-            title: "Error",
-            description: error instanceof Error ? error.message : fallback,
-            variant: "destructive",
-        });
+        toast.error(error instanceof Error ? error.message : fallback);
     };
 
     // Transfer credits mutation
     const transferMutation = useMutation({
         mutationFn: (body: TransferCreditsRequest) => transferCredits(body),
-        onSuccess: (response) => onSuccess(response.message || "Credits transferred successfully"),
+        onSuccess: (response) => {
+            const details = `ID: #${response.transferId} | Points: ${response.numberPoint}${response.note ? ` | Note: ${response.note}` : ""} | Time: ${new Date(response.createdAt).toLocaleString()}`;
+            onSuccess(details);
+        },
         onError: (error) => onError(error, "Transfer failed"),
     });
 
     const giftMutation = useMutation({
         mutationFn: (body: AdjustCreditsRequest) => giftCredits(body),
-        onSuccess: (response) => onSuccess(response.message || "Credits gifted successfully"),
+        onSuccess: (response) => {
+            const details = `ID: #${response.transferId} | Points: ${response.numberPoint}${response.note ? ` | Note: ${response.note}` : ""} | Time: ${new Date(response.createdAt).toLocaleString()}`;
+            onSuccess(details);
+        },
         onError: (error) => onError(error, "Gift failed"),
     });
 
     const deductMutation = useMutation({
         mutationFn: (body: AdjustCreditsRequest) => deductCredits(body),
-        onSuccess: (response) => onSuccess(response.message || "Credits deducted successfully"),
+        onSuccess: (response) => {
+            const details = `ID: #${response.transferId} | Points: ${response.numberPoint}${response.note ? ` | Note: ${response.note}` : ""} | Time: ${new Date(response.createdAt).toLocaleString()}`;
+            onSuccess(details);
+        },
         onError: (error) => onError(error, "Deduction failed"),
     });
 

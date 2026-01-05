@@ -49,9 +49,10 @@ export default function EmployeeTransferBonusPage() {
     const handleAction = (points: number, note?: string) => {
         if (selectedMember) {
             const payload = {
-                recipientId: selectedMember.id,
+                receiverId: selectedMember.id,
                 points,
                 note,
+                type: actionMode === "transfer" ? "TRANSFER" : actionMode === "gift" ? "AWARD" : "DEDUCT",
             };
 
             if (actionMode === "gift") {

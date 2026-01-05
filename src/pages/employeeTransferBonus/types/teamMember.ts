@@ -19,24 +19,34 @@ export type ViewTeamMembersResponse = {
 };
 
 export type TransferCreditsRequest = {
-    recipientId: number;
+    receiverId: number;
     points: number;
     note?: string;
+    type?: "TRANSFER" | "REDEEM" | "DEDUCT" | "AWARD" | "MONTHLY";
 };
 
 export type TransferCreditsResponse = {
-    success: boolean;
-    message: string;
-    newBalance?: number;
+    transferId: number;
+    numberPoint: number;
+    note?: string;
+    type: "TRANSFER" | "REDEEM" | "DEDUCT" | "AWARD" | "MONTHLY";
+    createdAt: string;
 };
 
 export type AdjustCreditsRequest = {
-    recipientId: number;
+    receiverId: number;
     points: number;
     note?: string;
+    type?: "TRANSFER" | "REDEEM" | "DEDUCT" | "AWARD" | "MONTHLY";
 };
 
-export type AdjustCreditsResponse = TransferCreditsResponse;
+export type AdjustCreditsResponse = {
+    transferId: number;
+    numberPoint: number;
+    note?: string;
+    type: "TRANSFER" | "REDEEM" | "DEDUCT" | "AWARD" | "MONTHLY";
+    createdAt: string;
+};
 
 export type BonusPointBalanceResponse = {
     bonusPoint: number;
