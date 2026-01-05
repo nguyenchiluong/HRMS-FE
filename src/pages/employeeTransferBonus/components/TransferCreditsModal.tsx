@@ -20,6 +20,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Card } from "@/components/ui/card";
+import { AlertCircle, Gift, MinusCircle, Send } from "lucide-react";
 import { TeamMember } from "../types/teamMember";
 
 interface TransferCreditsModalProps {
@@ -162,17 +164,97 @@ export function TransferCreditsModal({
             </Dialog>
 
             <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[425px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm {actionLabel.toLowerCase()}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {`Are you sure you want to ${actionLabel.toLowerCase()} ${points || 0} points to ${member?.name}?`}
-                        </AlertDialogDescription>
+                        <AlertDialogTitle>Confirm {actionLabel}</AlertDialogTitle>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
+
+                    <div className="space-y-4">
+                        {/* Action Type Badge with Icon */}
+                        <div className="flex items-center gap-2">
+                            {mode === "transfer" && (
+                                <>
+                                    <Send className="h-5 w-5 text-blue-500" />
+                                    <span className="text-sm font-medium text-blue-600">Transfer</span>
+                                </>
+                            )}
+                            {mode === "gift" && (
+                                <>
+                                    <Gift className="h-5 w-5 text-green-500" />
+                                    <span className="text-sm font-medium text-green-600">Gift</span>
+                                </>
+                            )}
+                            {mode === "deduct" && (
+                                <>
+                                    <MinusCircle className="h-5 w-5 text-red-500" />
+                                    <span className="text-sm font-medium text-red-600">Deduct</span>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Summary Card */}
+                        <Card className="border bg-muted/50 p-4">
+                            <div className="space-y-3">
+                                {/* Recipient */}
+                                <div>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                        {mode === "deduct" ? "From" : "To"}
+                                    </p>
+                                    <p className="mt-1 text-lg font-semibold">{member?.name}</p>
+                                    <p className="text-sm text-muted-foreground">{member?.email}</p>
+                                </div>
+
+                                {/* Amount */}
+                                <div className="border-t pt-3">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                        Amount
+                                    </p>
+                                    <p className="mt-1 text-3xl font-bold">{points}</p>
+                                    <p className="text-sm text-muted-foreground">points</p>
+                                </div>
+
+                                {/* Note if provided */}
+                                {note && (
+                                    <div className="border-t pt-3">
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                            Note
+                                        </p>
+                                        <p className="mt-1 text-sm italic text-muted-foreground">"{note}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+
+                        {/* Warning for Deduct */}
+                        {mode === "deduct" && (
+                            <div className="flex gap-2 rounded-md border border-red-200 bg-red-50 p-3">
+                                <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600" />
+                                <p className="text-sm text-red-700">
+                                    This will deduct points from the employee's balance.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Confirmation message */}
+                        <AlertDialogDescription className="text-center text-sm">
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </div>
+
+                    <AlertDialogFooter className="gap-2">
                         <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirm} disabled={isLoading}>
-                            {isLoading ? loadingLabel : actionLabel}
+                        <AlertDialogAction
+                            onClick={handleConfirm}
+                            disabled={isLoading}
+                            className={
+                                mode === "deduct"
+                                    ? "bg-red-600 hover:bg-red-700"
+                                    : mode === "gift"
+                                        ? "bg-green-600 hover:bg-green-700"
+                                        : ""
+                            }
+                        >
+                            {isLoading ? loadingLabel : `Confirm ${actionLabel}`}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

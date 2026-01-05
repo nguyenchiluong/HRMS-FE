@@ -5,6 +5,7 @@ export type TeamMember = {
     position: string | null;
     department: string | null;
     avatar: string | null;
+    isManager: boolean;
 };
 
 export type ViewTeamMembersRequest = {

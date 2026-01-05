@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
 interface SearchBoxProps {
     value: string;
     onChange: (value: string) => void;
     disabled?: boolean;
+    isFetching?: boolean;
 }
 
-export function SearchBox({ value, onChange, disabled }: SearchBoxProps) {
+export function SearchBox({ value, onChange, disabled, isFetching }: SearchBoxProps) {
     const [localValue, setLocalValue] = useState(value);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // Debounce the search to avoid excessive refetches
     useEffect(() => {
@@ -24,8 +26,16 @@ export function SearchBox({ value, onChange, disabled }: SearchBoxProps) {
         setLocalValue(value);
     }, [value]);
 
+    // Restore focus when refetching completes
+    useEffect(() => {
+        if (!isFetching && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isFetching]);
+
     return (
         <Input
+            ref={inputRef}
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
             placeholder="Search by name or email"

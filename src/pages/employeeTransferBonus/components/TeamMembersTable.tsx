@@ -8,6 +8,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamMember } from "../types/teamMember";
 
@@ -74,7 +75,7 @@ export function TeamMembersTable({
                     </TableHeader>
                     <TableBody>
                         {teamMembers.map((member) => (
-                            <TableRow key={member.id}>
+                            <TableRow key={member.id} className={member.isManager ? "bg-blue-50" : ""}>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-8 w-8">
@@ -87,7 +88,14 @@ export function TeamMembersTable({
                                                     .toUpperCase()}
                                             </AvatarFallback>
                                         </Avatar>
-                                        <span className="font-medium">{member.name}</span>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="font-medium">{member.name}</span>
+                                            {member.isManager && (
+                                                <Badge variant="secondary" className="w-fit text-xs">
+                                                    Manager
+                                                </Badge>
+                                            )}
+                                        </div>
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
