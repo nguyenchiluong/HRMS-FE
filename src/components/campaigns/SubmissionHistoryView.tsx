@@ -13,12 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/pages/employeeProfileManagement/components/ui/table";
-// 👇 IMPORT MỚI: hooks
+// IMPORT MỚI: hooks
 import { useMyCampaignActivities, useDeleteActivity } from "@/hooks/useCampaigns";
 import { ArrowLeft, CheckCircle2, Clock, Edit, Loader2, Trash2, X, XCircle } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-// 👇 IMPORT MỚI: EditModal và Alert Dialog
+// IMPORT MỚI: EditModal và Alert Dialog
 import EditActivityModal from "./EditActivityModal";
 import { 
     AlertDialog,

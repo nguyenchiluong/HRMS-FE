@@ -35,18 +35,23 @@ export default function SubmitActivityDialog({
     activityDate: Yup.date()
       .required("Activity date is required")
       .min(
-        new Date(campaign?.startDate),
-        `Date must be after ${new Date(campaign?.startDate).toLocaleDateString()}`
+        //  Reset giờ của startDate về 00:00:00
+        new Date(new Date(campaign?.startDate).setHours(0, 0, 0, 0)),
+        
+        // Sửa câu thông báo thành "from" thay vì "after" cho đúng nghĩa
+        `Date must be from ${new Date(campaign?.startDate).toLocaleDateString()}`
       )
       .max(
-        new Date(campaign?.endDate),
-        `Date must be before ${new Date(campaign?.endDate).toLocaleDateString()}`
+        new Date(new Date(campaign?.startDate).setHours(23, 59, 59, 999)),
+        `Date must be before or on ${new Date(campaign?.endDate).toLocaleDateString()}`
       )
       .max(new Date(), "Cannot submit future activities"),
+      
     distance: Yup.number()
       .required("Distance is required")
       .positive("Distance must be positive")
       .typeError("Must be a number"),
+      
     imageFile: Yup.mixed().required("Proof image is required"),
   });
 

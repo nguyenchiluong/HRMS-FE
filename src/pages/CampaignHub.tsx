@@ -15,9 +15,10 @@ import { Separator } from "@/components/ui/separator";
 import { useActiveCampaigns, useMyCampaigns, useRegisterCampaign } from "@/hooks/useCampaigns";
 import { Calendar, CheckCircle2, History, Info, Loader2, LogOut, Trophy, Users } from "lucide-react";
 import { useState } from "react";
+import LeaderboardView from "@/components/campaigns/LeaderboardView";
 import toast from "react-hot-toast";
 
-// 👇 Import component View mới
+// Import component View mới
 import SubmissionHistoryView from "@/components/campaigns/SubmissionHistoryView";
 
 export default function EmployeeCampaignHub() {
@@ -35,6 +36,8 @@ export default function EmployeeCampaignHub() {
   const myCampaigns = myCampaignsData || [];
   const joinedIds = myCampaigns.map((c) => c.id);
   const activeCampaignsList = (activeCampaignsData || []).filter((c) => !joinedIds.includes(c.id));
+
+  const [leaderboardCampaign, setLeaderboardCampaign] = useState<any | null>(null);
 
   const handleConfirmRegister = async () => {
     if (!selectedCampaign) return;
@@ -63,6 +66,12 @@ export default function EmployeeCampaignHub() {
     setSubmissionCampaign(campaign);
   };
 
+  const handleViewLeaderboard = (campaign: any) => {
+    console.log("Clicked Leaderboard for:", campaign.id);
+    setLeaderboardCampaign(campaign);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -75,6 +84,21 @@ export default function EmployeeCampaignHub() {
       </div>
     );
   }
+
+  // View: Leaderboard
+if (leaderboardCampaign) {
+  return (
+     <div className="min-h-screen bg-slate-50/50 p-6 font-sans">
+         <div className="max-w-6xl mx-auto">
+             <LeaderboardView
+                 campaign={leaderboardCampaign}
+                 onBack={() => setLeaderboardCampaign(null)}
+                 isAdminView={false} // Employee mode
+             />
+         </div>
+     </div>
+  );
+}
 
   // 👇 LOGIC QUAN TRỌNG: Nếu đang xem lịch sử, return giao diện lịch sử
   if (historyCampaign) {
@@ -224,7 +248,10 @@ export default function EmployeeCampaignHub() {
                                         >
                                             Submit Activity
                                         </Button>
-                                        <Button variant="outline" className="flex-1 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800">
+                                        <Button variant="outline" 
+                                                  className="flex-1 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+                                                  onClick={() => handleViewLeaderboard(campaign)} 
+                                        >
                                             <Trophy className="w-4 h-4 mr-2" />
                                             View Leaderboard
                                         </Button>

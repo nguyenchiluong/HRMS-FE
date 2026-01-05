@@ -42,12 +42,12 @@ export default function EditActivityModal({ activity, campaign, onClose }: EditA
     activityDate: Yup.date()
       .required("Activity date is required")
       .min(
-        new Date(campaign?.startDate),
-        `Date must be after ${new Date(campaign?.startDate).toLocaleDateString()}`
+        new Date(new Date(campaign?.startDate).setHours(0, 0, 0, 0)),
+        `Date must be from ${new Date(campaign?.startDate).toLocaleDateString()}`
       )
       .max(
-        new Date(campaign?.endDate),
-        `Date must be before ${new Date(campaign?.endDate).toLocaleDateString()}`
+        new Date(new Date(campaign?.endDate).setHours(23, 59, 59, 999)),
+        `Date must be before or on ${new Date(campaign?.endDate).toLocaleDateString()}`
       )
       .max(new Date(), "Cannot submit future activities"),
     distance: Yup.number()

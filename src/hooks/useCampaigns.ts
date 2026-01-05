@@ -1,6 +1,6 @@
 import { createCampaign, getCampaigns, updateCampaign, publishCampaign, 
 getActiveCampaigns, registerForCampaign, getMyCampaigns, submitActivity, 
-getMyCampaignActivities, getCampaignById, deleteActivityApi, updateActivityApi} from '@/api/campaign';
+getMyCampaignActivities, getCampaignById, deleteActivityApi, updateActivityApi, getCampaignLeaderboard, getMyCampaignRank} from '@/api/campaign';
 import type { Campaign, CampaignFormData, ActivitySubmissionData } from '@/types/campaign';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -145,5 +145,27 @@ export const useUpdateActivity = () => {
       queryClient.invalidateQueries({ queryKey: ['campaign-activities'] });
       queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
     },
+  });
+};
+
+
+// ... (code cũ)
+
+// Hook: Lấy Leaderboard chung
+export const useCampaignLeaderboard = (campaignId: string) => {
+  return useQuery({
+    queryKey: ['campaign-leaderboard', campaignId],
+    queryFn: () => getCampaignLeaderboard(campaignId),
+    enabled: !!campaignId,
+    staleTime: 1000 * 60, // Cache 1 phút vì leaderboard thay đổi liên tục
+  });
+};
+
+// Hook: Lấy Rank của tôi (Chỉ chạy khi không phải chế độ Admin)
+export const useMyRank = (campaignId: string, isEmployeeView: boolean = true) => {
+  return useQuery({
+    queryKey: ['my-rank', campaignId],
+    queryFn: () => getMyCampaignRank(campaignId),
+    enabled: !!campaignId && isEmployeeView, 
   });
 };

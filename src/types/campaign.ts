@@ -43,3 +43,21 @@ export interface EmployeeActivity {
   rejectionReason?: string;
 }
 
+
+export interface LeaderboardEntry {
+  rank: number;
+  employeeId: string;
+  employeeName: string;
+  totalPoints: number; // Có thể là totalDistance tùy logic
+  completedActivities: number;
+  lastActivityDate: string;
+}
+
+export interface MyRankInfo {
+  rank: number;
+  totalPoints: number;
+  completedActivities: number;
+  pointsToNextRank: number; // Khoảng cách điểm để leo hạng
+  nextRankName?: string; // Ví dụ: "Top 3", "Top 10"
+}
+

@@ -1,4 +1,4 @@
-import type { Campaign, CampaignFormData, ActivitySubmissionData} from '@/types/campaign';
+import type { Campaign, CampaignFormData, ActivitySubmissionData, LeaderboardEntry, MyRankInfo} from '@/types/campaign';
 import springApi from './spring';
 import type { EmployeeActivity } from '@/types/campaign';
 
@@ -299,6 +299,31 @@ export const updateActivityApi = async (activityId: string | number, data: Activ
     return response.data;
   } catch (error) {
     console.error('Error updating activity:', error);
+    throw error;
+  }
+};
+
+
+// --- LEADERBOARD APIs ---
+
+// Lấy danh sách Top xếp hạng (VD: Top 50)
+export const getCampaignLeaderboard = async (campaignId: string): Promise<LeaderboardEntry[]> => {
+  try {
+    const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${campaignId}/leaderboard`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    return []; // Trả về mảng rỗng để không crash UI
+  }
+};
+
+// Lấy hạng của chính mình (Chỉ dùng cho Employee)
+export const getMyCampaignRank = async (campaignId: string): Promise<MyRankInfo> => {
+  try {
+    const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${campaignId}/leaderboard/me`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my rank:', error);
     throw error;
   }
 };
