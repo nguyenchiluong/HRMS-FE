@@ -28,7 +28,30 @@ export default function ProfileChangeRequests() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const limit = 20;
 
-  // React Query hooks
+  // Fetch counts for each status using pagination totals
+  // Using limit=1 to minimize data transfer, we only need the pagination.total
+  const { data: allRequestsResponse } = useProfileChangeRequests(
+    1,
+    1,
+    undefined, // No status filter - get total count
+  );
+  const { data: pendingResponse } = useProfileChangeRequests(
+    1,
+    1,
+    'PENDING',
+  );
+  const { data: approvedResponse } = useProfileChangeRequests(
+    1,
+    1,
+    'APPROVED',
+  );
+  const { data: rejectedResponse } = useProfileChangeRequests(
+    1,
+    1,
+    'REJECTED',
+  );
+
+  // React Query hooks - fetch filtered requests for display
   const {
     data: response,
     isLoading,
@@ -56,14 +79,11 @@ export default function ProfileChangeRequests() {
     totalPages: 1,
   };
 
-  // Calculate stats from all requests (not just current page)
-  // Note: For accurate stats, we'd need to fetch all statuses separately
-  // For now, we'll calculate from the current page data
-  const pendingCount = allRequests.filter((r) => r.status === 'pending').length;
-  const approvedCount = allRequests.filter((r) => r.status === 'approved')
-    .length;
-  const rejectedCount = allRequests.filter((r) => r.status === 'rejected')
-    .length;
+  // Get counts from pagination totals (accurate counts regardless of current filter)
+  const pendingCount = pendingResponse?.pagination?.total || 0;
+  const approvedCount = approvedResponse?.pagination?.total || 0;
+  const rejectedCount = rejectedResponse?.pagination?.total || 0;
+  const totalCount = allRequestsResponse?.pagination?.total || 0;
 
   const handleApprove = (request: ProfileChangeRequest, notes?: string) => {
     approveRequest({
@@ -117,7 +137,7 @@ export default function ProfileChangeRequests() {
           size="sm"
           onClick={() => setFilterStatus('all')}
         >
-          All ({pagination.total})
+          All ({totalCount})
         </Button>
         <Button
           variant={filterStatus === 'pending' ? 'default' : 'outline'}
