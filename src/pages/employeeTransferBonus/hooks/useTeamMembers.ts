@@ -4,8 +4,14 @@ import {
     ViewTeamMembersRequest,
     ViewTeamMembersResponse,
     TransferCreditsRequest,
+    AdjustCreditsRequest,
 } from "../types/teamMember";
-import { fetchTeamMembers, transferCredits } from "../api/teamMembers";
+import {
+    fetchTeamMembers,
+    transferCredits,
+    giftCredits,
+    deductCredits,
+} from "../api/teamMembers";
 import { useToast } from "@/hooks/use-toast";
 
 export function useTeamMembers() {
@@ -21,28 +27,45 @@ export function useTeamMembers() {
             queryFn: () => fetchTeamMembers({ page, size: pageSize }),
         });
 
+    const onSuccess = (message?: string) => {
+        toast({
+            title: "Success",
+            description: message || "Action completed successfully",
+            variant: "default",
+        });
+        queryClient.invalidateQueries({
+            queryKey: ["teamMembers"],
+        });
+        queryClient.invalidateQueries({
+            queryKey: ["bonusBalance"],
+        });
+    };
+
+    const onError = (error: unknown, fallback = "Action failed") => {
+        toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : fallback,
+            variant: "destructive",
+        });
+    };
+
     // Transfer credits mutation
     const transferMutation = useMutation({
         mutationFn: (body: TransferCreditsRequest) => transferCredits(body),
-        onSuccess: (response) => {
-            toast({
-                title: "Success",
-                description:
-                    response.message || "Credits transferred successfully",
-                variant: "default",
-            });
-            // Invalidate and refetch team members data
-            queryClient.invalidateQueries({
-                queryKey: ["teamMembers"],
-            });
-        },
-        onError: (error) => {
-            toast({
-                title: "Error",
-                description: error instanceof Error ? error.message : "Transfer failed",
-                variant: "destructive",
-            });
-        },
+        onSuccess: (response) => onSuccess(response.message || "Credits transferred successfully"),
+        onError: (error) => onError(error, "Transfer failed"),
+    });
+
+    const giftMutation = useMutation({
+        mutationFn: (body: AdjustCreditsRequest) => giftCredits(body),
+        onSuccess: (response) => onSuccess(response.message || "Credits gifted successfully"),
+        onError: (error) => onError(error, "Gift failed"),
+    });
+
+    const deductMutation = useMutation({
+        mutationFn: (body: AdjustCreditsRequest) => deductCredits(body),
+        onSuccess: (response) => onSuccess(response.message || "Credits deducted successfully"),
+        onError: (error) => onError(error, "Deduction failed"),
     });
 
     const totalPages = Math.max(
@@ -63,5 +86,9 @@ export function useTeamMembers() {
         setPageSize,
         transferCredits: transferMutation.mutate,
         isTransferring: transferMutation.isPending,
+        giftCredits: giftMutation.mutate,
+        isGifting: giftMutation.isPending,
+        deductCredits: deductMutation.mutate,
+        isDeducting: deductMutation.isPending,
     };
 }

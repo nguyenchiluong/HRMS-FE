@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Send } from "lucide-react";
+import { AlertCircle, Gift, MinusCircle, Send } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTeamMembers } from "../hooks/useTeamMembers";
+import { useBalance } from "../hooks/useBalance";
 import { TeamMembersTable } from "../components/TeamMembersTable";
 import { TransferCreditsModal } from "../components/TransferCreditsModal";
 import { PaginationControls } from "../components/PaginationControls";
@@ -24,24 +25,41 @@ export default function EmployeeTransferBonusPage() {
         setPageSize,
         transferCredits,
         isTransferring,
+        giftCredits,
+        isGifting,
+        deductCredits,
+        isDeducting,
     } = useTeamMembers();
 
+    const { balance, isLoading: isBalanceLoading } = useBalance();
+
     const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+    const [actionMode, setActionMode] = useState<"transfer" | "gift" | "deduct">("transfer");
     const [transferModalOpen, setTransferModalOpen] = useState(false);
-    const [currentBalance] = useState<number>(1000); // You can replace this with actual balance from context/store
+
+    const isActionLoading = isTransferring || isGifting || isDeducting;
 
     const handleTransferClick = (member: TeamMember) => {
         setSelectedMember(member);
+        setActionMode("transfer");
         setTransferModalOpen(true);
     };
 
-    const handleTransfer = (points: number, note?: string) => {
+    const handleAction = (points: number, note?: string) => {
         if (selectedMember) {
-            transferCredits({
+            const payload = {
                 recipientId: selectedMember.id,
                 points,
                 note,
-            });
+            };
+
+            if (actionMode === "gift") {
+                giftCredits(payload);
+            } else if (actionMode === "deduct") {
+                deductCredits(payload);
+            } else {
+                transferCredits(payload);
+            }
         }
     };
 
@@ -60,7 +78,7 @@ export default function EmployeeTransferBonusPage() {
     return (
         <div className="space-y-6">
             {/* Balance Summary */}
-            <BalanceSummaryCard balance={currentBalance} />
+            <BalanceSummaryCard balance={balance} />
 
             {/* Team Members Section */}
             <div>
@@ -77,16 +95,46 @@ export default function EmployeeTransferBonusPage() {
                     isLoading={isLoading}
                     isFetching={isFetching}
                     renderAction={(member) => (
-                        <Button
-                            size="sm"
-                            variant="default"
-                            onClick={() => handleTransferClick(member)}
-                            disabled={isTransferring || isLoading}
-                            className="gap-2"
-                        >
-                            <Send className="h-4 w-4" />
-                            <span className="hidden sm:inline">Transfer</span>
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => {
+                                    setSelectedMember(member);
+                                    setActionMode("gift");
+                                    setTransferModalOpen(true);
+                                }}
+                                disabled={isActionLoading || isLoading}
+                                className="gap-2"
+                            >
+                                <Gift className="h-4 w-4" />
+                                <span className="hidden sm:inline">Gift</span>
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                    setSelectedMember(member);
+                                    setActionMode("deduct");
+                                    setTransferModalOpen(true);
+                                }}
+                                disabled={isActionLoading || isLoading}
+                                className="gap-2"
+                            >
+                                <MinusCircle className="h-4 w-4" />
+                                <span className="hidden sm:inline">Deduct</span>
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleTransferClick(member)}
+                                disabled={isActionLoading || isLoading}
+                                className="gap-2"
+                            >
+                                <Send className="h-4 w-4" />
+                                <span className="hidden sm:inline">Transfer</span>
+                            </Button>
+                        </div>
                     )}
                 />
 
@@ -113,12 +161,13 @@ export default function EmployeeTransferBonusPage() {
 
             {/* Transfer Credits Modal */}
             <TransferCreditsModal
+                mode={actionMode}
                 open={transferModalOpen}
                 onOpenChange={setTransferModalOpen}
                 member={selectedMember}
-                onTransfer={handleTransfer}
-                isLoading={isTransferring}
-                maxPoints={currentBalance}
+                onAction={handleAction}
+                isLoading={isActionLoading}
+                maxPoints={actionMode === "transfer" ? balance : undefined}
             />
         </div>
     );

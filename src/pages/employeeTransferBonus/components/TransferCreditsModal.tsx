@@ -13,25 +13,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { TeamMember } from "../types/teamMember";
 
 interface TransferCreditsModalProps {
+    mode: "transfer" | "gift" | "deduct";
     open: boolean;
     onOpenChange: (open: boolean) => void;
     member: TeamMember | null;
-    onTransfer: (points: number, note?: string) => void;
+    onAction: (points: number, note?: string) => void;
     isLoading: boolean;
     maxPoints?: number;
 }
 
 export function TransferCreditsModal({
+    mode,
     open,
     onOpenChange,
     member,
-    onTransfer,
+    onAction,
     isLoading,
-    maxPoints = 1000,
+    maxPoints,
 }: TransferCreditsModalProps) {
     const [points, setPoints] = useState<string>("");
     const [note, setNote] = useState<string>("");
     const [error, setError] = useState<string>("");
+
+    const actionLabel = mode === "transfer" ? "Transfer" : mode === "gift" ? "Gift" : "Deduct";
+    const loadingLabel = `${actionLabel}ing...`;
+    const title = `${actionLabel} Credits`;
+    const descriptionPrefix = mode === "deduct" ? "Deduct credits from" : "Send credits to";
 
     const handleTransfer = () => {
         // Reset error
@@ -44,13 +51,13 @@ export function TransferCreditsModal({
             return;
         }
 
-        if (pointsNum > maxPoints) {
-            setError(`Maximum transferable points is ${maxPoints}`);
+        if (maxPoints !== undefined && pointsNum > maxPoints) {
+            setError(`Maximum ${actionLabel.toLowerCase()} amount is ${maxPoints}`);
             return;
         }
 
         // Call transfer function
-        onTransfer(pointsNum, note || undefined);
+        onAction(pointsNum, note || undefined);
 
         // Reset form on success
         setPoints("");
@@ -69,9 +76,9 @@ export function TransferCreditsModal({
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Transfer Credits</DialogTitle>
+                    <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>
-                        Transfer credits to {member?.name}
+                        {descriptionPrefix} {member?.name}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -91,7 +98,7 @@ export function TransferCreditsModal({
                         <Input
                             id="points"
                             type="number"
-                            placeholder="Enter points to transfer"
+                            placeholder={`Enter points to ${actionLabel.toLowerCase()}`}
                             value={points}
                             onChange={(e) => setPoints(e.target.value)}
                             disabled={isLoading}
@@ -99,9 +106,11 @@ export function TransferCreditsModal({
                             max={maxPoints}
                             className="mt-1"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Maximum: {maxPoints.toLocaleString()} points
-                        </p>
+                        {maxPoints !== undefined && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Maximum: {maxPoints.toLocaleString()} points
+                            </p>
+                        )}
                     </div>
 
                     {/* Note Input */}
@@ -127,7 +136,7 @@ export function TransferCreditsModal({
                             Cancel
                         </Button>
                         <Button onClick={handleTransfer} disabled={isLoading}>
-                            {isLoading ? "Transferring..." : "Transfer"}
+                            {isLoading ? loadingLabel : actionLabel}
                         </Button>
                     </div>
                 </div>

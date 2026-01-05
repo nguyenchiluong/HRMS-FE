@@ -4,6 +4,9 @@ import {
     ViewTeamMembersResponse,
     TransferCreditsRequest,
     TransferCreditsResponse,
+    BonusPointBalanceResponse,
+    AdjustCreditsRequest,
+    AdjustCreditsResponse,
 } from "../types/teamMember";
 
 export async function fetchTeamMembers(
@@ -22,6 +25,33 @@ export async function transferCredits(
     const { data } = await springApi.post<TransferCreditsResponse>(
         "/api/credits/transfer",
         body
+    );
+    return data;
+}
+
+export async function giftCredits(
+    body: AdjustCreditsRequest
+): Promise<AdjustCreditsResponse> {
+    const { data } = await springApi.post<AdjustCreditsResponse>(
+        "/api/credits/gift",
+        body
+    );
+    return data;
+}
+
+export async function deductCredits(
+    body: AdjustCreditsRequest
+): Promise<AdjustCreditsResponse> {
+    const { data } = await springApi.post<AdjustCreditsResponse>(
+        "/api/credits/deduct",
+        body
+    );
+    return data;
+}
+
+export async function fetchBalance(): Promise<BonusPointBalanceResponse> {
+    const { data } = await springApi.get<BonusPointBalanceResponse>(
+        "/api/credits/balance"
     );
     return data;
 }

@@ -28,3 +28,15 @@ export type TransferCreditsResponse = {
     message: string;
     newBalance?: number;
 };
+
+export type AdjustCreditsRequest = {
+    recipientId: number;
+    points: number;
+    note?: string;
+};
+
+export type AdjustCreditsResponse = TransferCreditsResponse;
+
+export type BonusPointBalanceResponse = {
+    bonusPoint: number;
+};
