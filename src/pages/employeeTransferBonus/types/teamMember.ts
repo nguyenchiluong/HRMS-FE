@@ -10,6 +10,7 @@ export type TeamMember = {
 export type ViewTeamMembersRequest = {
     page?: number;
     size?: number;
+    search?: string;
 };
 
 export type ViewTeamMembersResponse = {

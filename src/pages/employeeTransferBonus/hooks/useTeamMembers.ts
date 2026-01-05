@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import {
     ViewTeamMembersRequest,
@@ -18,12 +19,13 @@ export function useTeamMembers() {
     const queryClient = useQueryClient();
     const [page, setPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(10);
+    const [search, setSearch] = useState<string>("");
 
     // Fetch team members
     const { data, isLoading, isFetching, error } =
         useQuery<ViewTeamMembersResponse>({
-            queryKey: ["teamMembers", page, pageSize],
-            queryFn: () => fetchTeamMembers({ page, size: pageSize }),
+            queryKey: ["teamMembers", page, pageSize, search],
+            queryFn: () => fetchTeamMembers({ page, size: pageSize, search: search || undefined }),
         });
 
     const onSuccess = (message?: string) => {
@@ -37,7 +39,13 @@ export function useTeamMembers() {
     };
 
     const onError = (error: unknown, fallback = "Action failed") => {
-        toast.error(error instanceof Error ? error.message : fallback);
+        const message = isAxiosError(error)
+            ? (error.response?.data as { message?: string })?.message || fallback
+            : error instanceof Error
+                ? error.message
+                : fallback;
+
+        toast.error(message);
     };
 
     // Transfer credits mutation
@@ -73,6 +81,11 @@ export function useTeamMembers() {
         Math.ceil((data?.totalRecords ?? 0) / pageSize)
     );
 
+    // Reset to first page when search changes
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
+
     return {
         teamMembers: data?.teamMembers ?? [],
         totalRecords: data?.totalRecords ?? 0,
@@ -84,6 +97,8 @@ export function useTeamMembers() {
         error,
         setPage,
         setPageSize,
+        search,
+        setSearch,
         transferCredits: transferMutation.mutate,
         isTransferring: transferMutation.isPending,
         giftCredits: giftMutation.mutate,

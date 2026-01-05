@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { TeamMember } from "../types/teamMember";
 
 interface TransferCreditsModalProps {
@@ -34,6 +44,7 @@ export function TransferCreditsModal({
     const [points, setPoints] = useState<string>("");
     const [note, setNote] = useState<string>("");
     const [error, setError] = useState<string>("");
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     const actionLabel = mode === "transfer" ? "Transfer" : mode === "gift" ? "Gift" : "Deduct";
     const loadingLabel = `${actionLabel}ing...`;
@@ -56,12 +67,18 @@ export function TransferCreditsModal({
             return;
         }
 
-        // Call transfer function
+        // Show confirmation dialog before sending
+        setConfirmOpen(true);
+    };
+
+    const handleConfirm = () => {
+        const pointsNum = Number(points);
         onAction(pointsNum, note || undefined);
 
         // Reset form on success
         setPoints("");
         setNote("");
+        setConfirmOpen(false);
         onOpenChange(false);
     };
 
@@ -73,6 +90,7 @@ export function TransferCreditsModal({
     };
 
     return (
+        <>
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -142,5 +160,23 @@ export function TransferCreditsModal({
                 </div>
             </DialogContent>
         </Dialog>
+
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm {actionLabel.toLowerCase()}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {`Are you sure you want to ${actionLabel.toLowerCase()} ${points || 0} points to ${member?.name}?`}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirm} disabled={isLoading}>
+                        {isLoading ? loadingLabel : actionLabel}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }

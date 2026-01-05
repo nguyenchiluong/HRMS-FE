@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Gift, MinusCircle, Send } from "lucide-react";
@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTeamMembers } from "../hooks/useTeamMembers";
 import { useBalance } from "../hooks/useBalance";
 import { TeamMembersTable } from "../components/TeamMembersTable";
+import { SearchBox } from "../components/SearchBox";
 import { TransferCreditsModal } from "../components/TransferCreditsModal";
 import { PaginationControls } from "../components/PaginationControls";
 import { TeamMember } from "../types/teamMember";
@@ -23,6 +24,8 @@ export default function EmployeeTransferBonusPage() {
         error,
         setPage,
         setPageSize,
+        search,
+        setSearch,
         transferCredits,
         isTransferring,
         giftCredits,
@@ -32,7 +35,7 @@ export default function EmployeeTransferBonusPage() {
         userRole,
     } = useTeamMembers();
 
-    const { balance, isLoading: isBalanceLoading } = useBalance();
+    const { balance, refetch: refetchBalance } = useBalance();
 
     const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
     const [actionMode, setActionMode] = useState<"transfer" | "gift" | "deduct">("transfer");
@@ -45,6 +48,13 @@ export default function EmployeeTransferBonusPage() {
         setActionMode("transfer");
         setTransferModalOpen(true);
     };
+
+    // Refresh balance whenever the modal opens to keep maxPoints accurate
+    useEffect(() => {
+        if (transferModalOpen) {
+            refetchBalance();
+        }
+    }, [transferModalOpen, refetchBalance]);
 
     const handleAction = (points: number, note?: string) => {
         if (selectedMember) {
@@ -84,11 +94,18 @@ export default function EmployeeTransferBonusPage() {
 
             {/* Team Members Section */}
             <div>
-                <div className="mb-4">
-                    <h2 className="text-2xl font-bold">Transfer Credits</h2>
-                    <p className="text-muted-foreground mt-1">
-                        Send bonus credits to your team members
-                    </p>
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold">Transfer Credits</h2>
+                        <p className="text-muted-foreground mt-1">
+                            Send bonus credits to your team members
+                        </p>
+                    </div>
+                    <SearchBox
+                        value={search}
+                        onChange={setSearch}
+                        disabled={isLoading}
+                    />
                 </div>
 
                 {/* Team Members Table */}

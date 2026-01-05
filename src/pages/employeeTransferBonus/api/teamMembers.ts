@@ -33,8 +33,8 @@ export async function giftCredits(
     body: AdjustCreditsRequest
 ): Promise<AdjustCreditsResponse> {
     const { data } = await springApi.post<AdjustCreditsResponse>(
-        "/api/credits/gift",
-        body
+        "/api/credits/transfer",
+        { ...body, type: "AWARD" }
     );
     return data;
 }
@@ -43,8 +43,8 @@ export async function deductCredits(
     body: AdjustCreditsRequest
 ): Promise<AdjustCreditsResponse> {
     const { data } = await springApi.post<AdjustCreditsResponse>(
-        "/api/credits/deduct",
-        body
+        "/api/credits/transfer",
+        { ...body, type: "DEDUCT" }
     );
     return data;
 }
