@@ -62,7 +62,6 @@ export interface IdChangeRequestDto {
     lastName?: string;
     nationality?: string;
     nationalId?: {
-      country?: string;
       number?: string;
       issuedDate?: string;
       expirationDate?: string;
@@ -89,7 +88,6 @@ export interface CreateIdChangeRequestPayload {
     lastName?: string | null;
     nationality?: string | null;
     nationalId?: {
-      country?: string | null;
       number?: string | null;
       issuedDate?: string | null;
       expirationDate?: string | null;

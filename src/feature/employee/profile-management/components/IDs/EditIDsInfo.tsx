@@ -35,6 +35,7 @@ import * as Yup from 'yup';
 import { useCurrentEmployee } from '../../hooks/useCurrentEmployee';
 import {
   useCreateIdChangeRequest,
+  useIdChangeRequests,
   useRequestTypes,
 } from '../../hooks/useIdChangeRequests';
 import { useUploadFiles } from '@/hooks/useFileUpload';
@@ -294,6 +295,15 @@ export default function EditIDsContent() {
   const uploadFilesMutation = useUploadFiles();
   const [uploadProgress, setUploadProgress] = useState<string>('');
 
+  // Check for pending requests
+  const { data: requestsData } = useIdChangeRequests({ page: 1, limit: 10 });
+  const hasPendingRequest = useMemo(() => {
+    if (!requestsData?.data) return false;
+    return requestsData.data.some(
+      (req: { status: string }) => req.status === 'PENDING',
+    );
+  }, [requestsData]);
+
   // Find PROFILE_ID_CHANGE request type ID
   const profileIdChangeRequestTypeId = useMemo(() => {
     if (!requestTypesData) return null;
@@ -308,6 +318,15 @@ export default function EditIDsContent() {
   const handleSubmit = async (values: FormValues) => {
     if (!profileIdChangeRequestTypeId) {
       toast.error('Unable to find request type. Please try again.');
+      return;
+    }
+
+    // Check if there's already a pending request
+    if (hasPendingRequest) {
+      toast.error(
+        'You already have a pending ID change request. Please wait for it to be reviewed or cancel it first.',
+        { duration: 5000 },
+      );
       return;
     }
 
@@ -362,7 +381,6 @@ export default function EditIDsContent() {
 
       if (nationalIdChanged) {
         payload.nationalId = {
-          country: values.nationality,
           number: values.nationalIdNumber,
           issuedDate: values.nationalIdIssuedDate,
           expirationDate: values.nationalIdExpirationDate,
@@ -461,10 +479,28 @@ export default function EditIDsContent() {
         </div>
       </div>
 
+      {hasPendingRequest && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-amber-800">
+                Pending Request Exists
+              </h3>
+              <p className="mt-1 text-sm text-amber-700">
+                You have a pending ID change request. Please wait for it to be
+                reviewed before submitting a new request. You can cancel the
+                existing request from the history page if needed.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
+        enableReinitialize
       >
         {({
           setFieldValue,
@@ -693,7 +729,8 @@ export default function EditIDsContent() {
                 disabled={
                   createRequestMutation.isPending ||
                   uploadFilesMutation.isPending ||
-                  !profileIdChangeRequestTypeId
+                  !profileIdChangeRequestTypeId ||
+                  hasPendingRequest
                 }
                 className="min-w-[150px]"
               >

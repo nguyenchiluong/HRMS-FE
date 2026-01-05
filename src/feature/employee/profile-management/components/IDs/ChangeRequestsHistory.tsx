@@ -148,6 +148,11 @@ export default function ChangeRequestsHistory() {
 
   const totalPages = requestsData?.pagination.totalPages || 1;
 
+  // Check if there are any pending requests (must be before early returns)
+  const hasPendingRequests = useMemo(() => {
+    return changeRequests.some((req) => req.status === 'Pending');
+  }, [changeRequests]);
+
   const handleActionClick = (
     request: ReturnType<typeof convertToDisplayRequest>,
   ) => {
@@ -220,11 +225,6 @@ export default function ChangeRequestsHistory() {
       </Card>
     );
   }
-
-  // Check if there are any pending requests
-  const hasPendingRequests = useMemo(() => {
-    return changeRequests.some((req) => req.status === 'Pending');
-  }, [changeRequests]);
 
   return (
     <>
