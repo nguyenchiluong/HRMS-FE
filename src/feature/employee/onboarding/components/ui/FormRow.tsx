@@ -21,6 +21,7 @@ interface FormRowProps {
   options?: string[];
   placeholder?: string;
   required?: boolean;
+  uppercase?: boolean;
 }
 
 export const FormRow: React.FC<FormRowProps> = ({
@@ -30,6 +31,7 @@ export const FormRow: React.FC<FormRowProps> = ({
   options = [],
   placeholder,
   required = false,
+  uppercase = false,
 }) => {
   const [field, meta, helpers] = useField(name);
   const isError = meta.touched && meta.error;
@@ -66,7 +68,10 @@ export const FormRow: React.FC<FormRowProps> = ({
       </label>
 
       {type === 'select' ? (
-        <Select value={field.value || undefined} onValueChange={handleSelectChange}>
+        <Select
+          value={field.value || undefined}
+          onValueChange={handleSelectChange}
+        >
           <SelectTrigger
             id={name}
             className={clsx(
@@ -96,7 +101,9 @@ export const FormRow: React.FC<FormRowProps> = ({
               !selectedDate && 'text-slate-400',
             )}
           >
-            {selectedDate ? format(selectedDate, 'MMM d, yyyy') : placeholder || 'Select date...'}
+            {selectedDate
+              ? format(selectedDate, 'MMM d, yyyy')
+              : placeholder || 'Select date...'}
             <Calendar className="h-4 w-4 text-slate-400" />
           </button>
 
@@ -121,9 +128,19 @@ export const FormRow: React.FC<FormRowProps> = ({
           id={name}
           placeholder={placeholder}
           className={clsx(
-            'w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-colors hover:bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200',
+            'w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 transition-colors placeholder:text-slate-400 hover:bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200',
             isError && 'border-red-300',
+            uppercase && 'uppercase',
           )}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            if (uppercase) {
+              const value = e.target.value.toUpperCase();
+              helpers.setValue(value);
+              helpers.setTouched(true, false);
+            } else {
+              field.onChange(e);
+            }
+          }}
         />
       )}
 

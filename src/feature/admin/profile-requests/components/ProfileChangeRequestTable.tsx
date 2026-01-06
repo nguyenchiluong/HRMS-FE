@@ -21,12 +21,18 @@ import {
 import { useState } from 'react';
 import { ProfileChangeRequest, ProfileRequestStatus } from '../types';
 
-const ITEMS_PER_PAGE = 10;
-
 interface ProfileChangeRequestTableProps {
   requests: ProfileChangeRequest[];
   onApprove: (request: ProfileChangeRequest, notes?: string) => void;
   onReject: (request: ProfileChangeRequest, notes: string) => void;
+  isLoading?: boolean;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  onPageChange?: (page: number) => void;
 }
 
 const getStatusConfig = (status: ProfileRequestStatus) => {
@@ -56,8 +62,14 @@ const getStatusConfig = (status: ProfileRequestStatus) => {
 
 export const ProfileChangeRequestTable: React.FC<
   ProfileChangeRequestTableProps
-> = ({ requests, onApprove, onReject }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+> = ({
+  requests,
+  onApprove,
+  onReject,
+  isLoading = false,
+  pagination,
+  onPageChange,
+}) => {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] =
     useState<ProfileChangeRequest | null>(null);
@@ -65,22 +77,29 @@ export const ProfileChangeRequestTable: React.FC<
     'view',
   );
   const [notes, setNotes] = useState('');
+  const [notesError, setNotesError] = useState('');
 
-  const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentRequests = requests.slice(startIndex, endIndex);
+  // Use server-side pagination if provided, otherwise client-side
+  const currentRequests = requests;
+  const totalPages = pagination?.totalPages || 1;
+  const currentPage = pagination?.page || 1;
 
   const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    if (onPageChange) {
+      onPageChange(Math.max(1, currentPage - 1));
+    }
   };
 
   const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    if (onPageChange) {
+      onPageChange(Math.min(totalPages, currentPage + 1));
+    }
   };
 
   const handlePageClick = (page: number) => {
-    setCurrentPage(page);
+    if (onPageChange) {
+      onPageChange(page);
+    }
   };
 
   const handleActionClick = (
@@ -90,17 +109,26 @@ export const ProfileChangeRequestTable: React.FC<
     setSelectedRequest(request);
     setActionType(action);
     setNotes('');
+    setNotesError('');
     setActionDialogOpen(true);
   };
 
   const handleConfirmAction = () => {
     if (!selectedRequest) return;
 
+    // Validate notes length (minimum 10 characters)
+    const trimmedNotes = notes.trim();
+    if (trimmedNotes.length < 10) {
+      setNotesError('Reason must be at least 10 characters long');
+      return;
+    }
+
+    setNotesError('');
+
     if (actionType === 'approve') {
-      onApprove(selectedRequest, notes || undefined);
+      onApprove(selectedRequest, trimmedNotes);
     } else if (actionType === 'reject') {
-      if (!notes.trim()) return; // Require notes for rejection
-      onReject(selectedRequest, notes);
+      onReject(selectedRequest, trimmedNotes);
     }
 
     setActionDialogOpen(false);
@@ -112,6 +140,7 @@ export const ProfileChangeRequestTable: React.FC<
     setActionDialogOpen(false);
     setSelectedRequest(null);
     setNotes('');
+    setNotesError('');
   };
 
   const getPageNumbers = () => {
@@ -157,13 +186,7 @@ export const ProfileChangeRequestTable: React.FC<
                 Employee
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Field Change
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Old Value
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                New Value
+                Fields Changed
               </th>
               <th className="px-2 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
                 Request Date
@@ -183,7 +206,7 @@ export const ProfileChangeRequestTable: React.FC<
 
               return (
                 <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4">
+                  <td className="whitespace-nowrap px-6 py-4 align-top">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white">
                         {request.employeeName.charAt(0).toUpperCase()}
@@ -198,25 +221,40 @@ export const ProfileChangeRequestTable: React.FC<
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-xs font-medium text-gray-900">
-                      {request.fieldLabel}
+                  <td className="px-6 py-4 align-top">
+                    <div className="flex flex-wrap gap-1.5">
+                      {request._apiData?.fieldChanges &&
+                      request._apiData.fieldChanges.length > 0 ? (
+                        request._apiData.fieldChanges.length <= 2 ? (
+                          request._apiData.fieldChanges.map((field, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700"
+                            >
+                              {field}
+                            </span>
+                          ))
+                        ) : (
+                          <>
+                            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                              {request._apiData.fieldChanges[0]}
+                            </span>
+                            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                              +{request._apiData.fieldChanges.length - 1} more
+                            </span>
+                          </>
+                        )
+                      ) : (
+                        <span className="text-xs text-gray-400">
+                          {request.fieldLabel || 'No fields'}
+                        </span>
+                      )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="max-w-xs truncate text-xs text-gray-600">
-                      {request.oldValue || '—'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="max-w-xs truncate text-xs font-medium text-gray-900">
-                      {request.newValue}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600">
+                  <td className="whitespace-nowrap px-6 py-4 text-center text-xs text-gray-600 align-top">
                     {format(request.requestDate, 'MMM dd, yyyy')}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4">
+                  <td className="whitespace-nowrap px-6 py-4 align-top">
                     <div className="flex justify-center">
                       <span
                         className={cn(
@@ -229,7 +267,7 @@ export const ProfileChangeRequestTable: React.FC<
                       </span>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4">
+                  <td className="whitespace-nowrap px-6 py-4 align-top">
                     <div className="flex items-center justify-center gap-2">
                       <Button
                         variant="outline"
@@ -279,8 +317,7 @@ export const ProfileChangeRequestTable: React.FC<
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t bg-white px-6 py-4">
             <div className="text-sm text-gray-500">
-              Showing {startIndex + 1} to {Math.min(endIndex, requests.length)}{' '}
-              of {requests.length} results
+              Page {currentPage} of {totalPages} ({pagination?.total || requests.length} total)
             </div>
             <div className="flex items-center gap-1">
               <Button
@@ -382,28 +419,64 @@ export const ProfileChangeRequestTable: React.FC<
               <div className="rounded-lg border bg-gray-50 p-4">
                 <h3 className="mb-3 text-sm font-semibold text-gray-700">
                   Change Details
+                  {selectedRequest._apiData?.fieldChanges &&
+                    selectedRequest._apiData.fieldChanges.length > 1 && (
+                      <span className="ml-2 text-xs font-normal text-gray-500">
+                        ({selectedRequest._apiData.fieldChanges.length} fields)
+                      </span>
+                    )}
                 </h3>
-                <div className="space-y-3">
-                  <div>
-                    <div className="text-xs text-gray-500">Field:</div>
-                    <div className="mt-1 text-sm font-medium">
-                      {selectedRequest.fieldLabel}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-xs text-gray-500">Old Value:</div>
-                      <div className="mt-1 rounded border bg-white p-2 text-sm text-gray-700">
-                        {selectedRequest.oldValue || '—'}
+                <div className="space-y-4">
+                  {/* Show all field changes if available, otherwise show single field */}
+                  {selectedRequest._apiData?.fieldChangeDetails &&
+                  selectedRequest._apiData.fieldChangeDetails.length > 0 ? (
+                    selectedRequest._apiData.fieldChangeDetails.map(
+                      (detail, idx) => (
+                        <div key={idx} className="space-y-2">
+                          <div className="text-xs font-medium text-gray-700">
+                            {detail.fieldLabel}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <div className="text-xs text-gray-500">Old Value</div>
+                              <div className="mt-1 rounded border bg-white p-2 text-sm text-gray-700">
+                                {detail.oldValue || '—'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500">New Value</div>
+                              <div className="mt-1 rounded border bg-emerald-50 p-2 text-sm font-medium text-emerald-700">
+                                {detail.newValue || '—'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ),
+                    )
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-xs text-gray-500">Field:</div>
+                        <div className="mt-1 text-sm font-medium">
+                          {selectedRequest.fieldLabel}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs text-gray-500">Old Value:</div>
+                          <div className="mt-1 rounded border bg-white p-2 text-sm text-gray-700">
+                            {selectedRequest.oldValue || '—'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">New Value:</div>
+                          <div className="mt-1 rounded border bg-emerald-50 p-2 text-sm font-medium text-emerald-700">
+                            {selectedRequest.newValue}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500">New Value:</div>
-                      <div className="mt-1 rounded border bg-emerald-50 p-2 text-sm font-medium text-emerald-700">
-                        {selectedRequest.newValue}
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -451,18 +524,30 @@ export const ProfileChangeRequestTable: React.FC<
                   <label className="text-sm font-medium text-gray-700">
                     {actionType === 'reject'
                       ? 'Reason for rejection *'
-                      : 'Notes (optional)'}
+                      : 'Reason *'}
                   </label>
                   <Textarea
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={(e) => {
+                      setNotes(e.target.value);
+                      if (notesError && e.target.value.trim().length >= 10) {
+                        setNotesError('');
+                      }
+                    }}
                     placeholder={
                       actionType === 'reject'
-                        ? 'Please provide a reason for rejection...'
-                        : 'Add any notes...'
+                        ? 'Please provide a reason for rejection (minimum 10 characters)...'
+                        : 'Please provide a reason (minimum 10 characters)...'
                     }
                     rows={3}
+                    className={notesError ? 'border-red-500' : ''}
                   />
+                  {notesError && (
+                    <p className="text-sm text-red-500">{notesError}</p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Minimum 10 characters required ({notes.trim().length}/10)
+                  </p>
                 </div>
               )}
             </div>
@@ -475,20 +560,21 @@ export const ProfileChangeRequestTable: React.FC<
             {actionType === 'approve' && (
               <Button
                 onClick={handleConfirmAction}
+                disabled={notes.trim().length < 10 || isLoading}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
                 <Check className="mr-2 h-4 w-4" />
-                Approve
+                {isLoading ? 'Approving...' : 'Approve'}
               </Button>
             )}
             {actionType === 'reject' && (
               <Button
                 onClick={handleConfirmAction}
-                disabled={!notes.trim()}
+                disabled={notes.trim().length < 10 || isLoading}
                 className="bg-red-600 hover:bg-red-700"
               >
                 <X className="mr-2 h-4 w-4" />
-                Reject
+                {isLoading ? 'Rejecting...' : 'Reject'}
               </Button>
             )}
           </div>

@@ -3,116 +3,113 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Bell, Check, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Notification } from '../types';
-
-// Mock data - replace with actual API call
-const generateMockNotifications = (): Notification[] => {
-  const notifications: Notification[] = [];
-  const today = new Date();
-
-  const notificationTemplates = [
-    {
-      title: 'Timesheet Approved',
-      content: 'Your timesheet for Week 1 has been approved by your manager.',
-    },
-    {
-      title: 'Time-off Request Pending',
-      content:
-        'Your time-off request is pending approval. Please wait for manager review.',
-    },
-    {
-      title: 'Profile Update Required',
-      content:
-        'Please update your emergency contact information in your profile.',
-    },
-    {
-      title: 'New Campaign Available',
-      content: 'A new wellness campaign has been launched. Check it out!',
-    },
-    {
-      title: 'Password Change Successful',
-      content: 'Your password has been successfully changed.',
-    },
-    {
-      title: 'Timesheet Rejected',
-      content:
-        'Your timesheet for Week 2 has been rejected. Please review and resubmit.',
-    },
-    {
-      title: 'Time-off Approved',
-      content: 'Your time-off request from Jan 15-20 has been approved.',
-    },
-    {
-      title: 'System Maintenance',
-      content:
-        'Scheduled system maintenance will occur on Sunday, 2 AM - 4 AM.',
-    },
-  ];
-
-  for (let i = 0; i < 25; i++) {
-    const notificationDate = new Date(today);
-    notificationDate.setHours(today.getHours() - i * 3);
-    notificationDate.setDate(today.getDate() - Math.floor(i / 8));
-
-    const template = notificationTemplates[i % notificationTemplates.length];
-
-    notifications.push({
-      id: `NOTIF-${String(i + 1).padStart(4, '0')}`,
-      title: template.title,
-      content: template.content,
-      time: notificationDate,
-      isRead: i >= 8, // First 8 are unread
-    });
-  }
-
-  return notifications;
-};
+import {
+  useNotifications,
+  useUnreadNotifications,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+} from '../hooks/useNotifications';
+import { mapNotificationsToLegacy } from '../utils/mapNotification';
 
 type FilterType = 'all' | 'unread' | 'read';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20; // Match API default
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<Notification[]>(
-    generateMockNotifications,
-  );
   const [filter, setFilter] = useState<FilterType>('all');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0); // API uses 0-indexed pages
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const readCount = notifications.filter((n) => n.isRead).length;
+  // Fetch all notifications with pagination
+  const {
+    data: allNotificationsData,
+    isLoading: isLoadingAll,
+    error: allError,
+  } = useNotifications({
+    page: filter === 'all' ? currentPage : undefined,
+    size: ITEMS_PER_PAGE,
+  });
 
-  const filteredNotifications =
-    filter === 'all'
-      ? notifications
-      : filter === 'unread'
-        ? notifications.filter((n) => !n.isRead)
-        : notifications.filter((n) => n.isRead);
+  // Fetch unread notifications
+  const {
+    data: unreadNotificationsData,
+    isLoading: isLoadingUnread,
+    error: unreadError,
+  } = useUnreadNotifications();
+
+  const { mutate: markAsRead } = useMarkNotificationAsRead();
+  const { mutate: markAllAsRead } = useMarkAllNotificationsAsRead();
+
+  // Map API notifications to legacy format
+  const allNotifications = useMemo(() => {
+    if (allNotificationsData?.notifications) {
+      return mapNotificationsToLegacy(allNotificationsData.notifications);
+    }
+    return [];
+  }, [allNotificationsData]);
+
+  const unreadNotifications = useMemo(() => {
+    if (unreadNotificationsData) {
+      return mapNotificationsToLegacy(unreadNotificationsData);
+    }
+    return [];
+  }, [unreadNotificationsData]);
+
+  // Determine which data to use based on filter
+  const isLoading =
+    filter === 'all' || filter === 'read' ? isLoadingAll : isLoadingUnread;
+  const error = filter === 'all' || filter === 'read' ? allError : unreadError;
+
+  const readNotifications = allNotifications.filter((n) => n.isRead);
+
+  const unreadCount = allNotificationsData?.totalUnread ?? unreadNotifications.length;
+  const readCount = allNotificationsData
+    ? allNotificationsData.totalElements - (allNotificationsData.totalUnread ?? 0)
+    : readNotifications.length;
+
+  // Determine notifications to display based on filter
+  let notifications: Notification[];
+  let totalPages: number;
+  let totalElements: number;
+
+  if (filter === 'all') {
+    notifications = allNotifications;
+    totalPages = allNotificationsData?.totalPages ?? 1;
+    totalElements = allNotificationsData?.totalElements ?? 0;
+  } else if (filter === 'unread') {
+    notifications = unreadNotifications;
+    totalPages = Math.ceil(unreadNotifications.length / ITEMS_PER_PAGE);
+    totalElements = unreadNotifications.length;
+  } else {
+    // Read filter - filter client-side from all notifications
+    notifications = readNotifications;
+    totalPages = Math.ceil(readNotifications.length / ITEMS_PER_PAGE);
+    totalElements = readNotifications.length;
+  }
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredNotifications.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const startIndex = currentPage * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentNotifications = filteredNotifications.slice(
-    startIndex,
-    endIndex,
-  );
+  const currentNotifications =
+    filter === 'all'
+      ? notifications // API handles pagination
+      : notifications.slice(startIndex, endIndex); // Client-side pagination for unread/read
 
-  // Reset to page 1 when filter changes
+  // Reset to page 0 when filter changes
   const handleFilterChange = (newFilter: FilterType) => {
     setFilter(newFilter);
-    setCurrentPage(1);
+    setCurrentPage(0);
   };
 
   const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    setCurrentPage((prev) => Math.max(prev - 1, 0));
   };
 
   const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1));
   };
 
   const handlePageClick = (page: number) => {
@@ -122,30 +119,30 @@ export default function NotificationsPage() {
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
+      for (let i = 0; i < totalPages; i++) {
         pages.push(i);
       }
     } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, '...', totalPages);
-      } else if (currentPage >= totalPages - 2) {
+      if (currentPage <= 2) {
+        pages.push(0, 1, 2, 3, '...', totalPages - 1);
+      } else if (currentPage >= totalPages - 3) {
         pages.push(
-          1,
+          0,
           '...',
+          totalPages - 4,
           totalPages - 3,
           totalPages - 2,
           totalPages - 1,
-          totalPages,
         );
       } else {
         pages.push(
-          1,
+          0,
           '...',
           currentPage - 1,
           currentPage,
           currentPage + 1,
           '...',
-          totalPages,
+          totalPages - 1,
         );
       }
     }
@@ -153,13 +150,11 @@ export default function NotificationsPage() {
   };
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
-    );
+    markAsRead(parseInt(id, 10));
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    markAllAsRead();
   };
 
   const formatNotificationTime = (date: Date) => {
@@ -176,7 +171,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="h-full w-full space-y-6 px-20 py-10">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -193,6 +188,7 @@ export default function NotificationsPage() {
             size="sm"
             onClick={handleMarkAllAsRead}
             className="flex items-center gap-2"
+            disabled={isLoading}
           >
             <Check className="h-4 w-4" />
             Mark all as read
@@ -206,8 +202,9 @@ export default function NotificationsPage() {
           variant={filter === 'all' ? 'default' : 'outline'}
           size="sm"
           onClick={() => handleFilterChange('all')}
+          disabled={isLoading}
         >
-          All ({notifications.length})
+          All ({allNotificationsData?.totalElements ?? 0})
         </Button>
         <Button
           variant={filter === 'unread' ? 'default' : 'outline'}
@@ -216,6 +213,7 @@ export default function NotificationsPage() {
           className={cn(
             filter === 'unread' && 'bg-amber-600 hover:bg-amber-700',
           )}
+          disabled={isLoading}
         >
           Unread ({unreadCount})
         </Button>
@@ -226,6 +224,7 @@ export default function NotificationsPage() {
           className={cn(
             filter === 'read' && 'bg-emerald-600 hover:bg-emerald-700',
           )}
+          disabled={isLoading}
         >
           Read ({readCount})
         </Button>
@@ -233,7 +232,24 @@ export default function NotificationsPage() {
 
       {/* Notifications List */}
       <div>
-        {filteredNotifications.length === 0 ? (
+        {isLoading ? (
+          <Card className="flex flex-col items-center justify-center py-16">
+            <Bell className="mb-4 h-12 w-12 animate-pulse text-gray-400" />
+            <p className="text-sm font-medium text-gray-900">
+              Loading notifications...
+            </p>
+          </Card>
+        ) : error ? (
+          <Card className="flex flex-col items-center justify-center py-16">
+            <Bell className="mb-4 h-12 w-12 text-red-400" />
+            <p className="text-sm font-medium text-gray-900">
+              Error loading notifications
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Please try refreshing the page.
+            </p>
+          </Card>
+        ) : currentNotifications.length === 0 ? (
           <Card className="flex flex-col items-center justify-center py-16">
             <Bell className="mb-4 h-12 w-12 text-gray-400" />
             <p className="text-sm font-medium text-gray-900">
@@ -254,7 +270,7 @@ export default function NotificationsPage() {
                 <Card
                   key={notification.id}
                   onClick={() => {
-                    // Mark as read when clicking (always mark as read)
+                    // Mark as read when clicking
                     if (!notification.isRead) {
                       handleMarkAsRead(notification.id);
                     }
@@ -314,9 +330,12 @@ export default function NotificationsPage() {
             {totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
                 <div className="text-sm text-gray-500">
-                  Showing {startIndex + 1} to{' '}
-                  {Math.min(endIndex, filteredNotifications.length)} of{' '}
-                  {filteredNotifications.length} results
+                  Showing {filter === 'all' ? currentPage * ITEMS_PER_PAGE + 1 : startIndex + 1} to{' '}
+                  {Math.min(
+                    filter === 'all' ? (currentPage + 1) * ITEMS_PER_PAGE : endIndex,
+                    totalElements,
+                  )}{' '}
+                  of {totalElements} results
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
@@ -338,7 +357,7 @@ export default function NotificationsPage() {
                         onClick={() => handlePageClick(page)}
                         className="h-8 w-8 p-0"
                       >
-                        {page}
+                        {page + 1}
                       </Button>
                     ) : (
                       <span key={index} className="px-2 text-gray-400">
@@ -351,7 +370,7 @@ export default function NotificationsPage() {
                     variant="outline"
                     size="sm"
                     onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage >= totalPages - 1}
                     className="h-8 w-8 p-0"
                   >
                     <ChevronRight className="h-4 w-4" />

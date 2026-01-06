@@ -87,12 +87,10 @@ export default function ApproveTimesheet() {
   }
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 py-5">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Approve Timesheet
-        </h1>
+        <h1 className="text-xl font-medium text-gray-900">Approve Timesheet</h1>
         <p className="mt-1 text-sm text-gray-500">
           Review and approve employee timesheet submissions
         </p>
