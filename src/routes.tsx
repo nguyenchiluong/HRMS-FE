@@ -10,7 +10,6 @@ import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EmployeeBonusPage from './pages/employeeBonus/page/EmployeeBonusPage';
 
-
 const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const ForgotPassword = lazy(
   () => import('@/feature/shared/auth/pages/ForgotPassword'),
@@ -115,6 +114,12 @@ const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
 const ViewBonus = lazy(
   () => import('./pages//employeeBonus/page/EmployeeBonusPage'),
 );
+const TransferBonus = lazy(
+  () => import('./pages/employeeTransferBonus/page/EmployeeTransferBonusPage'),
+);
+const RedeemBonus = lazy(
+  () => import('./pages/employeeCreditRedeem/page/EmployeeCreditRedeemPage'),
+);
 
 const routes: RouteObject[] = [
   // =================================================================
@@ -127,6 +132,11 @@ const routes: RouteObject[] = [
   {
     path: '/onboarding/success',
     element: <OnboardingSuccess />,
+  },
+  // Test
+  {
+    path: '/test',
+    element: <TransferBonus />,
   },
 
   // =================================================================
@@ -143,12 +153,7 @@ const routes: RouteObject[] = [
       {
         path: '/reset-password/:token',
         element: <Placeholder title="Reset Password" />,
-      },
-      // Test
-      {
-        path: '/test',
-        element: <EmployeeBonusPage />,
-      },
+      }
     ],
   },
 
@@ -280,8 +285,18 @@ const routes: RouteObject[] = [
           {
             path: 'credits',
             children: [
-              { index: true,
-                element: <ViewBonus/> },
+              {
+                index: true,
+                element: <ViewBonus />
+              },
+              {
+                path: 'transfer',
+                element: <TransferBonus />,
+              },
+              {
+                path: 'redeem',
+                element: <RedeemBonus />,
+              },
             ]
           }
         ],

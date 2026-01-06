@@ -59,7 +59,9 @@ export function TransactionDetailsSheet({
           {transaction.note && (
             <div>
               <strong>Note:</strong>
-              <div className="mt-1 text-muted-foreground">{transaction.note}</div>
+              <div className="mt-1 text-muted-foreground break-words whitespace-pre-wrap max-h-40 overflow-y-auto">
+                {transaction.note}
+              </div>
             </div>
           )}
         </div>
