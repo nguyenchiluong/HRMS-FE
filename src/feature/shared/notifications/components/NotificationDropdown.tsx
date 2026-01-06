@@ -7,27 +7,82 @@ import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Notification } from '../types';
+import { LegacyNotification } from '../types';
+import {
+  useNotifications,
+  useUnreadCount,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+} from '../hooks/useNotifications';
+import { mapNotificationsToLegacy } from '../utils/mapNotification';
+import { useMemo } from 'react';
 
 interface NotificationDropdownProps {
-  notifications: Notification[];
-  unreadCount: number;
-  onMarkAsRead: (notificationId: string) => void;
-  onMarkAllAsRead: () => void;
+  // Optional: if not provided, will fetch from API
+  notifications?: LegacyNotification[];
+  unreadCount?: number;
+  onMarkAsRead?: (notificationId: string) => void;
+  onMarkAllAsRead?: () => void;
 }
 
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
-  notifications,
-  unreadCount,
-  onMarkAsRead,
-  onMarkAllAsRead,
+  notifications: propNotifications,
+  unreadCount: propUnreadCount,
+  onMarkAsRead: propOnMarkAsRead,
+  onMarkAllAsRead: propOnMarkAllAsRead,
 }) => {
   const navigate = useNavigate();
 
-  const handleNotificationClick = (notification: Notification) => {
+  // Fetch all notifications (read and unread) if not provided
+  // Limit to first 20 most recent notifications for the dropdown
+  const { data: notificationsData, isLoading: isLoadingNotifications } =
+    useNotifications({ page: 0, size: 20 });
+  const { data: unreadCountFromApi } = useUnreadCount();
+  const { mutate: markAsRead } = useMarkNotificationAsRead();
+  const { mutate: markAllAsRead } = useMarkAllNotificationsAsRead();
+
+  // Use provided data or fetch from API
+  const notifications = useMemo(() => {
+    if (propNotifications) {
+      return propNotifications;
+    }
+    if (notificationsData?.notifications) {
+      return mapNotificationsToLegacy(notificationsData.notifications);
+    }
+    return [];
+  }, [propNotifications, notificationsData]);
+
+  const unreadCount = useMemo(() => {
+    if (propUnreadCount !== undefined) {
+      return propUnreadCount;
+    }
+    // Use API unread count if available, otherwise calculate from notifications
+    if (unreadCountFromApi !== undefined) {
+      return unreadCountFromApi;
+    }
+    return notifications.filter((n) => !n.isRead).length;
+  }, [propUnreadCount, unreadCountFromApi, notifications]);
+
+  const handleMarkAsRead = (notificationId: string) => {
+    if (propOnMarkAsRead) {
+      propOnMarkAsRead(notificationId);
+    } else {
+      markAsRead(parseInt(notificationId, 10));
+    }
+  };
+
+  const handleMarkAllAsRead = () => {
+    if (propOnMarkAllAsRead) {
+      propOnMarkAllAsRead();
+    } else {
+      markAllAsRead();
+    }
+  };
+
+  const handleNotificationClick = (notification: LegacyNotification) => {
     // Mark as read when clicking
     if (!notification.isRead) {
-      onMarkAsRead(notification.id);
+      handleMarkAsRead(notification.id);
     }
     // Navigate to detail page based on current path
     const currentPath = window.location.pathname;
@@ -72,7 +127,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             </h3>
             {unreadCount > 0 && (
               <button
-                onClick={onMarkAllAsRead}
+                onClick={handleMarkAllAsRead}
                 className="text-xs text-gray-600 transition-colors hover:text-gray-900"
               >
                 Mark all as read
@@ -82,7 +137,12 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
           {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto bg-white">
-            {notifications.length === 0 ? (
+            {isLoadingNotifications && !propNotifications ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Bell className="mb-2 h-8 w-8 animate-pulse text-gray-400" />
+                <p className="text-sm text-gray-500">Loading notifications...</p>
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Bell className="mb-2 h-8 w-8 text-gray-400" />
                 <p className="text-sm text-gray-500">No notifications</p>
@@ -138,7 +198,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           </div>
 
           {/* Footer */}
-          {notifications.length > 0 && (
             <div className="rounded-b-xl border-t border-gray-200 bg-white px-4 py-2">
               <button
                 onClick={() => {
@@ -155,7 +214,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 View all notifications
               </button>
             </div>
-          )}
         </div>
       </PopoverContent>
     </Popover>

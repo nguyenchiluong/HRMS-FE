@@ -1,3 +1,4 @@
+import EditPersonalInfo from '@/feature/employee/profile-management/pages/PersonalInformation/EditPersonalInfo';
 import { lazy } from 'react';
 import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import Placeholder from './components/Placeholder';
@@ -6,33 +7,35 @@ import PublicRoute from './components/PublicRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
-import EditPersonalInfo from '@/feature/employee/profile-management/pages/EditPersonalInfo';
-import WorkingHistory from '@/feature/employee/profile-management/pages/WorkingHistory';
 import EmployeeBonusPage from './pages/employeeBonus/page/EmployeeBonusPage';
 
 const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
-const Dashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+const ForgotPassword = lazy(
+  () => import('@/feature/shared/auth/pages/ForgotPassword'),
+);
+const Dashboard = lazy(() => import('@/feature/admin/dashboard/pages/AdminDashboard'));
 
-const AddEmployee = lazy(() => import('@/pages/admin/AddEmployee'));
 
 // Profile Management
 const EmployeeIDs = lazy(
-  () => import('@/feature/employee/profile-management/pages/EmployeeIDs'),
+  () => import('@/feature/employee/profile-management/pages/IDs/EmployeeIDs'),
 );
 const EmployeeEditIDs = lazy(
-  () => import('@/feature/employee/profile-management/pages/EmployeeEditID'),
+  () =>
+    import('@/feature/employee/profile-management/pages/IDs/EditEmployeeID'),
 );
 const PersonalInfo = lazy(
-  () => import('@/feature/employee/profile-management/pages/PersonalInfo'),
+  () =>
+    import('@/feature/employee/profile-management/pages/PersonalInformation/PersonalInfo'),
 );
 const Education = lazy(
-  () => import('@/feature/employee/profile-management/pages/EmployeeEducation'),
+  () => import('@/feature/employee/profile-management/pages/Education'),
 );
 const Financial = lazy(
   () => import('@/feature/employee/profile-management/pages/Financial'),
 );
-const JobDetails = lazy(
-  () => import('@/feature/employee/profile-management/pages/JobDetails'),
+const JobInformation = lazy(
+  () => import('@/feature/employee/profile-management/pages/JobInformation'),
 );
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
 const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
@@ -78,6 +81,10 @@ const TimeLayout = lazy(
   () => import('@/feature/employee/time-management/layout/TimeLayout'),
 );
 
+const ProfileLayout = lazy(
+  () => import('@/feature/employee/profile-management/layout/ProfileLayout'),
+);
+
 // Approve Requests
 const ApproveRequestsLayout = lazy(
   () =>
@@ -106,6 +113,12 @@ const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
 const ViewBonus = lazy(
   () => import('./pages//employeeBonus/page/EmployeeBonusPage'),
 );
+const TransferBonus = lazy(
+  () => import('./pages/employeeTransferBonus/page/EmployeeTransferBonusPage'),
+);
+const RedeemBonus = lazy(
+  () => import('./pages/employeeCreditRedeem/page/EmployeeCreditRedeemPage'),
+);
 
 const routes: RouteObject[] = [
   // =================================================================
@@ -122,7 +135,7 @@ const routes: RouteObject[] = [
   // Test
   {
     path: '/test',
-    element: <EmployeeBonusPage />,
+    element: <TransferBonus />,
   },
 
   // =================================================================
@@ -134,7 +147,7 @@ const routes: RouteObject[] = [
       { path: '/login', element: <Login /> },
       {
         path: '/forgot-password',
-        element: <Placeholder title="Forgot Password" />,
+        element: <ForgotPassword />,
       },
       {
         path: '/reset-password/:token',
@@ -189,8 +202,9 @@ const routes: RouteObject[] = [
           },
           {
             path: 'profile',
+            element: <ProfileLayout />,
             children: [
-              { index: true, element: <Navigate to="ids" replace /> },
+              { index: true, element: <Navigate to="personal-info" replace /> },
               {
                 path: 'personal-info',
                 children: [
@@ -230,15 +244,11 @@ const routes: RouteObject[] = [
                 path: 'change-requests',
                 element: <Placeholder title="Profile Change Requests" />,
               },
+              {
+                path: 'job-details',
+                element: <JobInformation />,
+              },
             ],
-          },
-          {
-            path: 'job-details',
-            children: [
-              { index: true, element: <Navigate to="info" replace /> },
-              { path: 'info', element: <JobDetails /> },
-              { path: 'working-history', element: <WorkingHistory /> },
-            ]
           },
           // ... (Rest of Employee Sub-routes kept as is, just ensured nesting)
           {
@@ -272,6 +282,14 @@ const routes: RouteObject[] = [
                 index: true,
                 element: <ViewBonus />
               },
+              {
+                path: 'transfer',
+                element: <TransferBonus />,
+              },
+              {
+                path: 'redeem',
+                element: <RedeemBonus />,
+              },
             ]
           }
         ],
@@ -302,7 +320,6 @@ const routes: RouteObject[] = [
 
           // Legacy Routes
           { path: 'employees', element: <EmployeeManagement /> }, // /admin/employees
-          { path: 'add-employee', element: <AddEmployee /> }, // /admin/add-employee
 
           // Auth Actions
           { path: 'logout', element: <Placeholder title="Logout Logic" /> },

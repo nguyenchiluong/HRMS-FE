@@ -5,6 +5,7 @@ export interface TokenPayload {
   sub: string;
   mail: string;
   roles: Role[];
+  empId?: number;
   iat: number;
   exp: number;
 }
@@ -32,5 +33,6 @@ export interface AuthState {
   isAuthenticated: boolean;
   login: (user: User, token: string) => void;
   logout: () => void;
+  updateUserName: (name: string) => void;
 }
 

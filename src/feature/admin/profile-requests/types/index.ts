@@ -39,6 +39,15 @@ export interface ProfileChangeRequest {
   reason?: string; // Employee's reason for the change
   adminNotes?: string; // Admin's notes when approving/rejecting
   attachments?: string[]; // URLs to supporting documents
+  // Full API data for details view (includes all field changes)
+  _apiData?: {
+    fieldChanges?: string[];
+    fieldChangeDetails?: Array<{
+      fieldLabel: string;
+      oldValue: string | null;
+      newValue: string | null;
+    }>;
+  };
 }
 
 // Stats for dashboard

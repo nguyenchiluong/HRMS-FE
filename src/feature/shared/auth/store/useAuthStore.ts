@@ -24,6 +24,20 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         });
       },
+
+      updateUserName: (name: string) => {
+        set((state) => {
+          if (state.user) {
+            return {
+              user: {
+                ...state.user,
+                name,
+              },
+            };
+          }
+          return state;
+        });
+      },
     }),
     {
       name: 'auth-storage',

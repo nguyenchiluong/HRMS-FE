@@ -1,159 +1,122 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { ProfileChangeRequestTable } from '../components/ProfileChangeRequestTable';
 import {
-  ChangeableField,
   ProfileChangeRequest,
   ProfileRequestStatus,
 } from '../types';
-
-// Mock data for demonstration
-const generateMockProfileRequests = (): ProfileChangeRequest[] => {
-  const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
-  const names = [
-    'John Smith',
-    'Sarah Johnson',
-    'Mike Chen',
-    'Emily Davis',
-    'Alex Wilson',
-    'Lisa Brown',
-    'David Lee',
-    'Jennifer Garcia',
-    'Robert Martinez',
-    'Amanda Taylor',
-  ];
-
-  const fieldConfigs: {
-    field: ChangeableField;
-    label: string;
-    oldValue: string;
-    newValue: string;
-  }[] = [
-    {
-      field: 'legal-full-name',
-      label: 'Legal Full Name',
-      oldValue: 'John Doe',
-      newValue: 'John Smith',
-    },
-    {
-      field: 'national-id',
-      label: 'National ID',
-      oldValue: '123456789',
-      newValue: '987654321',
-    },
-    {
-      field: 'social-insurance-number',
-      label: 'Social Insurance Number',
-      oldValue: 'SIN-123456',
-      newValue: 'SIN-654321',
-    },
-    {
-      field: 'phone-number',
-      label: 'Phone Number',
-      oldValue: '+1 234-567-8900',
-      newValue: '+1 234-567-8901',
-    },
-    {
-      field: 'personal-email',
-      label: 'Personal Email',
-      oldValue: 'old.email@example.com',
-      newValue: 'new.email@example.com',
-    },
-    {
-      field: 'address',
-      label: 'Address',
-      oldValue: '123 Old Street, City',
-      newValue: '456 New Avenue, City',
-    },
-    {
-      field: 'bank-account',
-      label: 'Bank Account',
-      oldValue: '****1234',
-      newValue: '****5678',
-    },
-  ];
-
-  const reasons = [
-    'Legal name change after marriage',
-    'Updated ID document',
-    'Moved to new address',
-    'Changed phone provider',
-    'Updated email for personal use',
-    'Bank account closure',
-    'Correction of typo in original data',
-  ];
-
-  const requests: ProfileChangeRequest[] = [];
-  const today = new Date();
-
-  for (let i = 0; i < 20; i++) {
-    const requestDate = new Date(today);
-    requestDate.setDate(today.getDate() - Math.floor(Math.random() * 30));
-
-    const status = i < 8 ? 'pending' : i < 15 ? 'approved' : 'rejected';
-
-    const fieldConfig = fieldConfigs[i % fieldConfigs.length];
-
-    requests.push({
-      id: `PCR-${String(i + 1).padStart(4, '0')}`,
-      employeeId: `EMP-${String(i + 1).padStart(4, '0')}`,
-      employeeName: names[i % names.length],
-      employeeEmail: `${names[i % names.length].toLowerCase().replace(' ', '.')}@company.com`,
-      department: departments[i % departments.length],
-      field: fieldConfig.field,
-      fieldLabel: fieldConfig.label,
-      oldValue: fieldConfig.oldValue,
-      newValue: fieldConfig.newValue,
-      requestDate,
-      status: status as 'pending' | 'approved' | 'rejected',
-      reason: reasons[i % reasons.length],
-      attachments:
-        i % 3 === 0 ? [`https://example.com/doc-${i + 1}.pdf`] : undefined,
-    });
-  }
-
-  return requests;
-};
+import {
+  useApproveProfileChangeRequest,
+  useProfileChangeRequests,
+  useRejectProfileChangeRequest,
+} from '../hooks/useProfileChangeRequests';
 
 type FilterStatus = 'all' | ProfileRequestStatus;
 
+// Map frontend status to API status
+const mapStatusToApi = (
+  status: FilterStatus,
+): 'PENDING' | 'APPROVED' | 'REJECTED' | undefined => {
+  if (status === 'all') return undefined;
+  return status.toUpperCase() as 'PENDING' | 'APPROVED' | 'REJECTED';
+};
+
 export default function ProfileChangeRequests() {
-  const [requests, setRequests] = useState<ProfileChangeRequest[]>(
-    generateMockProfileRequests,
-  );
+  const [page, setPage] = useState(1);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const limit = 20;
 
-  // Calculate stats
-  const pendingCount = requests.filter((r) => r.status === 'pending').length;
-  const approvedCount = requests.filter((r) => r.status === 'approved').length;
-  const rejectedCount = requests.filter((r) => r.status === 'rejected').length;
+  // Fetch counts for each status using pagination totals
+  // Using limit=1 to minimize data transfer, we only need the pagination.total
+  const { data: allRequestsResponse } = useProfileChangeRequests(
+    1,
+    1,
+    undefined, // No status filter - get total count
+  );
+  const { data: pendingResponse } = useProfileChangeRequests(
+    1,
+    1,
+    'PENDING',
+  );
+  const { data: approvedResponse } = useProfileChangeRequests(
+    1,
+    1,
+    'APPROVED',
+  );
+  const { data: rejectedResponse } = useProfileChangeRequests(
+    1,
+    1,
+    'REJECTED',
+  );
 
-  // Filter requests based on selected status
-  const filteredRequests =
-    filterStatus === 'all'
-      ? requests
-      : requests.filter((r) => r.status === filterStatus);
+  // React Query hooks - fetch filtered requests for display
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useProfileChangeRequests(page, limit, mapStatusToApi(filterStatus));
+
+  const { mutate: approveRequest, isPending: isApproving } =
+    useApproveProfileChangeRequest();
+  const { mutate: rejectRequest, isPending: isRejecting } =
+    useRejectProfileChangeRequest();
+
+  // Map API response to component types
+  const allRequests: ProfileChangeRequest[] = response?.data || [];
+
+  // Filter requests based on selected status (client-side for consistency)
+  const filteredRequests = useMemo(() => {
+    if (filterStatus === 'all') return allRequests;
+    return allRequests.filter((r) => r.status === filterStatus);
+  }, [allRequests, filterStatus]);
+
+  const pagination = response?.pagination || {
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+  };
+
+  // Get counts from pagination totals (accurate counts regardless of current filter)
+  const pendingCount = pendingResponse?.pagination?.total || 0;
+  const approvedCount = approvedResponse?.pagination?.total || 0;
+  const rejectedCount = rejectedResponse?.pagination?.total || 0;
+  const totalCount = allRequestsResponse?.pagination?.total || 0;
 
   const handleApprove = (request: ProfileChangeRequest, notes?: string) => {
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === request.id
-          ? { ...r, status: 'approved' as const, adminNotes: notes }
-          : r,
-      ),
-    );
+    approveRequest({
+      requestId: request.id,
+      data: notes ? { comment: notes } : undefined,
+    });
   };
 
   const handleReject = (request: ProfileChangeRequest, notes: string) => {
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === request.id
-          ? { ...r, status: 'rejected' as const, adminNotes: notes }
-          : r,
-      ),
-    );
+    rejectRequest({
+      requestId: request.id,
+      data: { reason: notes },
+    });
   };
+
+  if (isLoading && allRequests.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-12">
+        <p className="text-red-500">Error loading profile change requests</p>
+        <p className="text-sm text-gray-600">
+          Please try refreshing the page
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-6">
@@ -174,7 +137,7 @@ export default function ProfileChangeRequests() {
           size="sm"
           onClick={() => setFilterStatus('all')}
         >
-          All ({requests.length})
+          All ({totalCount})
         </Button>
         <Button
           variant={filterStatus === 'pending' ? 'default' : 'outline'}
@@ -216,16 +179,25 @@ export default function ProfileChangeRequests() {
             Change Requests
             {filterStatus !== 'all' && (
               <span className="ml-2 text-sm font-normal text-gray-500">
-                ({filteredRequests.length} {filterStatus})
+                ({pagination.total} {filterStatus})
               </span>
             )}
           </h2>
         </div>
-        <ProfileChangeRequestTable
-          requests={filteredRequests}
-          onApprove={handleApprove}
-          onReject={handleReject}
-        />
+        {filteredRequests.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-gray-600">No change requests found</p>
+          </div>
+        ) : (
+          <ProfileChangeRequestTable
+            requests={filteredRequests}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            isLoading={isApproving || isRejecting}
+            pagination={pagination}
+            onPageChange={setPage}
+          />
+        )}
       </div>
     </div>
   );

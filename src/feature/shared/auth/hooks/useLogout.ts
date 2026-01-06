@@ -14,7 +14,8 @@ export const useLogout = () => {
       // Clear Zustand Store (Token & User)
       clearAuth();
 
-      // Clear React Query Cache
+      // Invalidate all React Query cache
+      queryClient.invalidateQueries();
       queryClient.clear();
 
       navigate('/login', { replace: true });

@@ -2,102 +2,53 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { ArrowLeft, Bell } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Notification } from '../types';
-
-// Mock data - replace with actual API call
-const generateMockNotifications = (): Notification[] => {
-  const notifications: Notification[] = [];
-  const today = new Date();
-
-  const notificationTemplates = [
-    {
-      title: 'Timesheet Approved',
-      content: 'Your timesheet for Week 1 has been approved by your manager.',
-    },
-    {
-      title: 'Time-off Request Pending',
-      content:
-        'Your time-off request is pending approval. Please wait for manager review.',
-    },
-    {
-      title: 'Profile Update Required',
-      content:
-        'Please update your emergency contact information in your profile.',
-    },
-    {
-      title: 'New Campaign Available',
-      content: 'A new wellness campaign has been launched. Check it out!',
-    },
-    {
-      title: 'Password Change Successful',
-      content: 'Your password has been successfully changed.',
-    },
-    {
-      title: 'Timesheet Rejected',
-      content:
-        'Your timesheet for Week 2 has been rejected. Please review and resubmit.',
-    },
-    {
-      title: 'Time-off Approved',
-      content: 'Your time-off request from Jan 15-20 has been approved.',
-    },
-    {
-      title: 'System Maintenance',
-      content:
-        'Scheduled system maintenance will occur on Sunday, 2 AM - 4 AM.',
-    },
-  ];
-
-  for (let i = 0; i < 25; i++) {
-    const notificationDate = new Date(today);
-    notificationDate.setHours(today.getHours() - i * 3);
-    notificationDate.setDate(today.getDate() - Math.floor(i / 8));
-
-    const template = notificationTemplates[i % notificationTemplates.length];
-
-    notifications.push({
-      id: `NOTIF-${String(i + 1).padStart(4, '0')}`,
-      title: template.title,
-      content: template.content,
-      time: notificationDate,
-      isRead: i >= 8, // First 8 are unread
-    });
-  }
-
-  return notifications;
-};
+import { useNotifications } from '../hooks/useNotifications';
+import { useMarkNotificationAsRead } from '../hooks/useNotifications';
+import { mapNotificationToLegacy } from '../utils/mapNotification';
 
 export default function NotificationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [notification, setNotification] = useState<Notification | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const notificationId = id ? parseInt(id, 10) : null;
 
-  useEffect(() => {
-    // Simulate API call - replace with actual API call
-    const fetchNotification = async () => {
-      setIsLoading(true);
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
+  // Fetch all notifications (we'll need to search through them since there's no single notification endpoint)
+  // Using a large page size to get all notifications
+  const { data: notificationsData, isLoading } = useNotifications({
+    page: 0,
+    size: 1000, // Large size to get all notifications
+  });
 
-      const allNotifications = generateMockNotifications();
-      const found = allNotifications.find((n) => n.id === id);
+  const { mutate: markAsRead } = useMarkNotificationAsRead();
 
-      if (found) {
-        // Mark as read when viewing
-        setNotification({ ...found, isRead: true });
-      } else {
-        setNotification(null);
-      }
-      setIsLoading(false);
-    };
-
-    if (id) {
-      fetchNotification();
+  // Find the notification by ID
+  const notification = useMemo(() => {
+    if (!notificationId || !notificationsData?.notifications) {
+      return null;
     }
-  }, [id]);
+
+    const apiNotification = notificationsData.notifications.find(
+      (n) => n.notificationId === notificationId,
+    );
+
+    if (!apiNotification) {
+      return null;
+    }
+
+    // Mark as read when viewing if not already read
+    if (!apiNotification.isRead) {
+      markAsRead(notificationId);
+      // Optimistically update the notification
+      return mapNotificationToLegacy({
+        ...apiNotification,
+        isRead: true,
+      });
+    }
+
+    return mapNotificationToLegacy(apiNotification);
+  }, [notificationId, notificationsData, markAsRead]);
 
   const handleBack = () => {
     // Navigate back based on current path
@@ -147,7 +98,7 @@ export default function NotificationDetailPage() {
   }
 
   return (
-    <div className="w-full space-y-6">
+    <div className="h-full w-full space-y-6 px-20 py-10">
       {/* Back Button */}
       <Button
         variant="ghost"
