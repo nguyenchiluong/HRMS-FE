@@ -78,3 +78,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .font-regular {
+    font-weight: 400;
+  }
+}

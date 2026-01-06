@@ -5,7 +5,7 @@ import './index.css'
 import App from './App.tsx'
 
 // Tạo React Query client
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
