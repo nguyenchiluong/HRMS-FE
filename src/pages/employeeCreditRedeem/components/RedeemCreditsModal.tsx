@@ -9,28 +9,26 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card } from "@/components/ui/card";
+import { BankAccountRecord } from "../types/bankAccount";
 
 interface RedeemConfirmModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     amount: number;
-    accountLabel?: string;
-    accountNumber?: string;
-    note?: string;
     payoutAmount?: number;
+    payoutVND?: number;
+    bankAccount?: BankAccountRecord;
     isLoading: boolean;
     onConfirm: () => void;
 }
 
-// Confirmation dialog for submitting a redeem-to-cash request.
+// Confirmation dialog for submitting a withdrawal transaction.
 export function RedeemCreditsModal({
     open,
     onOpenChange,
     amount,
-    accountLabel,
-    accountNumber,
-    note,
-    payoutAmount,
+    payoutVND,
+    bankAccount,
     isLoading,
     onConfirm,
 }: RedeemConfirmModalProps) {
@@ -38,9 +36,9 @@ export function RedeemCreditsModal({
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent className="sm:max-w-[460px]">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Confirm redeem request</AlertDialogTitle>
+                    <AlertDialogTitle>Confirm withdrawal</AlertDialogTitle>
                     <AlertDialogDescription>
-                        You are converting bonus points to cash. Please confirm the details below.
+                        This will instantly convert your bonus points to cash. Please confirm the details below.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -51,15 +49,19 @@ export function RedeemCreditsModal({
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount</p>
                                 <p className="mt-1 text-3xl font-bold">{amount.toLocaleString()} pts</p>
                             </div>
-                            {(accountLabel || accountNumber) && (
-                                <div className="border-t pt-3 text-sm text-muted-foreground">
-                                    <p className="font-medium text-foreground">Destination</p>
-                                    {accountLabel && <p>{accountLabel}</p>}
-                                    {accountNumber && <p>{accountNumber}</p>}
+                            {payoutVND !== undefined && (
+                                <div className="border-t pt-2">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">You will receive</p>
+                                    <p className="mt-1 text-2xl font-bold text-green-600">{payoutVND.toLocaleString()} VND</p>
                                 </div>
                             )}
-                            {note && (
-                                <div className="border-t pt-3 text-sm text-muted-foreground italic">"{note}"</div>
+                            {bankAccount && (
+                                <div className="border-t pt-3 text-sm text-muted-foreground">
+                                    <p className="font-medium text-foreground">Destination</p>
+                                    <p>{bankAccount.bankName}</p>
+                                    <p>{bankAccount.accountNumber}</p>
+                                    <p>{bankAccount.accountName}</p>
+                                </div>
                             )}
                         </div>
                     </Card>
@@ -68,7 +70,7 @@ export function RedeemCreditsModal({
                 <AlertDialogFooter className="gap-2">
                     <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={onConfirm} disabled={isLoading}>
-                        {isLoading ? "Submitting..." : "Submit request"}
+                        {isLoading ? "Processing..." : "Confirm withdrawal"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

@@ -4,24 +4,24 @@ import { toast } from "sonner";
 import { createRedeem } from "../api/redeem";
 import { RedeemRequest } from "../types/redeem";
 
-// Provides a mutation for creating a redeem-to-cash request.
+// Provides a mutation for creating a withdrawal transaction.
 export function useRedeemRequest() {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (body: RedeemRequest) => createRedeem(body),
         onSuccess: (response) => {
-            const details = `ID #${response.redeemId} • ${response.amount.toLocaleString()} pts • ${response.status}`;
-            toast.success(response.message ?? details);
+            const details = `Successfully withdrew ${response.convertedPoint.toLocaleString()} pts → ${response.amountReceived.toLocaleString()} VND`;
+            toast.success(details);
             queryClient.invalidateQueries({ queryKey: ["redeemHistory"] });
             queryClient.invalidateQueries({ queryKey: ["redeemBalance"] });
         },
         onError: (err) => {
             const message = isAxiosError(err)
-                ? (err.response?.data as { message?: string })?.message || "Redeem request failed"
+                ? (err.response?.data as { message?: string })?.message || "Withdrawal failed"
                 : err instanceof Error
                     ? err.message
-                    : "Redeem request failed";
+                    : "Withdrawal failed";
             toast.error(message);
         },
     });

@@ -1,19 +1,12 @@
-// Redeem-to-cash request contracts (naming uses "redeem" per requirement).
+// Redemption request contracts
 export type RedeemRequest = {
-    amount: number; // points to convert
-    method: "BANK" | "EWALLET";
-    accountLabel?: string; // e.g., bank name or wallet provider
-    accountNumber?: string;
-    note?: string;
+    points: number; // points to convert
 };
 
 export type RedeemResponse = {
-    redeemId: number;
-    amount: number;
-    fee?: number;
-    payoutAmount?: number;
-    status: RedeemStatus;
-    message?: string;
+    redemptionId: number;
+    convertedPoint: number;
+    amountReceived: number;
     createdAt: string;
 };
 

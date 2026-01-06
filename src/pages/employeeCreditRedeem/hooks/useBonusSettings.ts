@@ -10,13 +10,13 @@ export function useBonusSettings() {
         refetchOnWindowFocus: false,
     });
 
-    // Calculate conversion rate: conversionRate is USD equivalent in cents, so divide by 100
-    // e.g., if conversionRate = 1000, then 1 credit = 1000 cents = $10
-    const creditToUsdRate = data ? data.conversionRate / 100 : 0;
+    // Calculate conversion rate: conversionRate is VND equivalent
+    // e.g., if conversionRate = 10000, then 1 credit = 10,000 VND
+    const creditToVndRate = data ? data.conversionRate : 0;
 
     return {
         settings: data,
-        creditToUsdRate,
+        creditToVndRate,
         isLoading,
         isFetching,
         error,

@@ -1,8 +1,7 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,45 +15,30 @@ import { useBankAccount } from "../hooks/useBankAccount";
 export default function EmployeeCreditRedeemPage() {
     const { balance, isFetching: isBalanceFetching, refetch: refetchBalance } = useRedeemBalance();
     const { submitRedeem, isSubmitting } = useRedeemRequest();
-    const { creditToUsdRate, isLoading: isSettingsLoading } = useBonusSettings();
+    const { creditToVndRate, isLoading: isSettingsLoading } = useBonusSettings();
     const { bankAccount } = useBankAccount();
 
     const [amount, setAmount] = useState<string>("");
-    const [accountLabel, setAccountLabel] = useState<string>("");
-    const [accountNumber, setAccountNumber] = useState<string>("");
-    const [note, setNote] = useState<string>("");
     const [formError, setFormError] = useState<string>("");
     const [confirmOpen, setConfirmOpen] = useState(false);
-
-    // Populate form with bank account data when it loads
-    useEffect(() => {
-        if (bankAccount) {
-            setAccountLabel(bankAccount.bankName);
-            setAccountNumber(bankAccount.accountNumber);
-        }
-    }, [bankAccount]);
 
     const payoutAmount = useMemo(() => {
         return Math.max(0, Number(amount) || 0);
     }, [amount]);
 
-    const payoutUSD = useMemo(() => {
-        return payoutAmount * creditToUsdRate;
-    }, [payoutAmount, creditToUsdRate]);
+    const payoutVND = useMemo(() => {
+        return payoutAmount * creditToVndRate;
+    }, [payoutAmount, creditToVndRate]);
 
     const handleSubmit = () => {
         setFormError("");
         const amt = Number(amount);
         if (!amt || Number.isNaN(amt) || amt <= 0) {
-            setFormError("Enter a valid amount of points to redeem.");
+            setFormError("Enter a valid amount of points to withdraw.");
             return;
         }
         if (amt > balance) {
-            setFormError("Insufficient balance for this redeem.");
-            return;
-        }
-        if (!accountNumber.trim()) {
-            setFormError("Destination account is required.");
+            setFormError("Insufficient balance for this withdrawal.");
             return;
         }
         setConfirmOpen(true);
@@ -63,10 +47,7 @@ export default function EmployeeCreditRedeemPage() {
     const handleConfirm = () => {
         const amt = Number(amount);
         submitRedeem({
-            amount: amt,
-            accountLabel: accountLabel || undefined,
-            accountNumber: accountNumber || undefined,
-            note: note || undefined,
+            points: amt,
         });
         setConfirmOpen(false);
     };
@@ -78,9 +59,9 @@ export default function EmployeeCreditRedeemPage() {
                 <Card className="w-full md:max-w-2xl">
                     <CardHeader className="flex flex-row items-start justify-between gap-4">
                         <div className="space-y-1">
-                            <CardTitle>Redeem credits</CardTitle>
+                            <CardTitle>Withdraw credits</CardTitle>
                             <CardDescription>
-                                Convert your bonus credits to cash and send to your saved account.
+                                Instantly convert your bonus credits to cash and send to your account.
                             </CardDescription>
                         </div>
                     </CardHeader>
@@ -93,8 +74,8 @@ export default function EmployeeCreditRedeemPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl">Create redeem request</CardTitle>
-                    <CardDescription>Specify amount and destination for payout.</CardDescription>
+                    <CardTitle className="text-2xl">Withdraw credits</CardTitle>
+                    <CardDescription>Specify amount to convert to VND and receive instant payout.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
@@ -110,40 +91,16 @@ export default function EmployeeCreditRedeemPage() {
                             />
                             <p className="text-xs text-muted-foreground">Available: {balance.toLocaleString()} pts</p>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="accountLabel">Bank / wallet name</Label>
-                            <Input
-                                id="accountLabel"
-                                value={accountLabel}
-                                onChange={(e) => setAccountLabel(e.target.value)}
-                                disabled={isSubmitting || !!bankAccount}
-                                placeholder="e.g. Vietcombank, Momo"
-                                className="disabled:bg-slate-200 disabled:text-slate-600"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="accountNumber">Account / phone number</Label>
-                            <Input
-                                id="accountNumber"
-                                value={accountNumber}
-                                onChange={(e) => setAccountNumber(e.target.value)}
-                                disabled={isSubmitting || !!bankAccount}
-                                placeholder="Enter destination account"
-                                className="disabled:bg-slate-200 disabled:text-slate-600"
-                            />
-                        </div>
-                        <div className="md:col-span-2 space-y-2">
-                            <Label htmlFor="note">Note (optional)</Label>
-                            <Textarea
-                                id="note"
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                disabled={isSubmitting}
-                                className="resize-none"
-                                rows={3}
-                                placeholder="Add context for finance team"
-                            />
-                        </div>
+                        {bankAccount && (
+                            <div className="space-y-2">
+                                <Label>Destination account</Label>
+                                <div className="rounded-md border bg-slate-100 p-3 text-sm">
+                                    <p className="font-medium">{bankAccount.bankName}</p>
+                                    <p className="text-muted-foreground">{bankAccount.accountNumber}</p>
+                                    <p className="text-muted-foreground">{bankAccount.accountName}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {formError && <div className="text-sm text-red-600">{formError}</div>}
@@ -162,11 +119,11 @@ export default function EmployeeCreditRedeemPage() {
                         <div className="border-t pt-2">
                             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                                 <span>Rate</span>
-                                <span>{isSettingsLoading ? "Loading..." : `1 credit = $${creditToUsdRate.toFixed(4)}`}</span>
+                                <span>{isSettingsLoading ? "Loading..." : `1 credit = ${creditToVndRate.toLocaleString()} VND`}</span>
                             </div>
                             <div className="flex items-center justify-between font-semibold text-green-600">
-                                <span>USD equivalent</span>
-                                <span>${payoutUSD.toFixed(2)}</span>
+                                <span>VND equivalent</span>
+                                <span>{payoutVND.toLocaleString()} VND</span>
                             </div>
                         </div>
                     </div>
@@ -177,7 +134,7 @@ export default function EmployeeCreditRedeemPage() {
                             Refresh balance
                         </Button>
                         <Button onClick={handleSubmit} disabled={isSubmitting}>
-                            {isSubmitting ? "Submitting..." : "Submit redeem"}
+                            {isSubmitting ? "Processing..." : "Withdraw now"}
                         </Button>
                     </div>
                 </CardContent>
@@ -187,10 +144,9 @@ export default function EmployeeCreditRedeemPage() {
                 open={confirmOpen}
                 onOpenChange={setConfirmOpen}
                 amount={Number(amount) || 0}
-                accountLabel={accountLabel}
-                accountNumber={accountNumber}
-                note={note}
                 payoutAmount={payoutAmount}
+                payoutVND={payoutVND}
+                bankAccount={bankAccount}
                 isLoading={isSubmitting}
                 onConfirm={handleConfirm}
             />
