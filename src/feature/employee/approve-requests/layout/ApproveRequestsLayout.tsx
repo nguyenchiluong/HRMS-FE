@@ -33,7 +33,7 @@ export default function ApproveRequestsLayout() {
         <aside className="w-80 shrink-0 px-8 py-6">
           <div className="h-full rounded-xl border bg-white p-4 shadow">
             <h2 className="mb-6 text-lg font-semibold text-slate-800">
-              Approve Requests
+              Time Requests
             </h2>
             <nav className="space-y-1">
               {tabItems.map((item) => (

@@ -41,7 +41,7 @@ export default function EmployeeNavBar() {
     { path: '/employee/time', label: 'Time Management', icon: Clock },
     {
       path: '/employee/approve-requests',
-      label: 'Request Approval',
+      label: 'Time Requests',
       icon: CheckCircle2,
     },
   ];
@@ -125,7 +125,7 @@ export default function EmployeeNavBar() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={logout}
+                    onClick={() => logout()}
                     className="cursor-pointer text-xs text-red-600 focus:text-red-600"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
