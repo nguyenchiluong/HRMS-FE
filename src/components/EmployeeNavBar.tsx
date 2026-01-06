@@ -1,7 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
-import { NotificationDropdown } from '@/feature/shared/notifications/components/NotificationDropdown';
-import { Notification } from '@/feature/shared/notifications/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +6,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
+import { useLogout } from '@/feature/shared/auth/hooks/useLogout';
+import { NotificationDropdown } from '@/feature/shared/notifications/components/NotificationDropdown';
 import {
   CheckCircle2,
   ChevronDown,
@@ -18,75 +18,32 @@ import {
   Settings,
   User,
 } from 'lucide-react';
-import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-
-// Mock notifications data
-const generateMockNotifications = (): Notification[] => {
-  const notifications: Notification[] = [];
-  const today = new Date();
-
-  const notificationTemplates = [
-    {
-      title: 'Timesheet Approved',
-      content: 'Your timesheet for Week 1 has been approved by your manager.',
-    },
-    {
-      title: 'Time-off Request Pending',
-      content:
-        'Your time-off request is pending approval. Please wait for manager review.',
-    },
-    {
-      title: 'Profile Update Required',
-      content:
-        'Please update your emergency contact information in your profile.',
-    },
-    {
-      title: 'New Campaign Available',
-      content: 'A new wellness campaign has been launched. Check it out!',
-    },
-    {
-      title: 'Password Change Successful',
-      content: 'Your password has been successfully changed.',
-    },
-  ];
-
-  for (let i = 0; i < 8; i++) {
-    const notificationDate = new Date(today);
-    notificationDate.setHours(today.getHours() - i * 2);
-
-    const template = notificationTemplates[i % notificationTemplates.length];
-
-    notifications.push({
-      id: `NOTIF-${String(i + 1).padStart(4, '0')}`,
-      title: template.title,
-      content: template.content,
-      time: notificationDate,
-      isRead: i >= 3, // First 3 are unread
-    });
-  }
-
-  return notifications;
-};
+import { useUnreadCount } from '@/feature/shared/notifications/hooks/useNotifications';
+import { useNotificationSSE } from '@/feature/shared/notifications/hooks/useNotificationSSE';
 
 export default function EmployeeNavBar() {
-  const { user, logout } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<Notification[]>(
-    generateMockNotifications,
-  );
+  const { mutate: logout } = useLogout();
+
+  // Fetch unread count
+  const { data: unreadCount = 0 } = useUnreadCount();
+
+  // Set up SSE for real-time notifications
+  useNotificationSSE({
+    enabled: isAuthenticated,
+  });
 
   const navItems = [
     { path: '/employee/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/employee/profile', label: 'Profile', icon: User },
     { path: '/employee/time', label: 'Time Management', icon: Clock },
     {
       path: '/employee/approve-requests',
       label: 'Request Approval',
       icon: CheckCircle2,
     },
-    { path: '/employee/settings', label: 'Settings', icon: Settings },
   ];
 
   const isActive = (path: string) =>
@@ -120,18 +77,7 @@ export default function EmployeeNavBar() {
           {/* Right Side - Notifications & User */}
           <div className="flex items-center space-x-4">
             <NotificationDropdown
-              notifications={notifications}
-              unreadCount={notifications.filter((n) => !n.isRead).length}
-              onMarkAsRead={(id) => {
-                setNotifications((prev) =>
-                  prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
-                );
-              }}
-              onMarkAllAsRead={() => {
-                setNotifications((prev) =>
-                  prev.map((n) => ({ ...n, isRead: true })),
-                );
-              }}
+              unreadCount={unreadCount}
             />
 
             {user && (

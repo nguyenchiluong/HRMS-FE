@@ -4,7 +4,10 @@ import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { useOnboarding, useSaveOnboardingProgress } from '../hooks/useOnboarding';
+import {
+  useOnboarding,
+  useSaveOnboardingProgress,
+} from '../hooks/useOnboarding';
 import {
   OnboardingFormValues,
   OnboardingInfo,
@@ -99,14 +102,12 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const { mutate: submitOnboarding, isPending: isSubmitPending } = useOnboarding(
-    employeeId,
-    {
+  const { mutate: submitOnboarding, isPending: isSubmitPending } =
+    useOnboarding(employeeId, {
       onSuccess: () => {
         navigate(`/onboarding/success?token=${encodeURIComponent(token)}`);
       },
-    },
-  );
+    });
 
   const { mutate: saveProgress, isPending: isSavePending } =
     useSaveOnboardingProgress(token);
@@ -215,7 +216,11 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
             />
             <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
               <FormRow label="Account Number" name="accountNumber" required />
-              <FormRow label="Account Holder Name" name="accountName" />
+              <FormRow
+                label="Account Holder Name"
+                name="accountName"
+                uppercase
+              />
             </div>
           </Section>
 
