@@ -25,7 +25,7 @@ export const useNotificationSSE = (options?: UseNotificationSSEOptions) => {
   const { token, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
   const reconnectDelay = 3000; // 3 seconds
