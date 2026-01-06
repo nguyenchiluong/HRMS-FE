@@ -3,7 +3,7 @@ import { isAxiosError } from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { getEmployeeById } from '@/feature/admin/employee-management/api';
+import { getEmployeeById, getPositions, getJobLevels } from '@/feature/admin/employee-management/api';
 import { login as loginApi } from '../api/login';
 import { useAuthStore } from '../store/useAuthStore';
 import type { AuthResponse, LoginPayload, TokenPayload, User } from '../types';
@@ -21,14 +21,34 @@ export const useLogin = () => {
       // Decode token
       const decoded = jwtDecode<TokenPayload>(token);
 
-      // Determine user name
+      // Determine user name, position, and job level
       let userName: string;
+      let position: string | undefined;
+      let jobLevel: string | undefined;
       
       if (decoded.empId) {
         try {
           // Fetch employee data to get the full name
           const employee = await getEmployeeById(decoded.empId);
           userName = employee.preferredName || employee.fullName;
+          
+          // Fetch positions and job levels to resolve names
+          if (employee.positionId || employee.jobLevelId) {
+            const [positions, jobLevels] = await Promise.all([
+              getPositions(),
+              getJobLevels(),
+            ]);
+            
+            if (employee.positionId) {
+              const pos = positions.find((p) => p.id === employee.positionId);
+              position = pos?.title;
+            }
+            
+            if (employee.jobLevelId) {
+              const level = jobLevels.find((l) => l.id === employee.jobLevelId);
+              jobLevel = level?.name;
+            }
+          }
         } catch (error) {
           // If fetching employee fails, fall back to email
           console.error('Failed to fetch employee data:', error);
@@ -45,6 +65,8 @@ export const useLogin = () => {
         sub: decoded.sub,
         email: decoded.mail,
         roles: decoded.roles,
+        position,
+        jobLevel,
       };
 
       // Update Store

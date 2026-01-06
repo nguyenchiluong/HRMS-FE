@@ -16,6 +16,8 @@ export interface User {
   sub: string;
   email: string;
   roles: Role[];
+  position?: string;
+  jobLevel?: string;
 }
 
 export interface LoginPayload {

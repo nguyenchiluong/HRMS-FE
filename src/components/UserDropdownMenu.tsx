@@ -44,7 +44,11 @@ export default function UserDropdownMenu() {
               {displayName}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {user.roles[0]}
+              {user.position && user.jobLevel
+                ? `${user.position} - ${user.jobLevel}`
+                : user.roles[0] === 'USER'
+                ? 'EMPLOYEE'
+                : user.roles[0]}
             </p>
           </div>
           <ChevronDown className="hidden h-4 w-4 text-gray-500 sm:block" />
@@ -54,6 +58,11 @@ export default function UserDropdownMenu() {
         <div className="px-2 py-2">
           <p className="text-sm font-medium">{displayName}</p>
           <p className="text-xs text-muted-foreground">{user.email}</p>
+          {user.position && user.jobLevel && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {user.position} - {user.jobLevel}
+            </p>
+          )}
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem
