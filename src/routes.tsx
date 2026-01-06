@@ -9,7 +9,6 @@ import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EmployeeBonusPage from './pages/employeeBonus/page/EmployeeBonusPage';
 
-
 const Login = lazy(() => import('@/feature/shared/auth/pages/Login'));
 const ForgotPassword = lazy(
   () => import('@/feature/shared/auth/pages/ForgotPassword'),
@@ -116,6 +115,9 @@ const ViewBonus = lazy(
 );
 const TransferBonus = lazy(
   () => import('./pages/employeeTransferBonus/page/EmployeeTransferBonusPage'),
+);
+const RedeemBonus = lazy(
+  () => import('./pages/employeeCreditRedeem/page/EmployeeCreditRedeemPage'),
 );
 
 const routes: RouteObject[] = [
@@ -283,6 +285,10 @@ const routes: RouteObject[] = [
               {
                 path: 'transfer',
                 element: <TransferBonus />,
+              },
+              {
+                path: 'redeem',
+                element: <RedeemBonus />,
               },
             ]
           }
