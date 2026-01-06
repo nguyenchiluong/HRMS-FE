@@ -5,6 +5,7 @@ import Placeholder from './components/Placeholder';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
 import AdminLayout from './layout/AdminLayout';
 import EmployeeLayout from './layout/EmployeeLayout';
 import EmployeeBonusPage from './pages/employeeBonus/page/EmployeeBonusPage';
@@ -190,14 +191,20 @@ const routes: RouteObject[] = [
               },
             ],
           },
-          // Approve Requests Routes
+          // Approve Requests Routes (Manager only)
           {
             path: 'approve-requests',
-            element: <ApproveRequestsLayout />,
+            element: <RoleProtectedRoute requiredRole="MANAGER" />,
             children: [
-              { index: true, element: <Navigate to="timesheet" replace /> },
-              { path: 'timesheet', element: <ApproveTimesheet /> },
-              { path: 'time-off', element: <ApproveTimeOff /> },
+              {
+                path: '',
+                element: <ApproveRequestsLayout />,
+                children: [
+                  { index: true, element: <Navigate to="timesheet" replace /> },
+                  { path: 'timesheet', element: <ApproveTimesheet /> },
+                  { path: 'time-off', element: <ApproveTimeOff /> },
+                ],
+              },
             ],
           },
           {
@@ -295,11 +302,15 @@ const routes: RouteObject[] = [
         ],
       },
 
-      // C. Admin Routes
+      // C. Admin Routes (Admin only)
       {
         path: '/admin',
-        element: <AdminLayout />,
+        element: <RoleProtectedRoute requiredRole="ADMIN" />,
         children: [
+          {
+            path: '',
+            element: <AdminLayout />,
+            children: [
           // 1. Dashboard is the index of /admin
           { index: true, element: <Dashboard /> },
 
@@ -426,6 +437,8 @@ const routes: RouteObject[] = [
             children: [
               { index: true, element: <BonusSettings /> },
               // { path: 'new', element: <CreateCampaign /> },
+            ],
+          },
             ],
           },
         ],

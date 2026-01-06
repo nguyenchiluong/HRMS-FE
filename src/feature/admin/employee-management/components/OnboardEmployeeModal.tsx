@@ -1,5 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -19,12 +27,15 @@ import { format } from 'date-fns';
 
 import type { InitialProfileFormData } from '@/types/employee';
 import { useFormik } from 'formik';
-import { Calendar as CalendarIcon, Loader2, X } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, ChevronsUpDown, Loader2, X } from 'lucide-react';
+import { useState } from 'react';
 import * as Yup from 'yup';
 import { useCreateInitialProfile } from '../hooks/useCreateInitialProfile';
 import { useDepartments } from '../hooks/useDepartments';
 import { useEmploymentTypes } from '../hooks/useEmploymentTypes';
+import { useHrPersonnel } from '../hooks/useHrPersonnel';
 import { useJobLevels } from '../hooks/useJobLevels';
+import { useManagers } from '../hooks/useManagers';
 import { usePositions } from '../hooks/usePositions';
 import { useTimeTypes } from '../hooks/useTimeTypes';
 
@@ -80,6 +91,10 @@ export default function OnboardEmployeeModal({
     useEmploymentTypes();
   const { data: timeTypes, isLoading: timeTypesLoading } = useTimeTypes();
   const createMutation = useCreateInitialProfile({ onSuccess: onClose });
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [hrOpen, setHrOpen] = useState(false);
+  const [managerSearch, setManagerSearch] = useState('');
+  const [hrSearch, setHrSearch] = useState('');
 
   const jobLevelIds = jobLevels?.map((level) => level.id) ?? [];
   const employmentTypeIds = employmentTypes?.map((type) => type.id) ?? [];
@@ -95,6 +110,8 @@ export default function OnboardEmployeeModal({
       employmentTypeId: '',
       timeTypeId: '',
       startDate: '',
+      managerId: '',
+      hrId: '',
     },
     validationSchema: createInitialProfileSchema(
       jobLevelIds,
@@ -112,8 +129,28 @@ export default function OnboardEmployeeModal({
         employmentTypeId: Number(values.employmentTypeId),
         timeTypeId: Number(values.timeTypeId),
         startDate: values.startDate,
+        managerId: values.managerId ? Number(values.managerId) : null,
+        hrId: values.hrId ? Number(values.hrId) : null,
       });
     },
+  });
+
+  // Fetch managers with search - fetch when popover opens
+  const {
+    data: managersData = [],
+    isLoading: managersLoading,
+  } = useManagers({
+    search: managerSearch || undefined,
+    enabled: managerOpen, // Only fetch when popover is open
+  });
+
+  // Fetch HR personnel with search - fetch when popover opens
+  const {
+    data: hrData = [],
+    isLoading: hrLoading,
+  } = useHrPersonnel({
+    search: hrSearch || undefined,
+    enabled: hrOpen, // Only fetch when popover is open
   });
 
   const isLoading =
@@ -412,6 +449,216 @@ export default function OnboardEmployeeModal({
               {formik.touched.startDate && formik.errors.startDate && (
                 <p className="text-sm text-red-500">
                   {formik.errors.startDate}
+                </p>
+              )}
+            </div>
+
+            {/* Manager */}
+            <div className="space-y-2">
+              <Label htmlFor="managerId">Manager</Label>
+              <Popover
+                open={managerOpen}
+                onOpenChange={(open) => {
+                  setManagerOpen(open);
+                  if (!open) {
+                    setManagerSearch('');
+                  }
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={managerOpen}
+                    className="w-full justify-between"
+                    type="button"
+                    onBlur={() => formik.setFieldTouched('managerId', true)}
+                  >
+                    <span className="truncate">
+                      {formik.values.managerId
+                        ? managersData.find(
+                            (emp) => Number(emp.id) === Number(formik.values.managerId),
+                          )?.fullName || 'Select manager...'
+                        : 'Select manager...'}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Search manager..."
+                      value={managerSearch}
+                      onValueChange={setManagerSearch}
+                    />
+                    <CommandList>
+                      {managersLoading ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <>
+                          <CommandEmpty>No manager found.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="none"
+                              onSelect={() => {
+                                formik.setFieldValue('managerId', '');
+                                setManagerOpen(false);
+                                setManagerSearch('');
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  !formik.values.managerId
+                                    ? 'opacity-100'
+                                    : 'opacity-0',
+                                )}
+                              />
+                              None (No Manager)
+                            </CommandItem>
+                            {managersData.map((employee) => (
+                              <CommandItem
+                                key={employee.id}
+                                value={employee.fullName}
+                                onSelect={() => {
+                                  formik.setFieldValue('managerId', Number(employee.id));
+                                  setManagerOpen(false);
+                                  setManagerSearch('');
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    Number(formik.values.managerId) === Number(employee.id)
+                                      ? 'opacity-100'
+                                      : 'opacity-0',
+                                  )}
+                                />
+                                {employee.fullName}
+                                {employee.position && (
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    ({employee.position})
+                                  </span>
+                                )}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {formik.touched.managerId && formik.errors.managerId && (
+                <p className="text-sm text-red-500">
+                  {formik.errors.managerId}
+                </p>
+              )}
+            </div>
+
+            {/* HR */}
+            <div className="space-y-2">
+              <Label htmlFor="hrId">HR</Label>
+              <Popover
+                open={hrOpen}
+                onOpenChange={(open) => {
+                  setHrOpen(open);
+                  if (!open) {
+                    setHrSearch('');
+                  }
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={hrOpen}
+                    className="w-full justify-between"
+                    type="button"
+                    onBlur={() => formik.setFieldTouched('hrId', true)}
+                  >
+                    <span className="truncate">
+                      {formik.values.hrId
+                        ? hrData.find(
+                            (hr) => Number(hr.id) === Number(formik.values.hrId),
+                          )?.fullName || 'Select HR...'
+                        : 'Select HR...'}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Search HR..."
+                      value={hrSearch}
+                      onValueChange={setHrSearch}
+                    />
+                    <CommandList>
+                      {hrLoading ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <>
+                          <CommandEmpty>No HR found.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="none"
+                              onSelect={() => {
+                                formik.setFieldValue('hrId', '');
+                                setHrOpen(false);
+                                setHrSearch('');
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  !formik.values.hrId
+                                    ? 'opacity-100'
+                                    : 'opacity-0',
+                                )}
+                              />
+                              None (No HR)
+                            </CommandItem>
+                            {hrData.map((hr) => (
+                              <CommandItem
+                                key={hr.id}
+                                value={hr.fullName}
+                                onSelect={() => {
+                                  formik.setFieldValue('hrId', Number(hr.id));
+                                  setHrOpen(false);
+                                  setHrSearch('');
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    Number(formik.values.hrId) === Number(hr.id)
+                                      ? 'opacity-100'
+                                      : 'opacity-0',
+                                  )}
+                                />
+                                {hr.fullName}
+                                {hr.position && (
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    ({hr.position})
+                                  </span>
+                                )}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {formik.touched.hrId && formik.errors.hrId && (
+                <p className="text-sm text-red-500">
+                  {formik.errors.hrId}
                 </p>
               )}
             </div>

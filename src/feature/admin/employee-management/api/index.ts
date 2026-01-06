@@ -13,7 +13,7 @@ import type {
   TimeType,
 } from '@/types/employee';
 import type { EmployeeDto } from '@/feature/employee/profile-management/types';
-import type { Employee, EmployeeStats, FilterState } from '../types';
+import type { Employee, EmployeeStats } from '../types';
 
 export interface GetEmployeesParams {
   searchTerm?: string;
@@ -121,6 +121,61 @@ export const createInitialProfile = async (
  */
 export const getEmployeeById = async (id: number): Promise<EmployeeDto> => {
   const response = await dotnetApi.get<EmployeeDto>(`/api/employees/${id}`);
+  return response.data;
+};
+
+/**
+ * Manager/HR Personnel DTO
+ */
+export interface ManagerOrHrDto {
+  id: number;
+  fullName: string;
+  workEmail: string;
+  position: string;
+  positionId: number;
+  jobLevel: string;
+  jobLevelId: number;
+  department: string;
+  departmentId: number;
+  employmentType: string;
+  employmentTypeId: number;
+  timeType: string;
+  timeTypeId: number;
+}
+
+/**
+ * Get all managers
+ * @param search Optional search term to filter by name, employee ID, or work email
+ * @returns Promise with array of managers
+ */
+export const getManagers = async (
+  search?: string,
+): Promise<ManagerOrHrDto[]> => {
+  const queryParams = new URLSearchParams();
+  if (search) {
+    queryParams.append('search', search);
+  }
+  const response = await dotnetApi.get<ManagerOrHrDto[]>(
+    `/api/Employees/managers${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
+  );
+  return response.data;
+};
+
+/**
+ * Get all HR personnel
+ * @param search Optional search term to filter by name, employee ID, or work email
+ * @returns Promise with array of HR personnel
+ */
+export const getHrPersonnel = async (
+  search?: string,
+): Promise<ManagerOrHrDto[]> => {
+  const queryParams = new URLSearchParams();
+  if (search) {
+    queryParams.append('search', search);
+  }
+  const response = await dotnetApi.get<ManagerOrHrDto[]>(
+    `/api/Employees/hr${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
+  );
   return response.data;
 };
 

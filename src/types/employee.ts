@@ -32,6 +32,8 @@ export interface InitialProfileFormData {
   employmentTypeId: number | '';
   timeTypeId: number | '';
   startDate: string;
+  managerId: number | '';
+  hrId: number | '';
 }
 
 export interface InitialProfilePayload {
@@ -44,4 +46,5 @@ export interface InitialProfilePayload {
   timeTypeId: number;
   startDate: string;
   managerId?: number | null;
+  hrId?: number | null;
 }

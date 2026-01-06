@@ -17,6 +17,14 @@ export interface Employee {
   status: EmployeeStatus;
   employmentType: string;
   timeType: string;
+  // Manager information
+  managerId: number | null;
+  managerName: string | null;
+  managerEmail: string | null;
+  // HR (admin) information
+  hrId: number | null;
+  hrName: string | null;
+  hrEmail: string | null;
 }
 
 export interface EmployeeStats {
