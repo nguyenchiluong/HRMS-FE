@@ -40,6 +40,8 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
               <th className="whitespace-nowrap px-6 py-4">Position</th>
               <th className="whitespace-nowrap px-6 py-4">Job Level</th>
               <th className="whitespace-nowrap px-6 py-4">Department</th>
+              <th className="whitespace-nowrap px-6 py-4">Manager</th>
+              <th className="whitespace-nowrap px-6 py-4">HR (Admin)</th>
               <th className="whitespace-nowrap px-6 py-4 text-center">
                 Status
               </th>
@@ -71,6 +73,34 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                 </td>
                 <td className="px-6 py-3 text-slate-600">
                   {employee.department}
+                </td>
+                <td className="px-6 py-3 text-slate-600">
+                  {employee.managerName ? (
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-700">
+                        {employee.managerName}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {employee.managerEmail}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-slate-400 italic">Not assigned</span>
+                  )}
+                </td>
+                <td className="px-6 py-3 text-slate-600">
+                  {employee.hrName ? (
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-700">
+                        {employee.hrName}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {employee.hrEmail}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-slate-400 italic">Not assigned</span>
+                  )}
                 </td>
                 <td className="px-6 py-3 text-center">
                   <Badge status={employee.status} />

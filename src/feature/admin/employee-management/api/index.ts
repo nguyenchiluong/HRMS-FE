@@ -13,7 +13,7 @@ import type {
   TimeType,
 } from '@/types/employee';
 import type { EmployeeDto } from '@/feature/employee/profile-management/types';
-import type { Employee, EmployeeStats, FilterState } from '../types';
+import type { Employee, EmployeeStats } from '../types';
 
 export interface GetEmployeesParams {
   searchTerm?: string;
