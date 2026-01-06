@@ -1,0 +1,19 @@
+import { useQuery } from "@tanstack/react-query";
+import { fetchBalance } from "../api/teamMembers";
+import { BonusPointBalanceResponse } from "../types/teamMember";
+
+export function useBalance() {
+    const { data, isLoading, error, refetch } = useQuery<BonusPointBalanceResponse>({
+        queryKey: ["bonusBalance"],
+        queryFn: fetchBalance,
+        staleTime: 30000, // Consider data fresh for 30 seconds
+        refetchOnWindowFocus: true, // Refetch when user returns to tab
+    });
+
+    return {
+        balance: data?.bonusPoint ?? 0,
+        isLoading,
+        error,
+        refetch,
+    };
+}

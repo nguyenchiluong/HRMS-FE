@@ -114,6 +114,9 @@ const EmployeeCampaignHub = lazy(() => import('@/pages/CampaignHub'));
 const ViewBonus = lazy(
   () => import('./pages//employeeBonus/page/EmployeeBonusPage'),
 );
+const TransferBonus = lazy(
+  () => import('./pages/employeeTransferBonus/page/EmployeeTransferBonusPage'),
+);
 
 const routes: RouteObject[] = [
   // =================================================================
@@ -126,6 +129,11 @@ const routes: RouteObject[] = [
   {
     path: '/onboarding/success',
     element: <OnboardingSuccess />,
+  },
+  // Test
+  {
+    path: '/test',
+    element: <TransferBonus />,
   },
 
   // =================================================================
@@ -142,12 +150,7 @@ const routes: RouteObject[] = [
       {
         path: '/reset-password/:token',
         element: <Placeholder title="Reset Password" />,
-      },
-      // Test
-      {
-        path: '/test',
-        element: <EmployeeBonusPage />,
-      },
+      }
     ],
   },
 
@@ -273,8 +276,14 @@ const routes: RouteObject[] = [
           {
             path: 'credits',
             children: [
-              { index: true,
-                element: <ViewBonus/> },
+              {
+                index: true,
+                element: <ViewBonus />
+              },
+              {
+                path: 'transfer',
+                element: <TransferBonus />,
+              },
             ]
           }
         ],
