@@ -8,35 +8,43 @@ export interface Department {
   name: string;
 }
 
-export type JobLevel =
-  | 'Intern'
-  | 'Fresher'
-  | 'Junior'
-  | 'Middle'
-  | 'Senior'
-  | 'Lead'
-  | 'Manager';
-export type EmployeeType = 'FullTime' | 'PartTime' | 'Contract' | 'Intern';
-export type TimeType = 'OnSite' | 'Remote' | 'Hybrid';
+export interface JobLevel {
+  id: number;
+  name: string;
+}
+
+export interface EmploymentType {
+  id: number;
+  name: string;
+}
+
+export interface TimeType {
+  id: number;
+  name: string;
+}
 
 export interface InitialProfileFormData {
   fullName: string;
-  email: string;
+  personalEmail: string;
   positionId: number | '';
-  jobLevel: JobLevel | '';
+  jobLevelId: number | '';
   departmentId: number | '';
-  employeeType: EmployeeType | '';
-  timeType: TimeType | '';
+  employmentTypeId: number | '';
+  timeTypeId: number | '';
   startDate: string;
+  managerId: number | '';
+  hrId: number | '';
 }
 
 export interface InitialProfilePayload {
   fullName: string;
-  email: string;
+  personalEmail: string;
   positionId: number;
-  jobLevel: string;
+  jobLevelId: number;
   departmentId: number;
-  employeeType: string;
-  timeType: string;
+  employmentTypeId: number;
+  timeTypeId: number;
   startDate: string;
+  managerId?: number | null;
+  hrId?: number | null;
 }

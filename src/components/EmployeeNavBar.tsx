@@ -1,29 +1,46 @@
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/feature/auth/store/useAuthStore';
+import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
+import { NotificationDropdown } from '@/feature/shared/notifications/components/NotificationDropdown';
 import {
-  Bell,
-  Briefcase,
+  CheckCircle2,
   Clock,
-  FileText,
   Home,
-  LogOut,
-  Settings,
-  User,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useUnreadCount } from '@/feature/shared/notifications/hooks/useNotifications';
+import { useNotificationSSE } from '@/feature/shared/notifications/hooks/useNotificationSSE';
+import UserDropdownMenu from './UserDropdownMenu';
 
 export default function EmployeeNavBar() {
-  const { user, logout } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const location = useLocation();
 
-  const navItems = [
+  // Fetch unread count
+  const { data: unreadCount = 0 } = useUnreadCount();
+
+  // Set up SSE for real-time notifications
+  useNotificationSSE({
+    enabled: isAuthenticated,
+  });
+
+  const allNavItems = [
     { path: '/employee/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/employee/profile', label: 'Profile', icon: User },
     { path: '/employee/time', label: 'Time Management', icon: Clock },
-    { path: '/employee/job-details', label: 'Job Details', icon: Briefcase },
-    { path: '/employee/documents', label: 'Documents', icon: FileText },
-    { path: '/employee/settings', label: 'Settings', icon: Settings },
+    {
+      path: '/employee/approve-requests',
+      label: 'Time Requests',
+      icon: CheckCircle2,
+      requiredRole: 'MANAGER' as const,
+    },
   ];
+
+  // Filter nav items based on user role
+  const navItems = allNavItems.filter((item) => {
+    if (item.requiredRole) {
+      return user?.roles.includes(item.requiredRole);
+    }
+    return true;
+  });
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/');
@@ -55,28 +72,11 @@ export default function EmployeeNavBar() {
 
           {/* Right Side - Notifications & User */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-            </Button>
+            <NotificationDropdown
+              unreadCount={unreadCount}
+            />
 
-            {user && (
-              <div className="flex items-center space-x-3">
-                <div className="hidden text-right sm:block">
-                  <p className="text-sm font-medium">{user.email}</p>
-                  <p className="text-xs text-muted-foreground">{user.roles[0]}</p>
-                </div>
-
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
-                  {user.email?.charAt(0).toUpperCase() || 'U'}
-                </div>
-
-                <Button variant="outline" size="sm" onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </Button>
-              </div>
-            )}
+            <UserDropdownMenu />
           </div>
         </div>
       </div>

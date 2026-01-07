@@ -1,22 +1,8 @@
 import { create } from 'zustand';
-import {
-  AvailableProject,
-  TimesheetRow,
-  TimesheetStatus,
-  WeekRange,
-} from '../types';
+import type { TimesheetRow, WeekRange } from '../types';
 
 // Constants
 export const MAX_HOURS_PER_WEEK = 40;
-
-export const AVAILABLE_PROJECTS: AvailableProject[] = [
-  { id: 'daily-study', name: 'Daily Study', type: 'project' },
-  { id: 'technical-research', name: 'Technical Research', type: 'project' },
-  { id: 'client-project-a', name: 'Client Project A', type: 'project' },
-  { id: 'internal-tools', name: 'Internal Tools', type: 'project' },
-  { id: 'training', name: 'Training & Development', type: 'project' },
-  { id: 'leave', name: 'Leave', type: 'leave' },
-];
 
 // Helper functions
 export const getWeeksInMonth = (year: number, month: number): WeekRange[] => {
@@ -45,6 +31,8 @@ export const getWeeksInMonth = (year: number, month: number): WeekRange[] => {
       end: `${(weekEnd.getMonth() + 1).toString().padStart(2, '0')}/${weekEnd.getDate().toString().padStart(2, '0')}`,
       weekNumber,
       isCurrentWeek,
+      startDate: weekStart,
+      endDate: weekEnd,
     });
 
     currentDate.setDate(currentDate.getDate() + 7);
@@ -74,21 +62,35 @@ export const getMonthName = (month: number): string => {
   return months[month];
 };
 
-export const getStatusConfig = (status: TimesheetStatus) => {
+export const getStatusConfig = (status: string) => {
   switch (status) {
-    case 'approved':
+    case 'APPROVED':
       return {
         label: 'Approved',
         bgColor: 'bg-green-100',
         textColor: 'text-green-700',
         borderColor: 'border-green-300',
       };
-    case 'submitted':
+    case 'PENDING':
       return {
-        label: 'Submitted',
+        label: 'Pending',
         bgColor: 'bg-yellow-100',
         textColor: 'text-yellow-700',
         borderColor: 'border-yellow-300',
+      };
+    case 'REJECTED':
+      return {
+        label: 'Rejected',
+        bgColor: 'bg-red-100',
+        textColor: 'text-red-700',
+        borderColor: 'border-red-300',
+      };
+    case 'CANCELLED':
+      return {
+        label: 'Cancelled',
+        bgColor: 'bg-gray-100',
+        textColor: 'text-gray-700',
+        borderColor: 'border-gray-300',
       };
     default:
       return {
@@ -100,123 +102,119 @@ export const getStatusConfig = (status: TimesheetStatus) => {
   }
 };
 
-// Initial mock data
-const initialTimesheetData: TimesheetRow[] = [
-  {
-    id: '1',
-    name: 'Daily Study',
-    type: 'project',
-    weeklyData: [{ hours: 40 }, { hours: 40 }, { hours: 0 }, { hours: 0 }],
-  },
-  {
-    id: '2',
-    name: 'Technical Research',
-    type: 'project',
-    weeklyData: [{ hours: 0 }, { hours: 0 }, { hours: 32 }, { hours: 32 }],
-  },
-  {
-    id: '3',
-    name: 'Leave',
-    type: 'leave',
-    weeklyData: [{ hours: 0 }, { hours: 0 }, { hours: 8 }, { hours: 8 }],
-  },
-];
-
-interface TimesheetStore {
-  // State
-  timesheetData: TimesheetRow[];
+/**
+ * UI State Store for Timesheet
+ * Data fetching is handled by react-query hooks
+ */
+interface TimesheetUIStore {
+  // UI State
   currentDate: Date;
-  status: TimesheetStatus;
-  isEditing: boolean;
+  selectedWeekIndex: number;
   showProjectDropdown: boolean;
 
+  // Local edits (before submission)
+  localEdits: TimesheetRow[];
+  hasLocalEdits: boolean;
+
   // Actions
-  setTimesheetData: (data: TimesheetRow[]) => void;
   setCurrentDate: (date: Date) => void;
-  setStatus: (status: TimesheetStatus) => void;
-  setIsEditing: (isEditing: boolean) => void;
+  setSelectedWeekIndex: (index: number) => void;
   setShowProjectDropdown: (show: boolean) => void;
 
-  // Business logic actions
-  addProject: (projectId: string, weekRanges: WeekRange[]) => void;
+  // Local edit actions
+  initializeLocalEdits: (rows: TimesheetRow[]) => void;
+  addTask: (
+    taskId: number,
+    taskCode: string,
+    taskName: string,
+    taskType: 'project' | 'leave',
+    weekRanges: WeekRange[],
+  ) => void;
   removeTask: (taskId: string) => void;
-  updateHours: (rowId: string, weekIndex: number, hours: number) => void;
-  submitTimesheet: () => void;
-  adjustTimesheet: () => void;
+  updateHours: (
+    rowId: string,
+    weekIndex: number,
+    hours: number,
+    weekStatus: string,
+  ) => void;
+  resetLocalEdits: () => void;
+
+  // Navigation
   goToPreviousMonth: () => void;
   goToNextMonth: () => void;
 }
 
-export const useTimesheetStore = create<TimesheetStore>((set, get) => ({
+export const useTimesheetStore = create<TimesheetUIStore>((set, get) => ({
   // Initial state
-  timesheetData: initialTimesheetData,
   currentDate: new Date(),
-  status: 'draft',
-  isEditing: true,
+  selectedWeekIndex: 0,
   showProjectDropdown: false,
+  localEdits: [],
+  hasLocalEdits: false,
 
   // Basic setters
-  setTimesheetData: (data) => set({ timesheetData: data }),
-  setCurrentDate: (date) => set({ currentDate: date }),
-  setStatus: (status) => set({ status }),
-  setIsEditing: (isEditing) => set({ isEditing }),
+  setCurrentDate: (date) => set({ currentDate: date, localEdits: [], hasLocalEdits: false }),
+  setSelectedWeekIndex: (index) => set({ selectedWeekIndex: index }),
   setShowProjectDropdown: (show) => set({ showProjectDropdown: show }),
 
-  // Business logic
-  addProject: (projectId, weekRanges) => {
-    const { timesheetData } = get();
-    const project = AVAILABLE_PROJECTS.find((p) => p.id === projectId);
-    if (!project) return;
+  // Local edit actions
+  initializeLocalEdits: (rows) => set({ localEdits: rows, hasLocalEdits: false }),
 
-    // Check if project already exists
-    if (timesheetData.some((row) => row.name === project.name)) {
+  addTask: (taskId, taskCode, taskName, taskType, weekRanges) => {
+    const { localEdits } = get();
+
+    // Check if task already exists
+    if (localEdits.some((row) => row.taskId === taskId)) {
       set({ showProjectDropdown: false });
       return;
     }
 
     const newRow: TimesheetRow = {
-      id: Date.now().toString(),
-      name: project.name,
-      type: project.type,
+      id: `task-${taskId}-${Date.now()}`,
+      taskId,
+      taskCode,
+      name: taskName,
+      type: taskType,
       weeklyData: weekRanges.map(() => ({ hours: 0 })),
     };
 
     set({
-      timesheetData: [...timesheetData, newRow],
+      localEdits: [...localEdits, newRow],
       showProjectDropdown: false,
+      hasLocalEdits: true,
     });
   },
 
   removeTask: (taskId) => {
-    const { timesheetData } = get();
-    set({ timesheetData: timesheetData.filter((row) => row.id !== taskId) });
+    const { localEdits } = get();
+    set({
+      localEdits: localEdits.filter((row) => row.id !== taskId),
+      hasLocalEdits: true,
+    });
   },
 
-  updateHours: (rowId, weekIndex, hours) => {
-    const { timesheetData, isEditing } = get();
-    if (!isEditing) return;
+  updateHours: (rowId, weekIndex, hours, weekStatus) => {
+    // Only allow editing for DRAFT, REJECTED, or CANCELLED weeks
+    if (weekStatus !== 'DRAFT' && weekStatus !== 'REJECTED' && weekStatus !== 'CANCELLED') return;
 
+    const { localEdits } = get();
     set({
-      timesheetData: timesheetData.map((row) => {
+      localEdits: localEdits.map((row) => {
         if (row.id === rowId) {
           const newWeeklyData = [...row.weeklyData];
           newWeeklyData[weekIndex] = {
+            ...newWeeklyData[weekIndex],
             hours: Math.max(0, Math.min(hours, MAX_HOURS_PER_WEEK)),
           };
           return { ...row, weeklyData: newWeeklyData };
         }
         return row;
       }),
+      hasLocalEdits: true,
     });
   },
 
-  submitTimesheet: () => {
-    set({ status: 'submitted', isEditing: false });
-  },
-
-  adjustTimesheet: () => {
-    set({ isEditing: true, status: 'draft' });
-  },
+  resetLocalEdits: () => set({ localEdits: [], hasLocalEdits: false }),
 
   goToPreviousMonth: () => {
     const { currentDate } = get();
@@ -226,6 +224,8 @@ export const useTimesheetStore = create<TimesheetStore>((set, get) => ({
         currentDate.getMonth() - 1,
         1,
       ),
+      localEdits: [],
+      hasLocalEdits: false,
     });
   },
 
@@ -237,6 +237,8 @@ export const useTimesheetStore = create<TimesheetStore>((set, get) => ({
         currentDate.getMonth() + 1,
         1,
       ),
+      localEdits: [],
+      hasLocalEdits: false,
     });
   },
 }));

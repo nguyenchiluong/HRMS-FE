@@ -11,9 +11,61 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   files,
   onFilesChange,
 }) => {
+  const MAX_FILES = 5;
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_TYPES = [
+    'application/pdf',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+
+  const validateFile = (file: File): string | null => {
+    if (file.size > MAX_FILE_SIZE) {
+      return `File "${file.name}" exceeds the maximum size of 10MB`;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return `File "${file.name}" is not a supported type. Allowed: PDF, JPG, JPEG, PNG, DOC, DOCX`;
+    }
+    return null;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      onFilesChange([...files, ...Array.from(e.target.files)]);
+      const newFiles = Array.from(e.target.files);
+      const validFiles: File[] = [];
+      const errors: string[] = [];
+
+      // Check total file count
+      if (files.length + newFiles.length > MAX_FILES) {
+        errors.push(`Maximum ${MAX_FILES} files allowed`);
+      }
+
+      // Validate each file
+      newFiles.forEach((file) => {
+        if (files.length + validFiles.length >= MAX_FILES) {
+          errors.push(`Maximum ${MAX_FILES} files allowed`);
+          return;
+        }
+        const error = validateFile(file);
+        if (error) {
+          errors.push(error);
+        } else {
+          validFiles.push(file);
+        }
+      });
+
+      // Show errors if any
+      if (errors.length > 0) {
+        alert(errors.join('\n'));
+      }
+
+      // Add valid files
+      if (validFiles.length > 0) {
+        onFilesChange([...files, ...validFiles]);
+      }
     }
   };
 
@@ -25,8 +77,13 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     <div className="space-y-2">
       <Label>Supporting Documents (Optional)</Label>
       <p className="text-xs text-muted-foreground">
-        Upload medical certificate or other relevant documents
+        Upload medical certificate or other relevant documents (Max 5 files, 10MB each. Allowed: PDF, JPG, JPEG, PNG, DOC, DOCX)
       </p>
+      {files.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {files.length} / {MAX_FILES} files selected
+        </p>
+      )}
       <div className="flex flex-col gap-3">
         <label
           htmlFor="file-upload"
