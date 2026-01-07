@@ -147,7 +147,7 @@ export default function EmployeeCreditRedeemPage() {
                     <div className="flex justify-end gap-3">
                         <Button variant="outline" onClick={() => refetchBalance()} disabled={isBalanceFetching} className="gap-2">
                             <RefreshCcw className={`h-4 w-4 ${isBalanceFetching ? "animate-spin" : ""}`} />
-                            Refresh balance
+                            Refresh credits
                         </Button>
                         <Button onClick={handleSubmit} disabled={isSubmitting}>
                             {isSubmitting ? "Processing..." : "Withdraw now"}

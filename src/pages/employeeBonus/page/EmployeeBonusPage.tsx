@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, Filter as FilterIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BalanceSummaryCard } from "../components/BalanceSummaryCard";
 import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
@@ -16,6 +16,7 @@ export default function EmployeeBonusPage() {
   const { user } = useAuthStore();
   const isManager = !!user?.roles?.includes("MANAGER");
   const [viewMode, setViewMode] = useState<"all" | "team">("all");
+  const [showFilters, setShowFilters] = useState(false);
   const {
     from,
     to,
@@ -84,7 +85,7 @@ export default function EmployeeBonusPage() {
         <Card className="w-full md:max-w-2xl">
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div className="space-y-1">
-              <CardTitle>Your Balance History</CardTitle>
+              <CardTitle>Credit History</CardTitle>
               <CardDescription>
                 Track all your bonus credit transactions including monthly bonuses, awards, transfers, and redeems.
               </CardDescription>
@@ -97,43 +98,76 @@ export default function EmployeeBonusPage() {
         </Card>
       </div>
 
-      {/* Date Range Filter */}
-      <Filter
-        from={from}
-        to={to}
-        onFromChange={setFrom}
-        onToChange={setTo}
-        isInvalidRange={isInvalidRange}
-        selectedTypes={selectedTypes}
-        onTypesChange={setSelectedTypes}
-      />
-
-      {/* View Mode Tabs (Manager Only) */}
-      {isManager && (
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "all" | "team")}>
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="all">My Balance History</TabsTrigger>
-            <TabsTrigger value="team">Team Actions</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      )}
-
       {/* Transaction History */}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="space-y-1">
-            <CardTitle className="text-2xl">Your Balance History</CardTitle>
+            <CardTitle className="text-2xl">Credit History</CardTitle>
             <CardDescription>View all your bonus credit transactions</CardDescription>
           </div>
           {/* Refresh Balance Button */}
           {filteredTransactions.length > 0 && (
             <Button variant="outline" onClick={() => refetchBalance()} disabled={isFetching} className="gap-2">
               <RefreshCcw className={isFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-              <span className="hidden sm:inline">Refresh balance</span>
+              <span className="hidden sm:inline">Refresh credits</span>
             </Button>
           )}
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Filter and View Mode Tabs */}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              {/* View Mode Tabs (Manager Only) */}
+              {isManager && (
+                <Tabs
+                  value={viewMode}
+                  onValueChange={(v) => setViewMode(v as "all" | "team")}
+                  className="md:self-start"
+                >
+                  <TabsList className="grid w-full max-w-md grid-cols-2">
+                    <TabsTrigger value="all">My Balance History</TabsTrigger>
+                    <TabsTrigger value="team">Team Actions</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
+
+              <div className="flex md:justify-end">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowFilters((prev) => !prev)}
+                  className={`min-w-[120px] ${showFilters
+                    ? "bg-blue-200 text-blue-800"
+                    : "bg-blue-50 text-slate-700"
+                    }`}
+                >
+                  {showFilters ? (
+                    <X className="mr-2 h-4 w-4" />
+                  ) : (
+                    <FilterIcon className="mr-2 h-4 w-4" />
+                  )}
+                  Filter by
+                </Button>
+              </div>
+            </div>
+
+            {showFilters && (
+              <div className="w-full">
+                <Filter
+                  from={from}
+                  to={to}
+                  onFromChange={setFrom}
+                  onToChange={setTo}
+                  isInvalidRange={isInvalidRange}
+                  selectedTypes={selectedTypes}
+                  onTypesChange={setSelectedTypes}
+                  hideToggle
+                  forceOpen
+                />
+              </div>
+            )}
+          </div>
+
           {/* Transaction History Table Card */}
           <Card>
             <CardContent

@@ -1,13 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown, Filter as FilterIcon, Search, X } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown, Filter as FilterIcon, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 import { subDays, startOfMonth } from "date-fns";
 import { toDateString } from "../utils/dateFormatters";
 import { TransactionType } from "../types/transaction";
 import { TRANSACTION_META } from "../constants/transactionMeta";
-import { Input } from "./ui/Input";
 
 interface FilterProps {
   from: string;
@@ -17,6 +15,9 @@ interface FilterProps {
   isInvalidRange: boolean;
   selectedTypes: TransactionType[];
   onTypesChange: (types: TransactionType[]) => void;
+  inline?: boolean; // render compact with no outer margin for inline layouts
+  forceOpen?: boolean; // externally control open state
+  hideToggle?: boolean; // hide internal toggle button (useful when controlled externally)
 }
 
 export function Filter({
@@ -27,6 +28,9 @@ export function Filter({
   isInvalidRange,
   selectedTypes,
   onTypesChange,
+  inline = false,
+  forceOpen,
+  hideToggle,
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const today = new Date();
@@ -66,29 +70,33 @@ export function Filter({
 
   const transactionTypeOptions = allTypes.map((type) => TRANSACTION_META[type].label);
 
+  const effectiveOpen = forceOpen ?? isOpen;
+
   return (
-    <div className="mb-6 space-y-4">
+    <div className={inline ? "space-y-3" : "mb-6 space-y-4"}>
       {/* Filter Toggle Button */}
-      <div className="flex justify-end">
-        <Button
-          variant={isOpen ? "secondary" : "secondary"}
-          onClick={() => setIsOpen(!isOpen)}
-          className={`min-w-[120px] ${isOpen
+      {!hideToggle && (
+        <div className={inline ? "flex justify-start" : "flex justify-end"}>
+          <Button
+            variant={effectiveOpen ? "secondary" : "secondary"}
+            onClick={() => setIsOpen(!isOpen)}
+            className={`min-w-[120px] ${effectiveOpen
               ? "bg-blue-200 text-blue-800"
               : "bg-blue-50 text-slate-700"
-            }`}
-        >
-          {isOpen ? (
-            <X className="mr-2 h-4 w-4" />
-          ) : (
-            <FilterIcon className="mr-2 h-4 w-4" />
-          )}
-          Filter by
-        </Button>
-      </div>
+              }`}
+          >
+            {effectiveOpen ? (
+              <X className="mr-2 h-4 w-4" />
+            ) : (
+              <FilterIcon className="mr-2 h-4 w-4" />
+            )}
+            Filter by
+          </Button>
+        </div>
+      )}
 
       {/* Collapsible Panel */}
-      {isOpen && (
+      {effectiveOpen && (
         <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-6 shadow-sm duration-200 animate-in fade-in slide-in-from-top-2">
           {/* Preset Buttons */}
           <div className="mb-6 flex flex-wrap gap-2">

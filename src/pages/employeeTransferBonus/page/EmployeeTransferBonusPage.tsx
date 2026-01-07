@@ -130,13 +130,19 @@ export default function EmployeeTransferBonusPage() {
                                 Send bonus credits to your team members
                             </CardDescription>
                         </div>
-                        <div className="w-full sm:w-64">
-                            <SearchBox
-                                value={search}
-                                onChange={setSearch}
-                                disabled={isLoading}
-                                isFetching={isFetching}
-                            />
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <div className="w-full sm:w-64">
+                                <SearchBox
+                                    value={search}
+                                    onChange={setSearch}
+                                    disabled={isLoading}
+                                    isFetching={isFetching}
+                                />
+                            </div>
+                            <Button variant="outline" onClick={() => refetchBalance()} disabled={isBalanceFetching} className="gap-2 shrink-0">
+                                <RefreshCcw className={isBalanceFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                                <span className="hidden md:inline">Refresh credits</span>
+                            </Button>
                         </div>
                     </div>
                 </CardHeader>
@@ -207,14 +213,6 @@ export default function EmployeeTransferBonusPage() {
                             Updating...
                         </div>
                     )}
-
-                    {/* Refresh Balance Button */}
-                    <div className="flex justify-end">
-                        <Button variant="outline" onClick={() => refetchBalance()} disabled={isBalanceFetching} className="gap-2">
-                            <RefreshCcw className={isBalanceFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-                            Refresh balance
-                        </Button>
-                    </div>
 
                     {/* Pagination */}
                     <div className="border-t pt-4">
