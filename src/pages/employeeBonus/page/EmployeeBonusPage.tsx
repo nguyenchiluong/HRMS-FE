@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCcw, Filter as FilterIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { BalanceSummaryCard } from "../components/BalanceSummaryCard";
 import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 import { Filter } from "../components/Filter";
@@ -48,7 +49,12 @@ export default function EmployeeBonusPage() {
   const handleRefresh = () => {
     setIsSpinning(true);
     refetchBalance();
-    setTimeout(() => setIsSpinning(false), 800);
+    setTimeout(() => {
+      setIsSpinning(false);
+      toast.success("Credits refreshed", {
+        description: "Your balance has been updated successfully.",
+      });
+    }, 800);
   };
 
   // Filter transactions for team actions view (manager only)

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Gift, MinusCircle, Send, Loader2, RefreshCcw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { useTeamMembers } from "../hooks/useTeamMembers";
 import { useBalance } from "../hooks/useBalance";
 import { TeamMembersTable } from "../components/TeamMembersTable";
@@ -48,7 +49,12 @@ export default function EmployeeTransferBonusPage() {
     const handleRefresh = () => {
         setIsSpinning(true);
         refetchBalance();
-        setTimeout(() => setIsSpinning(false), 800);
+        setTimeout(() => {
+            setIsSpinning(false);
+            toast.success("Credits refreshed", {
+                description: "Your balance has been updated successfully.",
+            });
+        }, 800);
     };
 
     const handleTransferClick = (member: TeamMember) => {

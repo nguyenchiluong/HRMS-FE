@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { BalanceSummaryCard } from "../../employeeBonus/components/BalanceSummaryCard";
 import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 import { RedeemCreditsModal } from "../components/RedeemCreditsModal";
@@ -28,7 +29,12 @@ export default function EmployeeCreditRedeemPage() {
     const handleRefresh = () => {
         setIsSpinning(true);
         refetchBalance();
-        setTimeout(() => setIsSpinning(false), 800);
+        setTimeout(() => {
+            setIsSpinning(false);
+            toast.success("Credits refreshed", {
+                description: "Your balance has been updated successfully.",
+            });
+        }, 800);
     };
 
     // Refresh balance on page load and when confirmation dialog opens
