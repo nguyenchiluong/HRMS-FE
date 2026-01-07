@@ -15,6 +15,9 @@ export interface Campaign extends CampaignFormData {
   status: 'draft' | 'active' | 'completed';
   imageUrl?: string;
   primaryMetric?: string;
+
+  participantCount?: number;
+  totalDistance?: number;
 }
 
 export interface CampaignListItem extends Campaign {
@@ -48,6 +51,7 @@ export interface LeaderboardEntry {
   rank: number;
   employeeId: string;
   employeeName: string;
+  department?: string;
   totalPoints: number; // Có thể là totalDistance tùy logic
   completedActivities: number;
   lastActivityDate: string;

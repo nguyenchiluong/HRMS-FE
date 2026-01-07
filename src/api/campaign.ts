@@ -94,6 +94,9 @@ const transformBackendToFrontend = (data: any): Campaign => ({
   createdAt: data.createdAt,
   imageUrl: data.imageUrl,
   primaryMetric: data.primaryMetric,
+
+  participantCount: data.participantCount || 0,
+  totalDistance: data.totalDistance || 0,
 });
 
 // ============================================================================
@@ -324,6 +327,30 @@ export const getMyCampaignRank = async (campaignId: string): Promise<MyRankInfo>
     return response.data;
   } catch (error) {
     console.error('Error fetching my rank:', error);
+    throw error;
+  }
+};
+
+
+// API: Rời chiến dịch
+export const leaveCampaignApi = async (campaignId: string): Promise<void> => {
+  try {
+    // Endpoint phải khớp với Backend: /api/campaigns/{id}/leave
+    await springApi.delete(`${CAMPAIGN_ENDPOINT}/${campaignId}/leave`);
+  } catch (error) {
+    console.error('Error leaving campaign:', error);
+    throw error; // Ném lỗi để Hook xử lý hiển thị Toast
+  }
+};
+
+
+// API: Đóng chiến dịch (Admin)
+export const closeCampaignApi = async (id: string): Promise<Campaign> => {
+  try {
+    const response = await springApi.post(`${CAMPAIGN_ENDPOINT}/${id}/close`);
+    return transformBackendToFrontend(response.data);
+  } catch (error) {
+    console.error('Error closing campaign:', error);
     throw error;
   }
 };

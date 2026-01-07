@@ -2,12 +2,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { 
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"; // Import thêm AlertDialog
 import { Check, ChevronLeft, X, ZoomIn, Calendar, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import RejectDialog from "@/components/campaigns/RejectDialog";
-import { usePendingActivities, useApproveActivity, useRejectActivity } from "@/hooks/useApprovals"; // 👈 Hook API
+import { usePendingActivities, useApproveActivity, useRejectActivity } from "@/hooks/useApprovals"; 
 import { useCampaignDetail } from "@/hooks/useCampaigns"; 
 
 export default function CampaignReviewPage() {
@@ -24,6 +34,7 @@ export default function CampaignReviewPage() {
 
   // State local UI
   const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [approvingId, setApprovingId] = useState<number | null>(null); // 👈 State mới cho Approve Popup
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const getDistance = (jsonString: string) => {
@@ -36,9 +47,20 @@ export default function CampaignReviewPage() {
     }
   };
 
-  const handleApprove = (id: number) => {
-    approveMutation.mutate(id, {
-      onSuccess: () => toast.success("Submission approved successfully!"),
+  // 👇 Hàm này giờ chỉ mở popup
+  const handleClickApprove = (id: number) => {
+    setApprovingId(id);
+  };
+
+  // 👇 Hàm xác nhận duyệt thật sự
+  const handleConfirmApprove = () => {
+    if (!approvingId) return;
+    
+    approveMutation.mutate(approvingId, {
+      onSuccess: () => {
+        toast.success("Submission approved successfully!");
+        setApprovingId(null); // Đóng popup
+      },
       onError: () => toast.error("Failed to approve submission"),
     });
   };
@@ -72,7 +94,6 @@ export default function CampaignReviewPage() {
                 <ChevronLeft className="w-4 h-4 mr-1" /> 
             </Button>
             <div>
-                {/* Lấy tên thật từ API */}
                 <h1 className="text-2xl font-bold text-slate-900">
                     {campaignData?.name || "Unknown Campaign"}
                 </h1>
@@ -115,7 +136,7 @@ export default function CampaignReviewPage() {
                             {/* 2. METRICS BAR */}
                             <div className="bg-slate-50 rounded-xl p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-12">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Total Distance</p>
+                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Distance</p>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-2xl font-black text-slate-900 tracking-tight">{distance}</span>
                                         <span className="text-base font-medium text-slate-500">km</span>
@@ -144,7 +165,6 @@ export default function CampaignReviewPage() {
                             <div className="mb-2">
                                 <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-3">Proof Evidence</p>
                                 <div className="flex gap-4 overflow-x-auto pb-2">
-                                    {/* Backend của bạn trả về 1 string proofImage */}
                                     {item.proofImage ? (
                                         <div 
                                             className="relative w-32 h-24 rounded-lg overflow-hidden border border-slate-200 cursor-pointer group bg-slate-100 flex-shrink-0"
@@ -175,7 +195,8 @@ export default function CampaignReviewPage() {
                                 <Button 
                                     size="sm"
                                     className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-sm px-6"
-                                    onClick={() => handleApprove(item.id)}
+                                    // 👇 Gọi hàm mở popup thay vì duyệt ngay
+                                    onClick={() => handleClickApprove(item.id)}
                                     disabled={approveMutation.isPending || rejectMutation.isPending}
                                 >
                                     {approveMutation.isPending && approveMutation.variables === item.id ? (
@@ -194,12 +215,37 @@ export default function CampaignReviewPage() {
         </div>
 
         {/* DIALOGS */}
+        
+        {/* 1. REJECT DIALOG (Có sẵn) */}
         <RejectDialog 
             open={!!rejectingId} 
             onOpenChange={(open) => !open && setRejectingId(null)} 
             onConfirm={handleConfirmReject}
         />
 
+        {/* 2. 👇 APPROVE CONFIRMATION DIALOG (MỚI) */}
+        <AlertDialog open={!!approvingId} onOpenChange={(open) => !open && setApprovingId(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Approve Submission?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will verify the activity and add the distance to the employee's total progress. 
+                        This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        onClick={handleConfirmApprove}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                        {approveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin"/> : "Confirm Approve"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        {/* 3. IMAGE ZOOM DIALOG */}
         <Dialog open={!!zoomedImage} onOpenChange={() => setZoomedImage(null)}>
             <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-transparent shadow-none flex items-center justify-center">
                 {zoomedImage && (

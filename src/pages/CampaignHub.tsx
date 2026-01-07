@@ -12,33 +12,101 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { useActiveCampaigns, useMyCampaigns, useRegisterCampaign } from "@/hooks/useCampaigns";
-import { Calendar, CheckCircle2, History, Info, Loader2, LogOut, Trophy, Users } from "lucide-react";
+import { useActiveCampaigns, useMyCampaigns, useRegisterCampaign, useMyRank } from "@/hooks/useCampaigns"; // 👈 Import useMyRank
+import { Calendar, CheckCircle2, History, Info, Loader2, LogOut, Trophy, Users, Star } from "lucide-react";
 import { useState } from "react";
 import LeaderboardView from "@/components/campaigns/LeaderboardView";
 import toast from "react-hot-toast";
 
 // Import component View mới
 import SubmissionHistoryView from "@/components/campaigns/SubmissionHistoryView";
+import LeaveCampaignDialog from "@/components/campaigns/LeaveCampaignDialog";
+import { Campaign } from "@/types/campaign";
 
+// --- COMPONENT CON: PAST CAMPAIGN CARD ---
+// Tách ra để gọi hook useMyRank cho từng card
+const PastCampaignCard = ({ campaign, onViewLeaderboard }: { campaign: Campaign, onViewLeaderboard: (c: Campaign) => void }) => {
+  // Lấy hạng của user trong chiến dịch này
+  const { data: rankInfo, isLoading } = useMyRank(campaign.id, true);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  return (
+    <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 border-slate-200 hover:shadow-md transition-all">
+      {/* LEFT SIDE: INFO */}
+      <div className="flex-1 mb-4 sm:mb-0">
+        <div className="flex items-center gap-3 mb-2">
+          <h3 className="text-lg font-bold text-slate-900">{campaign.name}</h3>
+          <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-200 border-none px-2.5 py-0.5 rounded-full font-medium">
+            {campaign.activityType || 'General'}
+          </Badge>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
+          </div>
+          
+          {/* 👇 PHẦN HIỂN THỊ RANKED (ĐÃ SỬA) */}
+          <div className="flex items-center gap-1.5">
+            <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+            <span className="font-medium text-slate-700">
+              {isLoading ? (
+                <span className="animate-pulse">Loading...</span>
+              ) : (
+                rankInfo && rankInfo.rank > 0 ? `Ranked #${rankInfo.rank}` : `Not Ranked`
+              )}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: BUTTON */}
+      <Button
+        className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-yellow-950 font-semibold border-none shadow-sm"
+        onClick={() => onViewLeaderboard(campaign)}
+      >
+        View Final Ranking
+      </Button>
+    </Card>
+  );
+};
+
+// --- COMPONENT CHÍNH ---
 export default function EmployeeCampaignHub() {
+  // Fetch Data
   const { data: activeCampaignsData, isLoading: loadingActive } = useActiveCampaigns();
   const { data: myCampaignsData, isLoading: loadingMy } = useMyCampaigns();
 
+  // Local State
   const [submissionCampaign, setSubmissionCampaign] = useState<any | null>(null);
-  const registerMutation = useRegisterCampaign();
   const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
-  
-  // 👇 State này giờ dùng để switch view (không phải bật popup nữa)
   const [historyCampaign, setHistoryCampaign] = useState<any | null>(null);
+  const [leavingCampaign, setLeavingCampaign] = useState<any | null>(null);
+  const [leaderboardCampaign, setLeaderboardCampaign] = useState<any | null>(null);
 
+  // Mutations
+  const registerMutation = useRegisterCampaign();
+
+  // --- LOGIC PHÂN LOẠI CAMPAIGN ---
   const myCampaigns = myCampaignsData || [];
+  
+  // 1. Chiến dịch ĐANG THAM GIA (Active)
+  const myActiveCampaigns = myCampaigns.filter(c => c.status === 'active');
+  
+  // 2. Chiến dịch ĐÃ KẾT THÚC (Completed/Closed)
+  const myPastCampaigns = myCampaigns.filter(c => c.status === 'completed');
+
+  // 3. Chiến dịch CÓ THỂ JOIN
   const joinedIds = myCampaigns.map((c) => c.id);
   const activeCampaignsList = (activeCampaignsData || []).filter((c) => !joinedIds.includes(c.id));
 
-  const [leaderboardCampaign, setLeaderboardCampaign] = useState<any | null>(null);
-
+  // --- HANDLERS ---
   const handleConfirmRegister = async () => {
     if (!selectedCampaign) return;
     try {
@@ -54,12 +122,8 @@ export default function EmployeeCampaignHub() {
   };
 
   const handleViewSubmissions = (campaign: any) => {
-    setHistoryCampaign(campaign); // Chuyển sang mode xem lịch sử
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Cuộn lên đầu trang
-  };
-
-  const handleLeaveCampaign = (campaignId: string) => {
-    toast.error("Leave Campaign API is not implemented yet in Backend.");
+    setHistoryCampaign(campaign);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenSubmitActivity = (campaign: any) => {
@@ -67,16 +131,16 @@ export default function EmployeeCampaignHub() {
   };
 
   const handleViewLeaderboard = (campaign: any) => {
-    console.log("Clicked Leaderboard for:", campaign.id);
     setLeaderboardCampaign(campaign);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  // --- CONDITIONAL RENDERING: LOADING ---
   if (loadingActive || loadingMy) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -85,40 +149,40 @@ export default function EmployeeCampaignHub() {
     );
   }
 
-  // View: Leaderboard
-if (leaderboardCampaign) {
-  return (
-     <div className="min-h-screen bg-slate-50/50 p-6 font-sans">
-         <div className="max-w-6xl mx-auto">
-             <LeaderboardView
-                 campaign={leaderboardCampaign}
-                 onBack={() => setLeaderboardCampaign(null)}
-                 isAdminView={false} // Employee mode
-             />
-         </div>
-     </div>
-  );
-}
-
-  // 👇 LOGIC QUAN TRỌNG: Nếu đang xem lịch sử, return giao diện lịch sử
-  if (historyCampaign) {
+  // --- CONDITIONAL RENDERING: SUB-VIEWS ---
+  if (leaderboardCampaign) {
     return (
-        <div className="min-h-screen bg-slate-50/50 p-6 font-sans">
-            <div className="max-w-6xl mx-auto">
-                <SubmissionHistoryView 
-                    campaign={historyCampaign} 
-                    onBack={() => setHistoryCampaign(null)} // Nút Back sẽ set null để quay lại Hub
-                />
-            </div>
+      <div className="min-h-screen bg-slate-50/50 p-6 font-sans">
+        <div className="max-w-6xl mx-auto">
+          <LeaderboardView
+            campaign={leaderboardCampaign}
+            onBack={() => setLeaderboardCampaign(null)}
+            isAdminView={false}
+          />
         </div>
+      </div>
     );
   }
 
-  // 👇 Nếu không, return giao diện Hub bình thường
+  if (historyCampaign) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 p-6 font-sans">
+        <div className="max-w-6xl mx-auto">
+          <SubmissionHistoryView 
+            campaign={historyCampaign} 
+            onBack={() => setHistoryCampaign(null)} 
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // --- MAIN DASHBOARD VIEW ---
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 font-sans">
       <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
         
+        {/* Header */}
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-slate-900">Campaigns Hub</h1>
           <p className="text-slate-500">
@@ -126,7 +190,7 @@ if (leaderboardCampaign) {
           </p>
         </div>
 
-        {/* SECTION 1: Campaigns You Can Join */}
+        {/* SECTION 1: CAMPAIGNS YOU CAN JOIN */}
         <section>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-slate-800">Campaigns You Can Join</h2>
@@ -163,10 +227,11 @@ if (leaderboardCampaign) {
                     <div className="space-y-2 text-sm text-slate-600">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-slate-400" />
-                        <span>{new Date(campaign.startDate).toLocaleDateString()} - {new Date(campaign.endDate).toLocaleDateString()}</span>
+                        <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-slate-400" />
+                        <span>{campaign.participantCount || 0} participants</span>
                       </div>
                     </div>
                   </CardContent>
@@ -186,33 +251,33 @@ if (leaderboardCampaign) {
 
         <Separator className="my-8" />
 
-        {/* SECTION 2: My Active Campaigns */}
+        {/* SECTION 2: MY ACTIVE CAMPAIGNS */}
         <section>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-slate-800">My Active Campaigns</h2>
                 <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
-                  Joined: {myCampaigns.length}
+                  Running: {myActiveCampaigns.length}
                 </Badge>
             </div>
             
-            {myCampaigns.length === 0 ? (
+            {myActiveCampaigns.length === 0 ? (
                  <div className="text-center py-16 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl">
                     <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
                         <Trophy className="w-6 h-6 text-slate-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-slate-900">You haven't joined any campaigns yet</h3>
+                    <h3 className="text-lg font-medium text-slate-900">You haven't joined any active campaigns</h3>
                     <p className="text-slate-500 mt-1 max-w-sm mx-auto">Register for a campaign above!</p>
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {myCampaigns.map((campaign) => (
+                    {myActiveCampaigns.map((campaign) => (
                         <Card key={campaign.id} className="flex flex-col md:flex-row overflow-hidden border-slate-200 shadow-sm">
                             <div className="w-full md:w-64 h-auto relative min-h-[200px]">
                                   <img 
                                     src={campaign.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=500&fit=crop"} 
                                     alt={campaign.name} 
                                     className="w-full h-full object-cover"
-                                />
+                                  />
                             </div>
                             <div className="flex-1 p-6 flex flex-col justify-between">
                                 <div>
@@ -229,13 +294,13 @@ if (leaderboardCampaign) {
                                     
                                     <div className="mb-6 space-y-2">
                                         <div className="flex justify-between text-sm">
-                                            <span className="font-medium text-slate-700">Campaign Progress</span>
-                                            <span className="font-bold text-slate-900">0%</span>
+                                            <span className="font-medium text-slate-700">Total Progress</span>
+                                            <span className="font-bold text-slate-900">{campaign.totalDistance || 0} {campaign.primaryMetric?.includes('Distance') ? 'km' : 'pts'}</span>
                                         </div>
-                                        <Progress value={0} className="h-2 bg-slate-100" />
+                                        <Progress value={30} className="h-2 bg-slate-100" />
                                         <div className="flex justify-between text-xs text-slate-400 mt-1">
-                                            <span>0 points</span>
-                                            <span>Start: {new Date(campaign.startDate).toLocaleDateString()}</span>
+                                            <span>Current Result</span>
+                                            <span>Ends: {formatDate(campaign.endDate)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -246,14 +311,14 @@ if (leaderboardCampaign) {
                                           className="flex-1 bg-slate-900 hover:bg-slate-800"
                                           onClick={() => handleOpenSubmitActivity(campaign)}
                                         >
-                                            Submit Activity
+                                          Submit Activity
                                         </Button>
                                         <Button variant="outline" 
-                                                  className="flex-1 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
-                                                  onClick={() => handleViewLeaderboard(campaign)} 
+                                              className="flex-1 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+                                              onClick={() => handleViewLeaderboard(campaign)} 
                                         >
-                                            <Trophy className="w-4 h-4 mr-2" />
-                                            View Leaderboard
+                                          <Trophy className="w-4 h-4 mr-2" />
+                                          View Leaderboard
                                         </Button>
                                     </div>
 
@@ -269,7 +334,7 @@ if (leaderboardCampaign) {
                                         <Button 
                                             variant="outline" 
                                             className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
-                                            onClick={() => handleLeaveCampaign(campaign.id)}
+                                            onClick={() => setLeavingCampaign(campaign)}
                                         >
                                             <LogOut className="w-4 h-4 mr-2" />
                                             Leave Campaign
@@ -283,7 +348,31 @@ if (leaderboardCampaign) {
             )}
         </section>
 
-        {/* DIALOG 1: REGISTER CAMPAIGN */}
+        {/* SECTION 3: MY PAST CAMPAIGNS */}
+        {myPastCampaigns.length > 0 && (
+          <>
+            <Separator className="my-8" />
+            <section>
+              <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-slate-800">My Past Campaigns</h2>
+                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Completed</span>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {myPastCampaigns.map((campaign) => (
+                  // 👇 Sử dụng Component con để có thể gọi useMyRank cho từng card
+                  <PastCampaignCard 
+                    key={campaign.id} 
+                    campaign={campaign} 
+                    onViewLeaderboard={handleViewLeaderboard} 
+                  />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* DIALOGS */}
         <Dialog open={!!selectedCampaign} onOpenChange={(open) => !open && setSelectedCampaign(null)}>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
@@ -314,11 +403,11 @@ if (leaderboardCampaign) {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                     <Users className="w-5 h-5 text-slate-500 mt-0.5" />
-                     <div>
+                      <Users className="w-5 h-5 text-slate-500 mt-0.5" />
+                      <div>
                         <p className="text-xs font-medium text-slate-500 uppercase">Current Participants</p>
                         <p className="text-sm font-medium text-slate-900">Open for all employees</p>
-                     </div>
+                      </div>
                   </div>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex gap-3">
@@ -339,12 +428,19 @@ if (leaderboardCampaign) {
           </DialogContent>
         </Dialog>
 
-        {/* DIALOG 2: SUBMIT ACTIVITY */}
         {submissionCampaign && (
           <SubmitActivityDialog 
             open={!!submissionCampaign} 
             onOpenChange={(open) => !open && setSubmissionCampaign(null)}
             campaign={submissionCampaign}
+          />
+        )}
+
+        {leavingCampaign && (
+          <LeaveCampaignDialog 
+            open={!!leavingCampaign} 
+            onOpenChange={(open) => !open && setLeavingCampaign(null)}
+            campaign={leavingCampaign}
           />
         )}
 

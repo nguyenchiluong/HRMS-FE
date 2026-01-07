@@ -1,8 +1,10 @@
 import { createCampaign, getCampaigns, updateCampaign, publishCampaign, 
 getActiveCampaigns, registerForCampaign, getMyCampaigns, submitActivity, 
-getMyCampaignActivities, getCampaignById, deleteActivityApi, updateActivityApi, getCampaignLeaderboard, getMyCampaignRank} from '@/api/campaign';
+getMyCampaignActivities, getCampaignById, deleteActivityApi, updateActivityApi, 
+getCampaignLeaderboard, getMyCampaignRank, leaveCampaignApi, closeCampaignApi} from '@/api/campaign';
 import type { Campaign, CampaignFormData, ActivitySubmissionData } from '@/types/campaign';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from "sonner";
 
 export const useCampaigns = () => {
   return useQuery<Campaign[]>({
@@ -148,9 +150,6 @@ export const useUpdateActivity = () => {
   });
 };
 
-
-// ... (code cũ)
-
 // Hook: Lấy Leaderboard chung
 export const useCampaignLeaderboard = (campaignId: string) => {
   return useQuery({
@@ -167,5 +166,47 @@ export const useMyRank = (campaignId: string, isEmployeeView: boolean = true) =>
     queryKey: ['my-rank', campaignId],
     queryFn: () => getMyCampaignRank(campaignId),
     enabled: !!campaignId && isEmployeeView, 
+  });
+};
+
+// Hook: Rời chiến dịch
+export const useLeaveCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (campaignId: string) => leaveCampaignApi(campaignId),
+    onSuccess: () => {
+      // 1. Refresh danh sách "My Active Campaigns" (để chiến dịch biến mất)
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+      
+      // 2. Refresh danh sách "Campaigns You Can Join" (để backend lọc lại, đảm bảo không hiện lại)
+      queryClient.invalidateQueries({ queryKey: ['active-campaigns'] });
+      
+      // 3. Nếu đang xem Leaderboard thì cũng nên refresh
+      queryClient.invalidateQueries({ queryKey: ['campaign-leaderboard'] });
+    },
+  });
+};
+
+
+
+// Hook: Close Campaign (Admin)
+export const useCloseCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => closeCampaignApi(id),
+    onSuccess: () => {
+      // Refresh tất cả các list liên quan
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });        // Admin list
+      queryClient.invalidateQueries({ queryKey: ['active-campaigns'] }); // Employee Active
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });     // Employee My/Past
+      
+      // Hiện thông báo
+      toast.success("Campaign closed successfully. Final results published.");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data || "Failed to close campaign.");
+    }
   });
 };

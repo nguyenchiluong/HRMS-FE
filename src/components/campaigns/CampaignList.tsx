@@ -13,12 +13,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Edit2, Eye, Trophy, Plus, CheckCircle, Send, Loader2 } from "lucide-react";
+// 👇 Đã bỏ icon X (và Ban) khỏi import
+import { Edit2, Trophy, Plus, CheckCircle, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import EditCampaignModal from "./EditCampaignModal";
 import type { Campaign, CampaignListItem } from "@/types/campaign";
-import { usePublishCampaign } from "@/hooks/useCampaigns";
-// 👇 IMPORT MỚI: Hook lấy dữ liệu pending thật từ backend
+import { usePublishCampaign, useCloseCampaign } from "@/hooks/useCampaigns"; 
 import { usePendingCampaigns } from "@/hooks/useApprovals"; 
 import toast from "react-hot-toast";
 
@@ -122,34 +122,85 @@ const PublishButton = ({ campaignId }: { campaignId: string }) => {
   );
 };
 
+// --- COMPONENT CloseButton (ĐÃ BỎ ICON) ---
+const CloseButton = ({ campaignId, campaignName }: { campaignId: string, campaignName: string }) => {
+  const closeMutation = useCloseCampaign();
+
+  const onConfirmClose = async () => {
+    try {
+      await closeMutation.mutateAsync(campaignId);
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          // Style: Viền đỏ nhạt, chữ đỏ, hover nền đỏ rất nhạt
+          className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+          disabled={closeMutation.isPending}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* 👇 Chỉ hiện Loader khi đang loading, còn bình thường không hiện icon gì cả */}
+          {closeMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+          
+          {/* Text đơn giản */}
+          {closeMutation.isPending ? "Closing..." : "Close Campaign"}
+        </Button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Close Campaign "{campaignName}"?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action will stop all submissions and move the campaign to the archive. 
+            The final leaderboard will be published to all participants.
+            <br/><br/>
+            <strong className="text-red-600">This action cannot be undone.</strong>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={onConfirmClose}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Confirm Close
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
 // --- COMPONENT CHÍNH ---
 export default function CampaignList({ 
   campaigns, 
   onCreateCampaign, 
-  onViewCampaign, 
   onViewFinalRankings, 
   onViewApprovals 
 }: CampaignListProps) {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // GỌI API: Lấy danh sách approval thực tế từ server
   const { data: pendingCampaignsData } = usePendingCampaigns();
 
-  // Tổng số lượng pending từ dữ liệu thật
   const totalPendingSubmissions = pendingCampaignsData?.reduce(
     (sum, item) => sum + (item.pendingCount || 0), 
     0
   ) || 0;
 
-  // Logic cũ (Mock data cho Card list) giữ nguyên để hiển thị giao diện đẹp
   const enhancedCampaigns: CampaignListItem[] = campaigns.map((campaign, index) => ({
     ...campaign,
     primaryMetric: getPrimaryMetric(campaign.activityType),
-    participants: Math.floor(Math.random() * 50) + 10,
-    totalDistance: Math.floor(Math.random() * 3000) + 500,
-    // pendingSubmissions: Math.floor(Math.random() * 10), // Xóa dòng này đi nếu muốn clean, hoặc để lại làm fake UI cho card
-    pendingSubmissions: 0, // Tạm để 0 cho card, ưu tiên hiển thị badge tổng ở trên
+    participants: campaign.participantCount || 0,
+    totalDistance: Number((campaign.totalDistance || 0).toFixed(1)),
+    pendingSubmissions: 0, 
     image: campaign.imageUrl || MOCK_IMAGES[index % MOCK_IMAGES.length]
   }));
 
@@ -283,13 +334,20 @@ export default function CampaignList({
                     </div>
                   </div>
 
-                  {/* NÚT BẤM */}
+                  {/* NÚT BẤM (BUTTONS) */}
                   <div className="flex gap-2 mt-4 flex-wrap">
-                    {/* Nút Publish */}
+                    
+                    {/* 1. Nếu là DRAFT -> Hiện nút Publish */}
                     {campaign.status === 'draft' && (
                       <PublishButton campaignId={campaign.id} />
                     )}
 
+                    {/* 2. Nếu là ACTIVE -> Hiện nút Close (Không Icon) */}
+                    {campaign.status === 'active' && (
+                      <CloseButton campaignId={campaign.id} campaignName={campaign.name} />
+                    )}
+
+                    {/* Nút Edit */}
                     {campaign.status !== "completed" && (
                       <Button
                         variant="outline"
@@ -302,27 +360,21 @@ export default function CampaignList({
                       </Button>
                     )}
 
+                    {/* Nút View Leaderboard */}
                     <Button
-                      variant="outline"
+                      variant={campaign.status === 'completed' ? "default" : "outline"}
                       size="sm"
-                      className="gap-2"
-                      onClick={() => onViewCampaign(campaign)}
+                      className={`gap-2 ${
+                        campaign.status === 'completed' 
+                          ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200' 
+                          : 'border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800'
+                      }`}
+                      onClick={() => onViewFinalRankings(campaign)} 
                     >
-                      <Eye className="h-4 w-4" />
-                      View
+                      <Trophy className="h-4 w-4" />
+                      {campaign.status === 'completed' ? "View Final Leaderboard" : "View Leaderboard"}
                     </Button>
 
-                    {campaign.status === "completed" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => onViewFinalRankings(campaign)}
-                      >
-                        <Trophy className="h-4 w-4" />
-                        Results
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
