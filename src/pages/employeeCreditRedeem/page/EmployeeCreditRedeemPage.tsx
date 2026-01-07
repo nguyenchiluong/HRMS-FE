@@ -41,14 +41,14 @@ export default function EmployeeCreditRedeemPage() {
 
     // Refresh balance on page load and when confirmation dialog opens
     useEffect(() => {
-        handleRefresh();
-    }, []);
+        refetchBalance();
+    }, [refetchBalance]);
 
     useEffect(() => {
         if (confirmOpen) {
-            handleRefresh();
+            refetchBalance();
         }
-    }, [confirmOpen]);
+    }, [confirmOpen, refetchBalance]);
 
     const payoutAmount = useMemo(() => {
         return Math.max(0, Number(amount) || 0);
