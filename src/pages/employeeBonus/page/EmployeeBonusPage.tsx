@@ -97,7 +97,10 @@ export default function EmployeeBonusPage() {
 
       {/* Transaction History */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent
+          className="pt-6 overflow-y-scroll min-h-[500px]"
+          style={{ scrollbarGutter: "stable" }}
+        >
           <TransactionHistoryTable
             transactions={filteredTransactions}
             isLoading={isLoading}

@@ -30,7 +30,7 @@ export function useCreditsData() {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [jumpPage, setJumpPage] = useState<string>("");
-  const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>(allTypes);
+  const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
 
   const isInvalidRange = from > to;
 
@@ -43,7 +43,7 @@ export function useCreditsData() {
   const requestBody = useMemo<ViewCreditsRequest>(
     () => ({
       dateRange: { from, to },
-      types: selectedTypes,
+      types: selectedTypes.length === 0 ? allTypes : selectedTypes,
       sort: { field: "createdAt", direction: "DESC" },
       page,
       size: pageSize,
