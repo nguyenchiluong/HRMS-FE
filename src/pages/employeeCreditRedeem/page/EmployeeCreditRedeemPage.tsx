@@ -6,11 +6,13 @@ import { Label } from "@/components/ui/label";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BalanceSummaryCard } from "../../employeeBonus/components/BalanceSummaryCard";
+import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 import { RedeemCreditsModal } from "../components/RedeemCreditsModal";
 import { useRedeemRequest } from "../hooks/useRedeemables";
 import { useRedeemBalance } from "../hooks/useRedeemBalance";
 import { useBonusSettings } from "../hooks/useBonusSettings";
 import { useBankAccount } from "../hooks/useBankAccount";
+import { useEffect } from "react";
 
 export default function EmployeeCreditRedeemPage() {
     const { balance, isFetching: isBalanceFetching, refetch: refetchBalance } = useRedeemBalance();
@@ -21,6 +23,17 @@ export default function EmployeeCreditRedeemPage() {
     const [amount, setAmount] = useState<string>("");
     const [formError, setFormError] = useState<string>("");
     const [confirmOpen, setConfirmOpen] = useState(false);
+
+    // Refresh balance on page load and when confirmation dialog opens
+    useEffect(() => {
+        refetchBalance();
+    }, [refetchBalance]);
+
+    useEffect(() => {
+        if (confirmOpen) {
+            refetchBalance();
+        }
+    }, [confirmOpen, refetchBalance]);
 
     const payoutAmount = useMemo(() => {
         return Math.max(0, Number(amount) || 0);
@@ -53,7 +66,10 @@ export default function EmployeeCreditRedeemPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="mt-8 px-6 md:px-8 space-y-6">
+            {/* Navigation Tabs */}
+            <EmployeeTabsNavigation />
+
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <BalanceSummaryCard balance={balance} />
                 <Card className="w-full md:max-w-2xl">

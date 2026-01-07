@@ -11,6 +11,8 @@ import { TransferCreditsModal } from "../components/TransferCreditsModal";
 import { PaginationControls } from "../components/PaginationControls";
 import { TeamMember } from "../types/teamMember";
 import { BalanceSummaryCard } from "../../employeeBonus/components/BalanceSummaryCard";
+import { PageInfoCard } from "../../sharedBonusComponents/PageInfoCard";
+import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 
 export default function EmployeeTransferBonusPage() {
     const {
@@ -88,9 +90,18 @@ export default function EmployeeTransferBonusPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="mt-8 px-6 md:px-8 space-y-6">
+            {/* Navigation Tabs */}
+            <EmployeeTabsNavigation />
+
             {/* Balance Summary */}
-            <BalanceSummaryCard balance={balance} />
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <BalanceSummaryCard balance={balance} />
+                <PageInfoCard
+                    title="Transfer Credits"
+                    description="Send bonus credits to your team members or receive transfers from colleagues."
+                />
+            </div>
 
             {/* Team Members Section */}
             <Card>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BalanceSummaryCard } from "../components/BalanceSummaryCard";
+import { PageInfoCard } from "../../sharedBonusComponents/PageInfoCard";
+import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 import { Filter } from "../components/Filter";
 import { TransactionHistoryTable } from "../components/TransactionHistoryTable";
 import { PaginationControls } from "../components/PaginationControls";
@@ -71,8 +73,17 @@ export default function EmployeeBonusPage() {
 
   return (
     <div className="mt-8 space-y-6 px-6 md:px-8">
+      {/* Navigation Tabs */}
+      <EmployeeTabsNavigation />
+
       {/* Balance Summary */}
-      <BalanceSummaryCard balance={currentBalance} />
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <BalanceSummaryCard balance={currentBalance} />
+        <PageInfoCard
+          title="Your Balance History"
+          description="Track all your bonus credit transactions including monthly bonuses, awards, transfers, and redeems."
+        />
+      </div>
 
       {/* Date Range Filter */}
       <Filter
