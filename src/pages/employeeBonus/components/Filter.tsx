@@ -143,7 +143,7 @@ export function Filter({
               {selectedTypes.length === allTypes.length ? "Deselect All" : "Select All"}
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {allTypes.map((type) => (
               <div key={type} className="flex items-center space-x-2">
