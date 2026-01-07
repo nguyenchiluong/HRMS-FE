@@ -369,6 +369,9 @@ export default function EditPersonalDetails() {
                                     setFieldValue(field.key, formattedDate);
                                   }
                                 }}
+                                captionLayout="dropdown"
+                                startMonth={new Date(1950, 0, 1)}
+                                endMonth={new Date()}
                               />
                             </PopoverContent>
                           </Popover>
