@@ -23,17 +23,24 @@ export default function EmployeeCreditRedeemPage() {
     const [amount, setAmount] = useState<string>("");
     const [formError, setFormError] = useState<string>("");
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [isSpinning, setIsSpinning] = useState(false);
+
+    const handleRefresh = () => {
+        setIsSpinning(true);
+        refetchBalance();
+        setTimeout(() => setIsSpinning(false), 800);
+    };
 
     // Refresh balance on page load and when confirmation dialog opens
     useEffect(() => {
-        refetchBalance();
-    }, [refetchBalance]);
+        handleRefresh();
+    }, []);
 
     useEffect(() => {
         if (confirmOpen) {
-            refetchBalance();
+            handleRefresh();
         }
-    }, [confirmOpen, refetchBalance]);
+    }, [confirmOpen]);
 
     const payoutAmount = useMemo(() => {
         return Math.max(0, Number(amount) || 0);
@@ -82,7 +89,7 @@ export default function EmployeeCreditRedeemPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <RefreshCcw className={isBalanceFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                        <RefreshCcw className={(isBalanceFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
                         <span>Balance refreshes automatically when you open the confirmation dialog.</span>
                     </CardContent>
                 </Card>
@@ -145,8 +152,8 @@ export default function EmployeeCreditRedeemPage() {
                     </div>
 
                     <div className="flex justify-end gap-3">
-                        <Button variant="outline" onClick={() => refetchBalance()} disabled={isBalanceFetching} className="gap-2">
-                            <RefreshCcw className={`h-4 w-4 ${isBalanceFetching ? "animate-spin" : ""}`} />
+                        <Button variant="outline" onClick={handleRefresh} disabled={isBalanceFetching || isSpinning} className="gap-2">
+                            <RefreshCcw className={(isBalanceFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
                             Refresh credits
                         </Button>
                         <Button onClick={handleSubmit} disabled={isSubmitting}>

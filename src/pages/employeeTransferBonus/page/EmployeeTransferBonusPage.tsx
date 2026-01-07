@@ -41,8 +41,15 @@ export default function EmployeeTransferBonusPage() {
     const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
     const [actionMode, setActionMode] = useState<"transfer" | "gift" | "deduct">("transfer");
     const [transferModalOpen, setTransferModalOpen] = useState(false);
+    const [isSpinning, setIsSpinning] = useState(false);
 
     const isActionLoading = isTransferring || isGifting || isDeducting;
+
+    const handleRefresh = () => {
+        setIsSpinning(true);
+        refetchBalance();
+        setTimeout(() => setIsSpinning(false), 800);
+    };
 
     const handleTransferClick = (member: TeamMember) => {
         setSelectedMember(member);
@@ -114,7 +121,7 @@ export default function EmployeeTransferBonusPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <RefreshCcw className={isBalanceFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                        <RefreshCcw className={(isBalanceFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
                         <span>Balance refreshes automatically when you open the confirmation dialog.</span>
                     </CardContent>
                 </Card>
@@ -139,8 +146,8 @@ export default function EmployeeTransferBonusPage() {
                                     isFetching={isFetching}
                                 />
                             </div>
-                            <Button variant="outline" onClick={() => refetchBalance()} disabled={isBalanceFetching} className="gap-2 shrink-0">
-                                <RefreshCcw className={isBalanceFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                            <Button variant="outline" onClick={handleRefresh} disabled={isBalanceFetching || isSpinning} className="gap-2 shrink-0">
+                                <RefreshCcw className={(isBalanceFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
                                 <span className="hidden md:inline">Refresh credits</span>
                             </Button>
                         </div>

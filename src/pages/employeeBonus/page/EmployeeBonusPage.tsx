@@ -17,6 +17,7 @@ export default function EmployeeBonusPage() {
   const isManager = !!user?.roles?.includes("MANAGER");
   const [viewMode, setViewMode] = useState<"all" | "team">("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
   const {
     from,
     to,
@@ -43,6 +44,12 @@ export default function EmployeeBonusPage() {
     handleJump,
     refetchBalance,
   } = useCreditsData();
+
+  const handleRefresh = () => {
+    setIsSpinning(true);
+    refetchBalance();
+    setTimeout(() => setIsSpinning(false), 800);
+  };
 
   // Filter transactions for team actions view (manager only)
   const filteredTransactions = viewMode === "team" && isManager
@@ -92,7 +99,7 @@ export default function EmployeeBonusPage() {
             </div>
           </CardHeader>
           <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
-            <RefreshCcw className={isFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            <RefreshCcw className={(isFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
             <span>Balance refreshes automatically when you reload the data.</span>
           </CardContent>
         </Card>
@@ -107,8 +114,8 @@ export default function EmployeeBonusPage() {
           </div>
           {/* Refresh Balance Button */}
           {filteredTransactions.length > 0 && (
-            <Button variant="outline" onClick={() => refetchBalance()} disabled={isFetching} className="gap-2">
-              <RefreshCcw className={isFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            <Button variant="outline" onClick={handleRefresh} disabled={isFetching || isSpinning} className="gap-2">
+              <RefreshCcw className={(isFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
               <span className="hidden sm:inline">Refresh credits</span>
             </Button>
           )}
