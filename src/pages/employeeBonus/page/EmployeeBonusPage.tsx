@@ -1,12 +1,18 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BalanceSummaryCard } from "../components/BalanceSummaryCard";
 import { Filter } from "../components/Filter";
 import { TransactionHistoryTable } from "../components/TransactionHistoryTable";
 import { PaginationControls } from "../components/PaginationControls";
 import { TransactionDetailsSheet } from "../components/TransactionDetailsSheet";
 import { useCreditsData } from "../hooks/useCreditsData";
+import { useAuthStore } from "@/feature/shared/auth/store/useAuthStore";
 
 export default function EmployeeBonusPage() {
+  const { user } = useAuthStore();
+  const isManager = !!user?.roles?.includes("MANAGER");
+  const [viewMode, setViewMode] = useState<"all" | "team">("all");
   const {
     from,
     to,
@@ -33,8 +39,16 @@ export default function EmployeeBonusPage() {
     handleJump,
   } = useCreditsData();
 
-  // Loading state
-  if (isLoading) {
+  // Filter transactions for team actions view (manager only)
+  const filteredTransactions = viewMode === "team" && isManager
+    ? transactions.filter((t) => t.type === "AWARD" || t.type === "DEDUCT")
+    : transactions;
+
+  // Only show full-page skeleton on initial load (no cached data yet)
+  const isInitialLoading = isLoading && transactions.length === 0 && currentBalance === undefined;
+
+  // Loading state - only for initial load
+  if (isInitialLoading) {
     return (
       <Card>
         <CardContent className="p-6 space-y-3">
@@ -71,23 +85,33 @@ export default function EmployeeBonusPage() {
         onTypesChange={setSelectedTypes}
       />
 
+      {/* View Mode Tabs (Manager Only) */}
+      {isManager && (
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "all" | "team")}>
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="all">My Balance History</TabsTrigger>
+            <TabsTrigger value="team">Team Actions</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+
       {/* Transaction History */}
       <Card>
         <CardContent className="pt-6">
           <TransactionHistoryTable
-            transactions={transactions}
+            transactions={filteredTransactions}
             isLoading={isLoading}
             isFetching={isFetching}
-            totalRecords={totalRecords}
+            totalRecords={viewMode === "team" && isManager ? filteredTransactions.length : totalRecords}
             onTransactionSelect={setSelected}
           />
 
           {/* Pagination Controls */}
-          {transactions.length > 0 && (
+          {filteredTransactions.length > 0 && (
             <PaginationControls
               currentPage={page}
               totalPages={totalPages}
-              totalRecords={totalRecords}
+              totalRecords={viewMode === "team" && isManager ? filteredTransactions.length : totalRecords}
               pageSize={pageSize}
               jumpPageValue={jumpPage}
               onPageChange={setPage}

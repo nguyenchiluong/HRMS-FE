@@ -9,6 +9,7 @@ import {
 import { BalanceHistoryItem } from "../types/transaction";
 import { TRANSACTION_META } from "../constants/transactionMeta";
 import { formatDate, formatTime, truncateText } from "../utils/dateFormatters";
+import { useAuthStore } from "@/feature/shared/auth/store/useAuthStore";
 
 interface TransactionHistoryTableProps {
   transactions: BalanceHistoryItem[];
@@ -25,6 +26,8 @@ export function TransactionHistoryTable({
   totalRecords,
   onTransactionSelect,
 }: TransactionHistoryTableProps) {
+  const { user } = useAuthStore();
+  const isManager = !!user?.roles?.includes("MANAGER");
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -70,6 +73,24 @@ export function TransactionHistoryTable({
         <TableBody>
           {transactions.map((item) => {
             const meta = TRANSACTION_META[item.type];
+            const directionText =
+              item.type === "TRANSFER_RECEIVED" && item.counterpartyName
+                ? `Received from ${item.counterpartyName}`
+                : item.type === "TRANSFER_SENT" && item.counterpartyName
+                  ? `Sent to ${item.counterpartyName}`
+                  : item.type === "AWARD"
+                    ? isManager
+                      ? `Award to${item.counterpartyName ? ` ${item.counterpartyName}` : ""}`
+                      : `Awarded${item.counterpartyName ? ` by ${item.counterpartyName}` : ""}`
+                    : item.type === "DEDUCT"
+                      ? isManager
+                        ? `Deduct from${item.counterpartyName ? ` ${item.counterpartyName}` : ""}`
+                        : `Deducted${item.counterpartyName ? ` by ${item.counterpartyName}` : ""}`
+                      : item.type === "REDEEM" && item.counterpartyName
+                        ? `Redeemed at ${item.counterpartyName}`
+                        : item.type === "MONTHLY"
+                          ? "Monthly bonus"
+                          : null;
 
             return (
               <TableRow
@@ -89,10 +110,9 @@ export function TransactionHistoryTable({
                   <div className="font-medium truncate">
                     {meta.label}
                   </div>
-
-                  {item.counterpartyName && (
+                  {directionText && (
                     <div className="text-sm text-muted-foreground truncate">
-                      {meta.isCredit ? "From" : "To"} {item.counterpartyName}
+                      {directionText}
                     </div>
                   )}
                 </TableCell>
@@ -115,9 +135,8 @@ export function TransactionHistoryTable({
 
                 {/* Points */}
                 <TableCell
-                  className={`whitespace-nowrap text-right font-semibold ${
-                    meta.isCredit ? "text-green-600" : "text-red-600"
-                  }`}
+                  className={`whitespace-nowrap text-right font-semibold ${meta.isCredit ? "text-green-600" : "text-red-600"
+                    }`}
                 >
                   {meta.isCredit ? "+" : "-"}
                   {Math.abs(item.points).toLocaleString()} pts
