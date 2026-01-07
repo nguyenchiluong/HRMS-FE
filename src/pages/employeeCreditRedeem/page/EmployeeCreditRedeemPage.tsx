@@ -25,12 +25,14 @@ export default function EmployeeCreditRedeemPage() {
     const [formError, setFormError] = useState<string>("");
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [isSpinning, setIsSpinning] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
     const handleRefresh = () => {
         setIsSpinning(true);
         refetchBalance();
         setTimeout(() => {
             setIsSpinning(false);
+            setLastUpdated(new Date());
             toast.success("Credits refreshed", {
                 description: "Your balance has been updated successfully.",
             });
@@ -84,7 +86,7 @@ export default function EmployeeCreditRedeemPage() {
             <EmployeeTabsNavigation />
 
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <BalanceSummaryCard balance={balance} />
+                <BalanceSummaryCard balance={balance} lastUpdated={lastUpdated} />
                 <Card className="w-full md:max-w-2xl">
                     <CardHeader>
                         <div className="space-y-1">

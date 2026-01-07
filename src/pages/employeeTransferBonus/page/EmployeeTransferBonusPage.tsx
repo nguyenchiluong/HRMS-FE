@@ -43,6 +43,7 @@ export default function EmployeeTransferBonusPage() {
     const [actionMode, setActionMode] = useState<"transfer" | "gift" | "deduct">("transfer");
     const [transferModalOpen, setTransferModalOpen] = useState(false);
     const [isSpinning, setIsSpinning] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
     const isActionLoading = isTransferring || isGifting || isDeducting;
 
@@ -51,6 +52,7 @@ export default function EmployeeTransferBonusPage() {
         refetchBalance();
         setTimeout(() => {
             setIsSpinning(false);
+            setLastUpdated(new Date());
             toast.success("Credits refreshed", {
                 description: "Your balance has been updated successfully.",
             });
@@ -116,7 +118,7 @@ export default function EmployeeTransferBonusPage() {
 
             {/* Balance Summary */}
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <BalanceSummaryCard balance={balance} />
+                <BalanceSummaryCard balance={balance} lastUpdated={lastUpdated} />
                 <Card className="w-full md:max-w-2xl">
                     <CardHeader>
                         <div className="space-y-1">

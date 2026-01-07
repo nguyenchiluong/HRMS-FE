@@ -19,6 +19,7 @@ export default function EmployeeBonusPage() {
   const [viewMode, setViewMode] = useState<"all" | "team">("all");
   const [showFilters, setShowFilters] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const {
     from,
     to,
@@ -51,6 +52,7 @@ export default function EmployeeBonusPage() {
     refetchBalance();
     setTimeout(() => {
       setIsSpinning(false);
+      setLastUpdated(new Date());
       toast.success("Credits refreshed", {
         description: "Your balance has been updated successfully.",
       });
@@ -94,7 +96,7 @@ export default function EmployeeBonusPage() {
 
       {/* Balance Summary */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <BalanceSummaryCard balance={currentBalance} />
+        <BalanceSummaryCard balance={currentBalance} lastUpdated={lastUpdated} />
         <Card className="w-full md:max-w-2xl">
           <CardHeader>
             <div className="space-y-1">
