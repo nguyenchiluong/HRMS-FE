@@ -1,7 +1,14 @@
 import { MoreVertical } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 import { Employee } from '../types';
 import { Badge } from './ui/Badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import ReassignSupervisorsModal from './ReassignSupervisorsModal';
 
 interface EmployeeTableProps {
   data: Employee[];
@@ -12,6 +19,10 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   data,
   isLoading,
 }) => {
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
+  );
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
   if (isLoading) {
     return (
       <div className="flex h-64 w-full items-center justify-center rounded-lg border border-gray-200 bg-white p-8">
@@ -106,15 +117,38 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                   <Badge status={employee.status} />
                 </td>
                 <td className="px-6 py-3 text-right">
-                  <button className="rounded-full p-1 text-slate-400 hover:bg-blue-50 hover:text-blue-600">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="rounded-full p-1 text-slate-400 hover:bg-blue-50 hover:text-blue-600">
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedEmployee(employee);
+                          setIsReassignModalOpen(true);
+                        }}
+                      >
+                        Reassign Supervisors
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {selectedEmployee && isReassignModalOpen && (
+        <ReassignSupervisorsModal
+          employee={selectedEmployee}
+          onClose={() => {
+            setIsReassignModalOpen(false);
+            setSelectedEmployee(null);
+          }}
+        />
+      )}
     </div>
   );
 };

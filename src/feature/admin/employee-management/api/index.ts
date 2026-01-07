@@ -179,3 +179,24 @@ export const getHrPersonnel = async (
   return response.data;
 };
 
+/**
+ * Reassign Supervisors Request DTO
+ */
+export interface ReassignSupervisorsPayload {
+  managerId: number | null;
+  hrId: number | null;
+}
+
+/**
+ * Reassign supervisors for an employee
+ * @param employeeId Employee ID
+ * @param data Supervisor assignment data
+ * @returns Promise
+ */
+export const reassignSupervisors = async (
+  employeeId: number,
+  data: ReassignSupervisorsPayload,
+): Promise<void> => {
+  await dotnetApi.put(`/api/Employees/${employeeId}/supervisors`, data);
+};
+

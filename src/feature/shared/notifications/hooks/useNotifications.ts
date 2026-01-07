@@ -67,6 +67,7 @@ export const useUnreadNotifications = () => {
 
 /**
  * Hook to get unread notification count
+ * Note: This query is updated via SSE events, so polling is disabled
  */
 export const useUnreadCount = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -75,8 +76,11 @@ export const useUnreadCount = () => {
     queryKey: notificationKeys.unreadCount(),
     queryFn: getUnreadCount,
     enabled: isAuthenticated,
-    staleTime: 10 * 1000, // 10 seconds - more frequent updates for badge
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds as fallback
+    staleTime: Infinity, // Never consider stale since SSE updates it directly
+    refetchInterval: false, // Disable polling - SSE handles updates
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    // refetchOnMount uses default (true) - will fetch on mount if no cache exists
+    // but won't refetch if cache exists and is not stale (staleTime: Infinity)
     retry: (failureCount, error) => {
       if (isAxiosError(error) && error.response?.status === 401) {
         return false;
