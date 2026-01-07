@@ -66,23 +66,23 @@ export default function EmployeeCreditRedeemPage() {
     };
 
     return (
-        <div className="mt-8 px-6 md:px-8 space-y-6">
+        <div className="mt-8 px-6 md:px-8 space-y-6 min-h-screen">
             {/* Navigation Tabs */}
             <EmployeeTabsNavigation />
 
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <BalanceSummaryCard balance={balance} />
                 <Card className="w-full md:max-w-2xl">
-                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                    <CardHeader>
                         <div className="space-y-1">
-                            <CardTitle>Withdraw credits</CardTitle>
+                            <CardTitle>Withdraw Credits</CardTitle>
                             <CardDescription>
                                 Instantly convert your bonus credits to cash and send to your account.
                             </CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <RefreshCcw className={`h-4 w-4 ${isBalanceFetching ? "animate-spin" : ""}`} />
+                        <RefreshCcw className={isBalanceFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
                         <span>Balance refreshes automatically when you open the confirmation dialog.</span>
                     </CardContent>
                 </Card>

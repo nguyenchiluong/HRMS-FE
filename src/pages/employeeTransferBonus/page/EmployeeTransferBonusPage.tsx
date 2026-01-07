@@ -97,7 +97,7 @@ export default function EmployeeTransferBonusPage() {
     }
 
     return (
-        <div className="mt-8 px-6 md:px-8 space-y-6">
+        <div className="mt-8 px-6 md:px-8 space-y-6 min-h-screen">
             {/* Navigation Tabs */}
             <EmployeeTabsNavigation />
 
@@ -105,7 +105,7 @@ export default function EmployeeTransferBonusPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <BalanceSummaryCard balance={balance} />
                 <Card className="w-full md:max-w-2xl">
-                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                    <CardHeader>
                         <div className="space-y-1">
                             <CardTitle>Transfer Credits</CardTitle>
                             <CardDescription>
