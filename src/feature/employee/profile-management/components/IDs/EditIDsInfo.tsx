@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import UnsavedChangesWarning from '@/components/UnsavedChangesWarning';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { FormikProps } from 'formik';
@@ -502,13 +503,33 @@ export default function EditIDsContent() {
         onSubmit={handleSubmit}
         enableReinitialize
       >
-        {({
-          setFieldValue,
-          errors,
-          touched,
-          values,
-        }: FormikProps<FormValues>) => (
-          <Form className="flex flex-1 flex-col overflow-hidden">
+        {(formikProps: FormikProps<FormValues>) => {
+          const { setFieldValue, errors, touched, values, dirty, initialValues: formikInitialValues } = formikProps;
+          // Check if any field other than attachments has changed
+          const fieldsToCheck: (keyof Omit<FormValues, 'attachments'>)[] = [
+            'fullName',
+            'firstName',
+            'lastName',
+            'nationality',
+            'socialInsuranceNumber',
+            'taxIdNumber',
+            'nationalIdNumber',
+            'nationalIdIssuedDate',
+            'nationalIdExpirationDate',
+            'nationalIdIssuedBy',
+            'comment',
+          ];
+          const hasOtherChanges = fieldsToCheck.some(
+            (field) => (values[field] || '') !== (formikInitialValues[field] || '')
+          );
+          const canSubmit = dirty && hasOtherChanges;
+          // Show warning if form has any changes (including just attachments)
+          const hasAnyChanges = dirty;
+
+          return (
+          <>
+            <UnsavedChangesWarning hasUnsavedChanges={hasAnyChanges} />
+            <Form className="flex flex-1 flex-col overflow-hidden">
             <div className="flex-1 space-y-6 overflow-y-auto">
               {/* Personal Information Section */}
               <div className="space-y-4">
@@ -730,7 +751,8 @@ export default function EditIDsContent() {
                   createRequestMutation.isPending ||
                   uploadFilesMutation.isPending ||
                   !profileIdChangeRequestTypeId ||
-                  hasPendingRequest
+                  hasPendingRequest ||
+                  !canSubmit
                 }
                 className="min-w-[150px]"
               >
@@ -745,7 +767,9 @@ export default function EditIDsContent() {
               </Button>
             </div>
           </Form>
-        )}
+          </>
+          );
+        }}
       </Formik>
     </Card>
   );

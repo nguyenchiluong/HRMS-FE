@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import UnsavedChangesWarning from '@/components/UnsavedChangesWarning';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { cn } from '@/lib/utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -287,7 +288,9 @@ export default function EditPersonalDetails() {
         enableReinitialize
       >
         {({ errors: formikErrors, touched, setFieldValue, isSubmitting, dirty }) => (
-          <Form className="flex h-full min-h-0 flex-col">
+          <>
+            <UnsavedChangesWarning hasUnsavedChanges={dirty} />
+            <Form className="flex h-full min-h-0 flex-col">
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
               {formFields.map((field) => (
                 <div
@@ -421,6 +424,7 @@ export default function EditPersonalDetails() {
               </Button>
             </div>
           </Form>
+          </>
         )}
       </Formik>
     </Card>
