@@ -70,7 +70,7 @@ export default function EmployeeBonusPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mt-8 space-y-6 px-6 md:px-8">
       {/* Balance Summary */}
       <BalanceSummaryCard balance={currentBalance} />
 
@@ -98,7 +98,7 @@ export default function EmployeeBonusPage() {
       {/* Transaction History */}
       <Card>
         <CardContent
-          className="pt-6 overflow-y-scroll min-h-[500px]"
+          className="pt-6 overflow-y-auto min-h-[500px]"
           style={{ scrollbarGutter: "stable" }}
         >
           <TransactionHistoryTable
