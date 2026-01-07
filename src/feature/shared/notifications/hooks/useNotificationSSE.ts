@@ -78,9 +78,13 @@ export const useNotificationSSE = (options?: UseNotificationSSEOptions) => {
             const notification: Notification = JSON.parse(event.data);
             console.log('New notification received:', notification);
 
-            // Invalidate queries to refresh data
+            // Invalidate notification list queries, but NOT unread count
+            // since unread count is updated separately via 'unread-count' event
             queryClient.invalidateQueries({
-              queryKey: notificationKeys.all,
+              queryKey: notificationKeys.lists(),
+            });
+            queryClient.invalidateQueries({
+              queryKey: notificationKeys.unread(),
             });
 
             // Call custom callback if provided
