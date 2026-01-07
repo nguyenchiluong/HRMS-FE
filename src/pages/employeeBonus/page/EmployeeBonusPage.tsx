@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { BalanceSummaryCard } from "../components/BalanceSummaryCard";
-import { PageInfoCard } from "../../sharedBonusComponents/PageInfoCard";
 import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 import { Filter } from "../components/Filter";
 import { TransactionHistoryTable } from "../components/TransactionHistoryTable";
@@ -39,6 +40,7 @@ export default function EmployeeBonusPage() {
     setSelected,
     setSelectedTypes,
     handleJump,
+    refetchBalance,
   } = useCreditsData();
 
   // Filter transactions for team actions view (manager only)
@@ -79,10 +81,20 @@ export default function EmployeeBonusPage() {
       {/* Balance Summary */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <BalanceSummaryCard balance={currentBalance} />
-        <PageInfoCard
-          title="Your Balance History"
-          description="Track all your bonus credit transactions including monthly bonuses, awards, transfers, and redeems."
-        />
+        <Card className="w-full md:max-w-2xl">
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle>Your Balance History</CardTitle>
+              <CardDescription>
+                Track all your bonus credit transactions including monthly bonuses, awards, transfers, and redeems.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
+            <RefreshCcw className={isFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            <span>Balance refreshes automatically when you reload the data.</span>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Date Range Filter */}
@@ -108,32 +120,50 @@ export default function EmployeeBonusPage() {
 
       {/* Transaction History */}
       <Card>
-        <CardContent
-          className="pt-6 overflow-y-auto min-h-[500px]"
-          style={{ scrollbarGutter: "stable" }}
-        >
-          <TransactionHistoryTable
-            transactions={filteredTransactions}
-            isLoading={isLoading}
-            isFetching={isFetching}
-            totalRecords={viewMode === "team" && isManager ? filteredTransactions.length : totalRecords}
-            onTransactionSelect={setSelected}
-          />
-
-          {/* Pagination Controls */}
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div className="space-y-1">
+            <CardTitle className="text-2xl">Your Balance History</CardTitle>
+            <CardDescription>View all your bonus credit transactions</CardDescription>
+          </div>
+          {/* Refresh Balance Button */}
           {filteredTransactions.length > 0 && (
-            <PaginationControls
-              currentPage={page}
-              totalPages={totalPages}
-              totalRecords={viewMode === "team" && isManager ? filteredTransactions.length : totalRecords}
-              pageSize={pageSize}
-              jumpPageValue={jumpPage}
-              onPageChange={setPage}
-              onPageSizeChange={setPageSize}
-              onJumpPageChange={setJumpPage}
-              onJumpPageSubmit={handleJump}
-            />
+            <Button variant="outline" onClick={() => refetchBalance()} disabled={isFetching} className="gap-2">
+              <RefreshCcw className={isFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+              <span className="hidden sm:inline">Refresh balance</span>
+            </Button>
           )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Transaction History Table Card */}
+          <Card>
+            <CardContent
+              className="overflow-y-auto min-h-[500px] pt-6"
+              style={{ scrollbarGutter: "stable" }}
+            >
+              <TransactionHistoryTable
+                transactions={filteredTransactions}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                totalRecords={viewMode === "team" && isManager ? filteredTransactions.length : totalRecords}
+                onTransactionSelect={setSelected}
+              />
+
+              {/* Pagination Controls */}
+              {filteredTransactions.length > 0 && (
+                <PaginationControls
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalRecords={viewMode === "team" && isManager ? filteredTransactions.length : totalRecords}
+                  pageSize={pageSize}
+                  jumpPageValue={jumpPage}
+                  onPageChange={setPage}
+                  onPageSizeChange={setPageSize}
+                  onJumpPageChange={setJumpPage}
+                  onJumpPageSubmit={handleJump}
+                />
+              )}
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
 

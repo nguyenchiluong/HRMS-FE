@@ -52,10 +52,12 @@ export function useCreditsData() {
   );
 
   // Fetch data
-  const { data, isLoading, isFetching, error } = useQuery<ViewCreditsResponse>({
+  const { data, isLoading, isFetching, error, refetch } = useQuery<ViewCreditsResponse>({
     queryKey: ["credits", requestBody],
     queryFn: () => fetchCredits(requestBody),
     enabled: !isInvalidRange,
+    staleTime: 30000,
+    gcTime: 30000,
   });
 
   // Keep previous data while fetching
@@ -131,5 +133,6 @@ export function useCreditsData() {
     setSelected,
     setSelectedTypes,
     handleJump,
+    refetchBalance: () => refetch({ cancelRefetch: true }),
   };
 }

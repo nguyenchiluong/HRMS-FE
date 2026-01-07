@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Gift, MinusCircle, Send, Loader2 } from "lucide-react";
+import { AlertCircle, Gift, MinusCircle, Send, Loader2, RefreshCcw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTeamMembers } from "../hooks/useTeamMembers";
 import { useBalance } from "../hooks/useBalance";
@@ -11,7 +11,6 @@ import { TransferCreditsModal } from "../components/TransferCreditsModal";
 import { PaginationControls } from "../components/PaginationControls";
 import { TeamMember } from "../types/teamMember";
 import { BalanceSummaryCard } from "../../employeeBonus/components/BalanceSummaryCard";
-import { PageInfoCard } from "../../sharedBonusComponents/PageInfoCard";
 import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 
 export default function EmployeeTransferBonusPage() {
@@ -37,7 +36,7 @@ export default function EmployeeTransferBonusPage() {
         userRole,
     } = useTeamMembers();
 
-    const { balance, refetch: refetchBalance } = useBalance();
+    const { balance, isFetching: isBalanceFetching, refetch: refetchBalance } = useBalance();
 
     const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
     const [actionMode, setActionMode] = useState<"transfer" | "gift" | "deduct">("transfer");
@@ -60,19 +59,27 @@ export default function EmployeeTransferBonusPage() {
 
     const handleAction = (points: number, note?: string) => {
         if (selectedMember) {
-            const payload = {
-                receiverId: selectedMember.id,
-                points,
-                note,
-                type: actionMode === "transfer" ? "TRANSFER" : actionMode === "gift" ? "AWARD" : "DEDUCT",
-            };
-
             if (actionMode === "gift") {
-                giftCredits(payload);
+                giftCredits({
+                    receiverId: selectedMember.id,
+                    points,
+                    note,
+                    type: "AWARD",
+                });
             } else if (actionMode === "deduct") {
-                deductCredits(payload);
+                deductCredits({
+                    receiverId: selectedMember.id,
+                    points,
+                    note,
+                    type: "DEDUCT",
+                });
             } else {
-                transferCredits(payload);
+                transferCredits({
+                    receiverId: selectedMember.id,
+                    points,
+                    note,
+                    type: "TRANSFER",
+                });
             }
         }
     };
@@ -97,10 +104,20 @@ export default function EmployeeTransferBonusPage() {
             {/* Balance Summary */}
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <BalanceSummaryCard balance={balance} />
-                <PageInfoCard
-                    title="Transfer Credits"
-                    description="Send bonus credits to your team members or receive transfers from colleagues."
-                />
+                <Card className="w-full md:max-w-2xl">
+                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                        <div className="space-y-1">
+                            <CardTitle>Transfer Credits</CardTitle>
+                            <CardDescription>
+                                Send bonus credits to your team members or receive transfers from colleagues.
+                            </CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <RefreshCcw className={isBalanceFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                        <span>Balance refreshes automatically when you open the confirmation dialog.</span>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Team Members Section */}
@@ -190,6 +207,14 @@ export default function EmployeeTransferBonusPage() {
                             Updating...
                         </div>
                     )}
+
+                    {/* Refresh Balance Button */}
+                    <div className="flex justify-end">
+                        <Button variant="outline" onClick={() => refetchBalance()} disabled={isBalanceFetching} className="gap-2">
+                            <RefreshCcw className={isBalanceFetching ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                            Refresh balance
+                        </Button>
+                    </div>
 
                     {/* Pagination */}
                     <div className="border-t pt-4">
