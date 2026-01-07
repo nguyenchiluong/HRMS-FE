@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/pages/employeeProfileManagement/components/ui/table";
+} from "@/components/ui/table";
 // IMPORT MỚI: hooks
 import { useMyCampaignActivities, useDeleteActivity } from "@/hooks/useCampaigns";
 import { ArrowLeft, CheckCircle2, Clock, Edit, Loader2, Trash2, X, XCircle } from "lucide-react";

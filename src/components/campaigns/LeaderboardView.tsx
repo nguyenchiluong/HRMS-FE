@@ -1,8 +1,8 @@
-import { Avatar, AvatarFallback } from "@/pages/employeeProfileManagement/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/pages/employeeProfileManagement/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCampaignLeaderboard, useMyRank } from "@/hooks/useCampaigns";
 import { Campaign } from "@/types/campaign";
 import { ArrowLeft, TrendingUp, Trophy, Zap, Medal, Crown, Building2, IdCard } from "lucide-react";
