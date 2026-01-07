@@ -6,52 +6,52 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { CheckCircle2 } from 'lucide-react';
+import { Activity } from 'lucide-react';
+import type { Campaign } from '@/types/campaign';
+import { Link } from 'react-router-dom';
 
-interface Task {
-  id: number;
-  title: string;
-  dueDate: string;
+interface ActiveCampaignsProps {
+  campaigns?: Campaign[];
+  isLoading?: boolean;
 }
 
-interface PendingTasksProps {
-  tasks?: Task[];
-}
-
-export default function PendingTasks({
-  tasks = [
-    { id: 1, title: 'Complete onboarding checklist', dueDate: 'Dec 25, 2024' },
-    { id: 2, title: 'Submit timesheet', dueDate: 'Dec 27, 2024' },
-    { id: 3, title: 'Review company policies', dueDate: 'Dec 30, 2024' },
-  ],
-}: PendingTasksProps) {
+export default function ActiveCampaigns({
+  campaigns = [],
+  isLoading = false,
+}: ActiveCampaignsProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pending Tasks</CardTitle>
-        <CardDescription>Tasks that need your attention</CardDescription>
+        <CardTitle>Active Campaigns</CardTitle>
+        <CardDescription>Campaigns you can join</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              className="flex items-center justify-between rounded-lg border p-3"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">{task.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Due: {task.dueDate}
-                  </p>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading campaigns...</p>
+          ) : campaigns.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No active campaigns available</p>
+          ) : (
+            campaigns.slice(0, 3).map((campaign) => (
+              <div
+                key={campaign.id}
+                className="flex items-center justify-between rounded-lg border p-3"
+              >
+                <div className="flex items-center gap-3">
+                  <Activity className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">{campaign.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {campaign.activityType} • Ends: {new Date(campaign.endDate).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/employee/campaigns">View</Link>
+                </Button>
               </div>
-              <Button variant="ghost" size="sm">
-                Complete
-              </Button>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </CardContent>
     </Card>
