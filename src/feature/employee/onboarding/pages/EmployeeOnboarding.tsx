@@ -1,16 +1,8 @@
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Header';
-import { JobDetailsSection } from '../components/JobDetailsSection';
 import { OnboardingForm } from '../components/OnboardingForm';
 import { useOnboardingInfo } from '../hooks/useOnboarding';
-
-// Check if status indicates onboarding is still pending
-const isPendingOnboarding = (status: string | null | undefined): boolean => {
-  if (!status) return true; // Assume pending if no status
-  const normalized = status.toUpperCase().replace(/_/g, '');
-  return normalized === 'PENDINGONBOARDING';
-};
 
 export default function EmployeeOnboarding() {
   const [searchParams] = useSearchParams();
@@ -61,34 +53,11 @@ export default function EmployeeOnboarding() {
     return null;
   }
 
-  // Check if onboarding is already completed
-  if (!isPendingOnboarding(onboardingInfo.status)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="mx-4 max-w-md text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="rounded-full bg-green-100 p-4">
-              <CheckCircle2 className="h-16 w-16 text-green-600" />
-            </div>
-          </div>
+  // Note: The new response structure doesn't include status/employee info
+  // If status checking is needed, it should come from a different endpoint or be added to the response
+  // For now, we'll proceed with the form
 
-          <h1 className="mb-4 text-3xl font-bold text-slate-900">
-            Onboarding Already Completed
-          </h1>
-
-          <p className="mb-6 text-lg text-slate-600">
-            Hi <span className="font-semibold">{onboardingInfo.fullName}</span>,
-            your onboarding has already been completed. If you need to update
-            your information, please contact HR.
-          </p>
-
-          <p className="text-sm text-slate-500">
-            You can safely close this page.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const fullName = `${onboardingInfo.firstName} ${onboardingInfo.lastName}`.trim();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -98,22 +67,22 @@ export default function EmployeeOnboarding() {
         {/* Welcome */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold text-slate-900">
-            Welcome, {onboardingInfo.fullName}!
+            Welcome, {fullName}!
           </h2>
           <p className="mt-1 text-slate-500">
             Complete your onboarding by filling out the information below.
           </p>
         </div>
 
-        {/* Job Details Card */}
-        <JobDetailsSection onboardingInfo={onboardingInfo} />
+        {/* Job Details Card - Note: Job details not in new response structure */}
+        {/* <JobDetailsSection onboardingInfo={onboardingInfo} /> */}
 
         {/* Divider */}
         <div className="my-8 border-t border-slate-200" />
 
         {/* Form */}
         <OnboardingForm
-          employeeId={onboardingInfo.id}
+          employeeId={0} // TODO: Get employeeId from token or separate endpoint
           token={token}
           initialData={onboardingInfo}
         />
