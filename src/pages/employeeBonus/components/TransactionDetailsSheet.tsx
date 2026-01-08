@@ -22,6 +22,14 @@ export function TransactionDetailsSheet({
   if (!transaction) return null;
 
   const meta = TRANSACTION_META[transaction.type];
+  const formattedPoints = transaction.points.toLocaleString();
+  const formattedAmount =
+    transaction.amount != null
+      ? transaction.amount.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      })
+      : null;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -40,12 +48,12 @@ export function TransactionDetailsSheet({
           </div>
 
           <div>
-            <strong>Points:</strong> {transaction.points}
+            <strong>Points:</strong> {formattedPoints}
           </div>
 
           {transaction.amount != null && transaction.currency && (
             <div>
-              <strong>Amount:</strong> {transaction.amount} {transaction.currency}
+              <strong>Amount:</strong> {formattedAmount} {transaction.currency}
             </div>
           )}
 
