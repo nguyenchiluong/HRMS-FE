@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import UnsavedChangesWarning from '@/components/UnsavedChangesWarning';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { cn } from '@/lib/utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -286,8 +287,10 @@ export default function EditPersonalDetails() {
         onSubmit={handleSubmit}
         enableReinitialize
       >
-        {({ errors: formikErrors, touched, setFieldValue, isSubmitting }) => (
-          <Form className="flex h-full min-h-0 flex-col">
+        {({ errors: formikErrors, touched, setFieldValue, isSubmitting, dirty }) => (
+          <>
+            <UnsavedChangesWarning hasUnsavedChanges={dirty} />
+            <Form className="flex h-full min-h-0 flex-col">
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
               {formFields.map((field) => (
                 <div
@@ -369,6 +372,9 @@ export default function EditPersonalDetails() {
                                     setFieldValue(field.key, formattedDate);
                                   }
                                 }}
+                                captionLayout="dropdown"
+                                startMonth={new Date(1950, 0, 1)}
+                                endMonth={new Date()}
                               />
                             </PopoverContent>
                           </Popover>
@@ -405,7 +411,7 @@ export default function EditPersonalDetails() {
             <div className="mt-6 flex shrink-0 justify-end border-t border-gray-100 bg-white pt-6">
               <Button
                 type="submit"
-                disabled={isSubmitting || updateMutation.isPending}
+                disabled={isSubmitting || updateMutation.isPending || !dirty}
               >
                 {isSubmitting || updateMutation.isPending ? (
                   <>
@@ -418,6 +424,7 @@ export default function EditPersonalDetails() {
               </Button>
             </div>
           </Form>
+          </>
         )}
       </Formik>
     </Card>

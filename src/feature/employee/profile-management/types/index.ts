@@ -95,9 +95,12 @@ export interface UpdateEducationDto {
 
 // Bank Account Types
 export interface BankAccountRecordDto {
+  id: number;
   accountNumber: string;
   bankName: string;
   accountName?: string | null;
+  swiftCode?: string | null;
+  branchCode?: string | null;
   employeeId: number;
 }
 
@@ -105,10 +108,14 @@ export interface CreateBankAccountDto {
   accountNumber: string;
   bankName: string;
   accountName?: string | null;
+  swiftCode?: string | null;
+  branchCode?: string | null;
 }
 
 export interface UpdateBankAccountDto {
   accountNumber?: string | null;
   bankName?: string | null;
   accountName?: string | null;
+  swiftCode?: string | null;
+  branchCode?: string | null;
 }

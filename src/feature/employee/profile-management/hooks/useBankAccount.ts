@@ -2,12 +2,12 @@
  * Bank Account React Query Hooks
  * 
  * Custom hooks for managing bank account data with React Query
+ * Each employee has a single bank account
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
-  getMyBankAccounts,
   getMyBankAccount,
   createMyBankAccount,
   updateMyBankAccount,
@@ -17,33 +17,17 @@ import { CreateBankAccountDto, UpdateBankAccountDto } from '../types';
 
 // Query keys for cache management
 export const bankAccountKeys = {
-  all: ['bankAccounts'] as const,
-  lists: () => [...bankAccountKeys.all, 'list'] as const,
-  list: () => [...bankAccountKeys.lists()] as const,
-  details: () => [...bankAccountKeys.all, 'detail'] as const,
-  detail: (accountNumber: string, bankName: string) => 
-    [...bankAccountKeys.details(), accountNumber, bankName] as const,
+  all: ['bankAccount'] as const,
+  detail: () => [...bankAccountKeys.all, 'me'] as const,
 };
 
 /**
- * Hook to fetch all bank accounts for the current user
+ * Hook to fetch the bank account for the current user (single account)
  */
-export const useMyBankAccounts = () => {
+export const useMyBankAccount = () => {
   return useQuery({
-    queryKey: bankAccountKeys.list(),
-    queryFn: getMyBankAccounts,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-};
-
-/**
- * Hook to fetch a specific bank account
- */
-export const useMyBankAccount = (accountNumber: string, bankName: string) => {
-  return useQuery({
-    queryKey: bankAccountKeys.detail(accountNumber, bankName),
-    queryFn: () => getMyBankAccount(accountNumber, bankName),
-    enabled: !!accountNumber && !!bankName,
+    queryKey: bankAccountKeys.detail(),
+    queryFn: getMyBankAccount,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
@@ -57,37 +41,32 @@ export const useCreateBankAccount = () => {
   return useMutation({
     mutationFn: (data: CreateBankAccountDto) => createMyBankAccount(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: bankAccountKeys.list() });
-      toast.success('Bank account added successfully!');
+      queryClient.invalidateQueries({ queryKey: bankAccountKeys.detail() });
+      toast.success('Bank account created successfully!');
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to add bank account';
+      const message = error?.response?.data?.message || 'Failed to create bank account';
       toast.error(message);
     },
   });
 };
 
 /**
- * Hook to update an existing bank account
+ * Hook to update the bank account
  */
 export const useUpdateBankAccount = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ 
-      accountNumber, 
-      bankName, 
+      id, 
       data 
     }: { 
-      accountNumber: string; 
-      bankName: string; 
+      id: number; 
       data: UpdateBankAccountDto;
-    }) => updateMyBankAccount(accountNumber, bankName, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: bankAccountKeys.list() });
-      queryClient.invalidateQueries({ 
-        queryKey: bankAccountKeys.detail(variables.accountNumber, variables.bankName) 
-      });
+    }) => updateMyBankAccount(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bankAccountKeys.detail() });
       toast.success('Bank account updated successfully!');
     },
     onError: (error: any) => {
@@ -98,21 +77,15 @@ export const useUpdateBankAccount = () => {
 };
 
 /**
- * Hook to delete a bank account
+ * Hook to delete the bank account
  */
 export const useDeleteBankAccount = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ 
-      accountNumber, 
-      bankName 
-    }: { 
-      accountNumber: string; 
-      bankName: string;
-    }) => deleteMyBankAccount(accountNumber, bankName),
+    mutationFn: (id: number) => deleteMyBankAccount(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: bankAccountKeys.list() });
+      queryClient.invalidateQueries({ queryKey: bankAccountKeys.detail() });
       toast.success('Bank account deleted successfully!');
     },
     onError: (error: any) => {
