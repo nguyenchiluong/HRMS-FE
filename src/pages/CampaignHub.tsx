@@ -10,9 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { useActiveCampaigns, useMyCampaigns, useRegisterCampaign, useMyRank } from "@/hooks/useCampaigns"; // 👈 Import useMyRank
+import { useActiveCampaigns, useMyCampaigns, useRegisterCampaign, useMyRank } from "@/hooks/useCampaigns"; 
 import { Calendar, CheckCircle2, History, Info, Loader2, LogOut, Trophy, Users, Star } from "lucide-react";
 import { useState } from "react";
 import LeaderboardView from "@/components/campaigns/LeaderboardView";
@@ -23,10 +22,8 @@ import SubmissionHistoryView from "@/components/campaigns/SubmissionHistoryView"
 import LeaveCampaignDialog from "@/components/campaigns/LeaveCampaignDialog";
 import { Campaign } from "@/types/campaign";
 
-// --- COMPONENT CON: PAST CAMPAIGN CARD ---
-// Tách ra để gọi hook useMyRank cho từng card
+// --- COMPONENT CON 1: PAST CAMPAIGN CARD (Giữ nguyên) ---
 const PastCampaignCard = ({ campaign, onViewLeaderboard }: { campaign: Campaign, onViewLeaderboard: (c: Campaign) => void }) => {
-  // Lấy hạng của user trong chiến dịch này
   const { data: rankInfo, isLoading } = useMyRank(campaign.id, true);
 
   const formatDate = (dateString: string) => {
@@ -51,7 +48,6 @@ const PastCampaignCard = ({ campaign, onViewLeaderboard }: { campaign: Campaign,
             <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
           </div>
           
-          {/* 👇 PHẦN HIỂN THỊ RANKED (ĐÃ SỬA) */}
           <div className="flex items-center gap-1.5">
             <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
             <span className="font-medium text-slate-700">
@@ -72,6 +68,172 @@ const PastCampaignCard = ({ campaign, onViewLeaderboard }: { campaign: Campaign,
       >
         View Final Ranking
       </Button>
+    </Card>
+  );
+};
+
+// --- COMPONENT CON 2: ACTIVE CAMPAIGN CARD (UPDATE TARGET GOAL & UI) ---
+interface ActiveCampaignCardProps {
+  campaign: Campaign;
+  onOpenSubmit: (c: Campaign) => void;
+  onViewLeaderboard: (c: Campaign) => void;
+  onViewHistory: (c: Campaign) => void;
+  onLeave: (c: Campaign) => void;
+}
+
+const ActiveCampaignCard = ({ campaign, onOpenSubmit, onViewLeaderboard, onViewHistory, onLeave }: ActiveCampaignCardProps) => {
+  // Lấy dữ liệu Rank của tôi
+  const { data: myRankData } = useMyRank(campaign.id, true);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // 1. Lấy điểm hiện tại
+  const myCurrentScore = myRankData?.totalPoints || 0;
+  
+  // 2. Lấy Target Goal (Mặc định 100 nếu null để tránh chia cho 0)
+  const targetGoal = campaign.targetGoal || 100;
+  
+  // 3. Tính % tiến độ
+  const rawPercent = (myCurrentScore / targetGoal) * 100;
+  const progressPercent = Math.min(100, rawPercent); // Cap ở 100% cho thanh hiển thị
+  const isTargetReached = rawPercent >= 100;
+
+  // Đơn vị
+  const unit = campaign.primaryMetric?.includes('Distance') ? 'km' : 'pts';
+
+  return (
+    <Card className="flex flex-col md:flex-row overflow-hidden border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+      {/* 1. IMAGE SECTION */}
+      <div className="w-full md:w-64 h-auto relative min-h-[200px] md:min-h-full">
+        <img 
+          src={campaign.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=500&fit=crop"} 
+          alt={campaign.name} 
+          className="w-full h-full object-cover"
+        />
+        {/* Overlay nếu đã hoàn thành mục tiêu */}
+        {isTargetReached && (
+           <div className="absolute inset-0 bg-green-900/20 flex items-center justify-center backdrop-blur-[1px]">
+              <Badge className="bg-green-600 text-white border-none px-3 py-1 shadow-lg text-sm font-semibold">
+                 <Trophy className="w-3 h-3 mr-1.5 fill-current" /> GOAL REACHED
+              </Badge>
+           </div>
+        )}
+      </div>
+
+      {/* 2. CONTENT SECTION */}
+      <div className="flex-1 p-6 flex flex-col justify-between bg-white">
+        <div>
+          {/* Header */}
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <h3 className="text-xl font-bold text-slate-900 mr-auto">{campaign.name}</h3>
+            
+            <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200 shrink-0">
+              <CheckCircle2 className="w-3 h-3 mr-1" /> JOINED
+            </Badge>
+            <Badge variant="outline" className="text-xs shrink-0">
+              {campaign.activityType ? campaign.activityType.toUpperCase() : 'EVENT'}
+            </Badge>
+          </div>
+          
+          <p className="text-slate-500 text-sm mb-5 line-clamp-2">{campaign.description}</p>
+          
+          {/* 👇 PROGRESS SECTION (ĐÃ CẬP NHẬT) */}
+          <div className={`mb-6 p-4 rounded-xl border ${isTargetReached ? 'bg-green-50 border-green-100' : 'bg-slate-50 border-slate-100'}`}>
+             
+             {/* Info Row */}
+             <div className="flex justify-between items-end mb-2">
+                <div>
+                   <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isTargetReached ? 'text-green-600' : 'text-slate-400'}`}>
+                      {isTargetReached ? 'Campaign Goal Completed!' : 'Goal Progress'}
+                   </p>
+                   <div className="flex items-baseline gap-1">
+                      <span className={`text-2xl font-black tracking-tight ${isTargetReached ? 'text-green-700' : 'text-slate-900'}`}>
+                         {myCurrentScore}
+                      </span>
+                      <span className={`text-sm font-medium ${isTargetReached ? 'text-green-600' : 'text-slate-500'}`}>
+                         / {targetGoal} {unit}
+                      </span>
+                   </div>
+                </div>
+                
+                {/* Percentage Badge */}
+                <div className="text-right">
+                   <span className={`text-sm font-bold px-2 py-1 rounded-md ${
+                      isTargetReached ? 'bg-green-200 text-green-800' : 'bg-blue-100 text-blue-700'
+                   }`}>
+                      {Math.floor(rawPercent)}%
+                   </span>
+                </div>
+             </div>
+
+             {/* Progress Bar */}
+             <div className="relative w-full h-2.5 bg-white rounded-full overflow-hidden mb-3 border border-slate-100">
+                <div 
+                   className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out ${
+                      isTargetReached ? 'bg-green-500' : 'bg-blue-600'
+                   }`}
+                   style={{ width: `${progressPercent}%` }}
+                />
+             </div>
+
+             {/* Footer Info (Rank & Date) */}
+             <div className={`flex justify-between text-xs pt-2 border-t ${isTargetReached ? 'border-green-200 text-green-700' : 'border-slate-200 text-slate-500'}`}>
+                <div className="flex items-center gap-1.5">
+                   <Trophy className={`w-3.5 h-3.5 ${isTargetReached ? 'text-green-600' : 'text-amber-500'}`} />
+                   <span className="font-semibold">
+                      {myRankData?.rank && myRankData.rank > 0 
+                         ? `Current Rank: #${myRankData.rank}` 
+                         : "Not ranked yet"}
+                   </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                   <History className="w-3.5 h-3.5 opacity-70" />
+                   <span>Ends {formatDate(campaign.endDate)}</span>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* 3. BUTTONS ACTION */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-auto">
+          <Button 
+            className="flex-1 bg-slate-900 hover:bg-slate-800 shadow-sm py-5"
+            onClick={() => onOpenSubmit(campaign)}
+          >
+            Submit Activity
+          </Button>
+          
+          <div className="flex flex-1 gap-2">
+             <Button 
+                variant="outline" 
+                className="flex-1 border-slate-200 hover:bg-slate-50 py-5"
+                title="View Leaderboard"
+                onClick={() => onViewLeaderboard(campaign)} 
+             >
+                <Trophy className="w-4 h-4" />
+             </Button>
+             <Button 
+                variant="outline" 
+                className="flex-1 border-slate-200 hover:bg-slate-50 py-5"
+                title="View History"
+                onClick={() => onViewHistory(campaign)}
+             >
+                <History className="w-4 h-4" />
+             </Button>
+             <Button 
+                variant="ghost" 
+                className="px-3 text-slate-400 hover:text-red-600 hover:bg-red-50 py-5"
+                title="Leave Campaign"
+                onClick={() => onLeave(campaign)}
+             >
+                <LogOut className="w-4 h-4" />
+             </Button>
+          </div>
+        </div>
+      </div>
     </Card>
   );
 };
@@ -251,7 +413,7 @@ export default function EmployeeCampaignHub() {
 
         <Separator className="my-8" />
 
-        {/* SECTION 2: MY ACTIVE CAMPAIGNS */}
+        {/* SECTION 2: MY ACTIVE CAMPAIGNS (CẬP NHẬT) */}
         <section>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-slate-800">My Active Campaigns</h2>
@@ -270,79 +432,16 @@ export default function EmployeeCampaignHub() {
                 </div>
             ) : (
                 <div className="space-y-4">
+                    {/* 👇 SỬ DỤNG COMPONENT MỚI ACTIVE CAMPAIGN CARD */}
                     {myActiveCampaigns.map((campaign) => (
-                        <Card key={campaign.id} className="flex flex-col md:flex-row overflow-hidden border-slate-200 shadow-sm">
-                            <div className="w-full md:w-64 h-auto relative min-h-[200px]">
-                                  <img 
-                                    src={campaign.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=500&fit=crop"} 
-                                    alt={campaign.name} 
-                                    className="w-full h-full object-cover"
-                                  />
-                            </div>
-                            <div className="flex-1 p-6 flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <h3 className="text-lg font-bold text-slate-900">{campaign.name}</h3>
-                                        <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                                            <CheckCircle2 className="w-3 h-3 mr-1" /> JOINED
-                                        </Badge>
-                                        <Badge variant="outline" className="ml-2 text-xs">
-                                            {campaign.activityType ? campaign.activityType.toUpperCase() : 'EVENT'}
-                                        </Badge>
-                                    </div>
-                                    <p className="text-slate-500 text-sm mb-6">{campaign.description}</p>
-                                    
-                                    <div className="mb-6 space-y-2">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="font-medium text-slate-700">Total Progress</span>
-                                            <span className="font-bold text-slate-900">{campaign.totalDistance || 0} {campaign.primaryMetric?.includes('Distance') ? 'km' : 'pts'}</span>
-                                        </div>
-                                        <Progress value={30} className="h-2 bg-slate-100" />
-                                        <div className="flex justify-between text-xs text-slate-400 mt-1">
-                                            <span>Current Result</span>
-                                            <span>Ends: {formatDate(campaign.endDate)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 mt-4">
-                                    <div className="flex gap-3">
-                                        <Button 
-                                          className="flex-1 bg-slate-900 hover:bg-slate-800"
-                                          onClick={() => handleOpenSubmitActivity(campaign)}
-                                        >
-                                          Submit Activity
-                                        </Button>
-                                        <Button variant="outline" 
-                                              className="flex-1 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
-                                              onClick={() => handleViewLeaderboard(campaign)} 
-                                        >
-                                          <Trophy className="w-4 h-4 mr-2" />
-                                          View Leaderboard
-                                        </Button>
-                                    </div>
-
-                                    <div className="flex gap-3">
-                                        <Button 
-                                            variant="outline" 
-                                            className="flex-1 bg-white"
-                                            onClick={() => handleViewSubmissions(campaign)}
-                                        >
-                                            <History className="w-4 h-4 mr-2 text-slate-500" />
-                                            View Submissions
-                                        </Button>
-                                        <Button 
-                                            variant="outline" 
-                                            className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
-                                            onClick={() => setLeavingCampaign(campaign)}
-                                        >
-                                            <LogOut className="w-4 h-4 mr-2" />
-                                            Leave Campaign
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
+                        <ActiveCampaignCard 
+                            key={campaign.id} 
+                            campaign={campaign}
+                            onOpenSubmit={handleOpenSubmitActivity}
+                            onViewLeaderboard={handleViewLeaderboard}
+                            onViewHistory={handleViewSubmissions}
+                            onLeave={setLeavingCampaign}
+                        />
                     ))}
                 </div>
             )}
@@ -360,7 +459,6 @@ export default function EmployeeCampaignHub() {
 
               <div className="flex flex-col gap-4">
                 {myPastCampaigns.map((campaign) => (
-                  // 👇 Sử dụng Component con để có thể gọi useMyRank cho từng card
                   <PastCampaignCard 
                     key={campaign.id} 
                     campaign={campaign} 

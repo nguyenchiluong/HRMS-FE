@@ -33,6 +33,7 @@ const createPayload = (data: Partial<Campaign> | CampaignFormData, imageUrl?: st
     campaignName: data.name, 
     description: data.description,
     campaignType: data.activityType, // Quan trọng: Leader thiếu cái này
+    targetGoal: data.targetGoal,
     
     startDate: data.startDate,
     endDate: data.endDate,
@@ -55,6 +56,7 @@ const transformBackendToFrontend = (data: any): Campaign => ({
   description: data.description,
   startDate: data.startDate,
   endDate: data.endDate,
+  targetGoal: data.targetGoal,
   startTime: data.startTime ? data.startTime.substring(0, 5) : '00:00',
   endTime: data.endTime ? data.endTime.substring(0, 5) : '23:59',
   activityType: (data.campaignType || 'walking').toLowerCase(),

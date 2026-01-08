@@ -6,6 +6,7 @@ export interface CampaignFormData {
   endDate: string;
   endTime: string;
   activityType: 'walking' | 'running' | 'cycling';
+  targetGoal?: number;
   imageFile?: File;
 }
 
@@ -15,7 +16,7 @@ export interface Campaign extends CampaignFormData {
   status: 'draft' | 'active' | 'completed';
   imageUrl?: string;
   primaryMetric?: string;
-
+  targetGoal?: number;
   participantCount?: number;
   totalDistance?: number;
 }
