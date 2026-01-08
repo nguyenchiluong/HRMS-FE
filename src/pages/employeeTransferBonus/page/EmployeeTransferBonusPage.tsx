@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Gift, MinusCircle, Send, Loader2 } from "lucide-react";
+import { AlertCircle, Gift, MinusCircle, Send, Loader2, RefreshCcw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { useTeamMembers } from "../hooks/useTeamMembers";
 import { useBalance } from "../hooks/useBalance";
 import { TeamMembersTable } from "../components/TeamMembersTable";
@@ -11,6 +12,7 @@ import { TransferCreditsModal } from "../components/TransferCreditsModal";
 import { PaginationControls } from "../components/PaginationControls";
 import { TeamMember } from "../types/teamMember";
 import { BalanceSummaryCard } from "../../employeeBonus/components/BalanceSummaryCard";
+import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 
 export default function EmployeeTransferBonusPage() {
     const {
@@ -35,13 +37,27 @@ export default function EmployeeTransferBonusPage() {
         userRole,
     } = useTeamMembers();
 
-    const { balance, refetch: refetchBalance } = useBalance();
+    const { balance, isFetching: isBalanceFetching, refetch: refetchBalance } = useBalance();
 
     const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
     const [actionMode, setActionMode] = useState<"transfer" | "gift" | "deduct">("transfer");
     const [transferModalOpen, setTransferModalOpen] = useState(false);
+    const [isSpinning, setIsSpinning] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
     const isActionLoading = isTransferring || isGifting || isDeducting;
+
+    const handleRefresh = () => {
+        setIsSpinning(true);
+        refetchBalance();
+        setTimeout(() => {
+            setIsSpinning(false);
+            setLastUpdated(new Date());
+            toast.success("Credits refreshed", {
+                description: "Your balance has been updated successfully.",
+            });
+        }, 800);
+    };
 
     const handleTransferClick = (member: TeamMember) => {
         setSelectedMember(member);
@@ -58,19 +74,27 @@ export default function EmployeeTransferBonusPage() {
 
     const handleAction = (points: number, note?: string) => {
         if (selectedMember) {
-            const payload = {
-                receiverId: selectedMember.id,
-                points,
-                note,
-                type: actionMode === "transfer" ? "TRANSFER" : actionMode === "gift" ? "AWARD" : "DEDUCT",
-            };
-
             if (actionMode === "gift") {
-                giftCredits(payload);
+                giftCredits({
+                    receiverId: selectedMember.id,
+                    points,
+                    note,
+                    type: "AWARD",
+                });
             } else if (actionMode === "deduct") {
-                deductCredits(payload);
+                deductCredits({
+                    receiverId: selectedMember.id,
+                    points,
+                    note,
+                    type: "DEDUCT",
+                });
             } else {
-                transferCredits(payload);
+                transferCredits({
+                    receiverId: selectedMember.id,
+                    points,
+                    note,
+                    type: "TRANSFER",
+                });
             }
         }
     };
@@ -88,9 +112,28 @@ export default function EmployeeTransferBonusPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="mt-8 px-6 md:px-8 space-y-6 min-h-screen">
+            {/* Navigation Tabs */}
+            <EmployeeTabsNavigation />
+
             {/* Balance Summary */}
-            <BalanceSummaryCard balance={balance} />
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <BalanceSummaryCard balance={balance} lastUpdated={lastUpdated} />
+                <Card className="w-full md:max-w-2xl">
+                    <CardHeader>
+                        <div className="space-y-1">
+                            <CardTitle>Transfer Credits</CardTitle>
+                            <CardDescription>
+                                Send bonus credits to your team members or receive transfers from colleagues.
+                            </CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <RefreshCcw className={(isBalanceFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                        <span>Balance refreshes automatically when you open the confirmation dialog.</span>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Team Members Section */}
             <Card>
@@ -102,13 +145,19 @@ export default function EmployeeTransferBonusPage() {
                                 Send bonus credits to your team members
                             </CardDescription>
                         </div>
-                        <div className="w-full sm:w-64">
-                            <SearchBox
-                                value={search}
-                                onChange={setSearch}
-                                disabled={isLoading}
-                                isFetching={isFetching}
-                            />
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <div className="w-full sm:w-64">
+                                <SearchBox
+                                    value={search}
+                                    onChange={setSearch}
+                                    disabled={isLoading}
+                                    isFetching={isFetching}
+                                />
+                            </div>
+                            <Button variant="outline" onClick={handleRefresh} disabled={isBalanceFetching || isSpinning} className="gap-2 shrink-0">
+                                <RefreshCcw className={(isBalanceFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                                <span className="hidden md:inline">Refresh credits</span>
+                            </Button>
                         </div>
                     </div>
                 </CardHeader>

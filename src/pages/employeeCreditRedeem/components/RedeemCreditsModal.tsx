@@ -67,6 +67,10 @@ export function RedeemCreditsModal({
                     </Card>
                 </div>
 
+                <AlertDialogDescription className="text-center text-sm">
+                    This action cannot be undone.
+                </AlertDialogDescription>
+
                 <AlertDialogFooter className="gap-2">
                     <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={onConfirm} disabled={isLoading}>
