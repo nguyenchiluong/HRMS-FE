@@ -13,8 +13,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-// 👇 Đã bỏ icon X (và Ban) khỏi import
-import { Edit2, Trophy, Plus, CheckCircle, Send, Loader2 } from "lucide-react";
+// IMPORT SELECT COMPONENT & FILTER ICON
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Edit2, Trophy, Plus, CheckCircle, Send, Loader2, Filter } from "lucide-react";
 import { useState } from "react";
 import EditCampaignModal from "./EditCampaignModal";
 import type { Campaign, CampaignListItem } from "@/types/campaign";
@@ -188,6 +195,9 @@ export default function CampaignList({
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
+  // 👇 2. THÊM STATE CHO FILTER STATUS
+  const [statusFilter, setStatusFilter] = useState("all");
+  
   const { data: pendingCampaignsData } = usePendingCampaigns();
 
   const totalPendingSubmissions = pendingCampaignsData?.reduce(
@@ -204,11 +214,18 @@ export default function CampaignList({
     image: campaign.imageUrl || MOCK_IMAGES[index % MOCK_IMAGES.length]
   }));
 
-  const filteredCampaigns = enhancedCampaigns.filter(
-    (campaign) =>
+  // 👇 3. CẬP NHẬT LOGIC FILTER: KẾT HỢP SEARCH + STATUS
+  const filteredCampaigns = enhancedCampaigns.filter((campaign) => {
+    // Logic tìm kiếm text
+    const matchesSearch = 
       campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Logic lọc status
+    const matchesStatus = statusFilter === "all" || campaign.status.toLowerCase() === statusFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <>
@@ -250,15 +267,33 @@ export default function CampaignList({
           </div>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex gap-4">
-          <Input
-            placeholder="Search campaigns..."
-            className="flex-1"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button variant="outline">Filter</Button>
+        {/* 👇 4. THANH TÌM KIẾM VÀ FILTER */}
+        <div className="flex gap-4 items-center">
+          {/* Input Search */}
+          <div className="flex-1 relative">
+             <Input
+                placeholder="Search campaigns..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
+          </div>
+
+          {/* Dropdown Filter Status */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[200px] bg-white">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                 <Filter className="w-4 h-4" />
+                 <SelectValue placeholder="Filter by Status" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Campaign Status</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Campaign Cards */}
@@ -387,7 +422,7 @@ export default function CampaignList({
                 <div className="flex flex-col items-center justify-center py-12">
                     <p className="text-lg font-medium text-foreground">No campaigns found</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                        {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first campaign"}
+                        {searchTerm || statusFilter !== "all" ? "Try adjusting your search terms or filters" : "Get started by creating your first campaign"}
                     </p>
                 </div>
             </Card>

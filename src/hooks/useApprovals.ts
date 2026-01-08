@@ -5,6 +5,7 @@ import {
   rejectActivity 
 } from '@/api/approval';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from "sonner";
 
 // Hook: Lấy danh sách campaign có bài pending (Dashboard)
 export const usePendingCampaigns = () => {
@@ -34,7 +35,12 @@ export const useApproveActivity = () => {
       queryClient.invalidateQueries({ queryKey: ['pending-activities'] });
       // Refresh lại dashboard (số lượng pending thay đổi)
       queryClient.invalidateQueries({ queryKey: ['pending-campaigns'] });
+
+      toast.success("Submission approved successfully!");
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data || "Failed to approve activity");
+    }
   });
 };
 
@@ -47,6 +53,11 @@ export const useRejectActivity = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-activities'] });
       queryClient.invalidateQueries({ queryKey: ['pending-campaigns'] });
+
+      toast.success("Submission rejected.");
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data || "Failed to reject activity");
+    }
   });
 };
