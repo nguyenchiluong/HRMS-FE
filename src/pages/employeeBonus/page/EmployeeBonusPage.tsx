@@ -150,7 +150,7 @@ export default function EmployeeBonusPage() {
                 </Tabs>
               )}
 
-              <div className="flex md:justify-end">
+              <div className="flex md:flex-1 md:justify-end">
                 <Button
                   variant="secondary"
                   size="sm"
