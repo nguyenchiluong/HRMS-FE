@@ -38,14 +38,6 @@ export function TransactionHistoryTable({
     );
   }
 
-  if (transactions.length === 0) {
-    return (
-      <div className="py-6 text-center text-muted-foreground">
-        No transactions in the selected date range
-      </div>
-    );
-  }
-
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -57,6 +49,11 @@ export function TransactionHistoryTable({
         </h3>
       </div>
 
+      {transactions.length === 0 ? (
+        <div className="py-6 text-center text-muted-foreground">
+          No transactions in the selected date range
+        </div>
+      ) : (
       <Table className="table-fixed">
         <TableHeader>
           <TableRow>
@@ -178,6 +175,7 @@ export function TransactionHistoryTable({
           })}
         </TableBody>
       </Table>
+      )}
     </div>
   );
 }

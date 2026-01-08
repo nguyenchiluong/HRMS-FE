@@ -10,7 +10,7 @@ import {
 import { fetchCredits } from "../api/credits";
 import { toDateString } from "../utils/dateFormatters";
 
-export function useCreditsData() {
+export function useCreditsData(availableTypes?: TransactionType[]) {
   const today = new Date();
   const queryClient = useQueryClient();
 
@@ -22,6 +22,9 @@ export function useCreditsData() {
     "REDEEM",
     "DEDUCT",
   ];
+
+  // Use availableTypes if provided, otherwise use all types as default
+  const defaultTypes = availableTypes || allTypes;
 
   // State
   const [selected, setSelected] = useState<BalanceHistoryItem | null>(null);
@@ -43,12 +46,12 @@ export function useCreditsData() {
   const requestBody = useMemo<ViewCreditsRequest>(
     () => ({
       dateRange: { from, to },
-      types: selectedTypes.length === 0 ? allTypes : selectedTypes,
+      types: selectedTypes.length === 0 ? defaultTypes : selectedTypes,
       sort: { field: "createdAt", direction: "DESC" },
       page,
       size: pageSize,
     }),
-    [from, to, selectedTypes, page, pageSize]
+    [from, to, selectedTypes, page, pageSize, defaultTypes]
   );
 
   // Fetch data

@@ -18,6 +18,7 @@ interface FilterProps {
   inline?: boolean; // render compact with no outer margin for inline layouts
   forceOpen?: boolean; // externally control open state
   hideToggle?: boolean; // hide internal toggle button (useful when controlled externally)
+  availableTypes?: TransactionType[]; // limit which types can be selected
 }
 
 export function Filter({
@@ -31,6 +32,7 @@ export function Filter({
   inline = false,
   forceOpen,
   hideToggle,
+  availableTypes,
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const today = new Date();
@@ -43,6 +45,9 @@ export function Filter({
     "REDEEM",
     "DEDUCT",
   ];
+
+  // Use availableTypes if provided, otherwise use all types
+  const displayTypes = availableTypes || allTypes;
 
   const handleClear = () => {
     onFromChange(toDateString(subDays(today, 30)));
@@ -66,9 +71,9 @@ export function Filter({
   };
 
   // Check if filters are different from default (all types, no date range)
-  const hasActiveFilters = from || to || selectedTypes.length < allTypes.length;
+  const hasActiveFilters = from || to || selectedTypes.length < displayTypes.length;
 
-  const transactionTypeOptions = allTypes.map((type) => TRANSACTION_META[type].label);
+  const transactionTypeOptions = displayTypes.map((type) => TRANSACTION_META[type].label);
 
   const effectiveOpen = forceOpen ?? isOpen;
 
@@ -164,7 +169,7 @@ export function Filter({
               options={transactionTypeOptions}
               selectedValues={selectedTypes.map((type) => TRANSACTION_META[type].label)}
               onChange={(labels) => {
-                const types = allTypes.filter((type) =>
+                const types = displayTypes.filter((type) =>
                   labels.includes(TRANSACTION_META[type].label)
                 );
                 onTypesChange(types);

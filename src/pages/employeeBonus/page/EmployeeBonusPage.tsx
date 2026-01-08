@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCcw, Filter as FilterIcon, X } from "lucide-react";
@@ -45,7 +45,16 @@ export default function EmployeeBonusPage() {
     setSelectedTypes,
     handleJump,
     refetchBalance,
-  } = useCreditsData();
+  } = useCreditsData(viewMode === "team" && isManager ? ["AWARD", "DEDUCT"] : undefined);
+
+  // Update selectedTypes when switching view modes
+  useEffect(() => {
+    if (viewMode === "team" && isManager) {
+      setSelectedTypes(["AWARD", "DEDUCT"]);
+    } else if (viewMode === "all") {
+      setSelectedTypes([]);
+    }
+  }, [viewMode, isManager, setSelectedTypes]);
 
   const handleRefresh = () => {
     setIsSpinning(true);
@@ -58,11 +67,6 @@ export default function EmployeeBonusPage() {
       });
     }, 800);
   };
-
-  // Filter transactions for team actions view (manager only)
-  const filteredTransactions = viewMode === "team" && isManager
-    ? transactions.filter((t) => t.type === "AWARD" || t.type === "DEDUCT")
-    : transactions;
 
   // Only show full-page skeleton on initial load (no cached data yet)
   const isInitialLoading = isLoading && transactions.length === 0 && currentBalance === undefined;
@@ -121,7 +125,7 @@ export default function EmployeeBonusPage() {
             <CardDescription>View all your bonus credit transactions</CardDescription>
           </div>
           {/* Refresh Balance Button */}
-          {filteredTransactions.length > 0 && (
+          {transactions.length > 0 && (
             <Button variant="outline" onClick={handleRefresh} disabled={isFetching || isSpinning} className="gap-2">
               <RefreshCcw className={(isFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
               <span className="hidden sm:inline">Refresh credits</span>
@@ -178,6 +182,7 @@ export default function EmployeeBonusPage() {
                   onTypesChange={setSelectedTypes}
                   hideToggle
                   forceOpen
+                  availableTypes={viewMode === "team" && isManager ? ["AWARD", "DEDUCT"] : undefined}
                 />
               </div>
             )}
@@ -186,23 +191,23 @@ export default function EmployeeBonusPage() {
           {/* Transaction History Table Card */}
           <Card>
             <CardContent
-              className="overflow-y-auto min-h-[500px] pt-6"
+              className="overflow-y-auto pt-6"
               style={{ scrollbarGutter: "stable" }}
             >
               <TransactionHistoryTable
-                transactions={filteredTransactions}
+                transactions={transactions}
                 isLoading={isLoading}
                 isFetching={isFetching}
-                totalRecords={viewMode === "team" && isManager ? filteredTransactions.length : totalRecords}
+                totalRecords={totalRecords}
                 onTransactionSelect={setSelected}
               />
 
               {/* Pagination Controls */}
-              {filteredTransactions.length > 0 && (
+              {transactions.length > 0 && (
                 <PaginationControls
                   currentPage={page}
                   totalPages={totalPages}
-                  totalRecords={viewMode === "team" && isManager ? filteredTransactions.length : totalRecords}
+                  totalRecords={totalRecords}
                   pageSize={pageSize}
                   jumpPageValue={jumpPage}
                   onPageChange={setPage}
