@@ -54,9 +54,6 @@ export function TransactionHistoryTable({
           {isFetching && (
             <span className="ml-2 text-xs text-muted-foreground">Updating…</span>
           )}
-          <span className="ml-2 text-sm text-muted-foreground">
-            ({totalRecords})
-          </span>
         </h3>
       </div>
 
@@ -152,10 +149,10 @@ export function TransactionHistoryTable({
                   <div className="flex flex-col items-end gap-1">
                     <div
                       className={`flex items-center gap-2 ${isTeamActionForManager
-                          ? "text-slate-600"
-                          : meta.isCredit
-                            ? "text-green-600"
-                            : "text-red-600"
+                        ? "text-slate-600"
+                        : meta.isCredit
+                          ? "text-green-600"
+                          : "text-red-600"
                         }`}
                     >
                       {teamBadge && (
