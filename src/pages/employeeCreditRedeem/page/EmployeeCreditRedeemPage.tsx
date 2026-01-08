@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ export default function EmployeeCreditRedeemPage() {
     const { bankAccount } = useBankAccount();
 
     const [amount, setAmount] = useState<string>("");
+    const [note, setNote] = useState<string>("");
     const [formError, setFormError] = useState<string>("");
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [isSpinning, setIsSpinning] = useState(false);
@@ -76,6 +78,7 @@ export default function EmployeeCreditRedeemPage() {
         const amt = Number(amount);
         submitRedeem({
             points: amt,
+            note: note.trim() || undefined,
         });
         setConfirmOpen(false);
     };
@@ -134,6 +137,20 @@ export default function EmployeeCreditRedeemPage() {
                         )}
                     </div>
 
+                    <div className="space-y-2">
+                        <Label htmlFor="note">Note (optional)</Label>
+                        <Textarea
+                            id="note"
+                            placeholder="Add a note for this withdrawal..."
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            disabled={isSubmitting}
+                            rows={3}
+                            maxLength={500}
+                        />
+                        <p className="text-xs text-muted-foreground">{note.length}/500 characters</p>
+                    </div>
+
                     {formError && <div className="text-sm text-red-600">{formError}</div>}
 
                     <div className="flex flex-col gap-2 rounded-md border bg-muted/60 p-3 text-sm">
@@ -178,6 +195,7 @@ export default function EmployeeCreditRedeemPage() {
                 payoutAmount={payoutAmount}
                 payoutVND={payoutVND}
                 bankAccount={bankAccount}
+                note={note}
                 isLoading={isSubmitting}
                 onConfirm={handleConfirm}
             />

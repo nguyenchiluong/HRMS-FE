@@ -1,6 +1,7 @@
 // Redemption request contracts
 export type RedeemRequest = {
     points: number; // points to convert
+    note?: string; // optional note for the redemption
 };
 
 export type RedeemResponse = {
