@@ -6,6 +6,7 @@ import {
   Home,
   Trophy,
   Users,
+  Wallet,
 } from 'lucide-react';
 import { Link, Outlet } from 'react-router-dom';
 import { useUnreadCount } from '@/feature/shared/notifications/hooks/useNotifications';
@@ -53,6 +54,12 @@ export default function AdminLayout() {
                   <Button variant="ghost" size="sm">
                     <ClipboardCheck className="mr-2 h-4 w-4" />
                     Profile Requests
+                  </Button>
+                </Link>
+                <Link to="/admin/bonus">
+                  <Button variant="ghost" size="sm">
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Credit Settings
                   </Button>
                 </Link>
               </div>

@@ -1,6 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Award, Calendar, Wallet, FileClock } from 'lucide-react'; // Đã bỏ Clock
+import { useCreditsData } from '@/pages/employeeBonus/hooks/useCreditsData';
+import { Award, Calendar, FileClock, Wallet } from 'lucide-react'; // Đã bỏ Clock
+import { useEffect, useState } from 'react';
 
 interface StatsCardsProps {
   myCampaigns?: number;
@@ -19,6 +21,14 @@ export default function StatsCards({
   // totalHoursThisMonth = 0, // Đã xóa
   isLoading = false,
 }: StatsCardsProps) {
+  const { currentBalance, isLoading: isBalanceLoading } = useCreditsData([]);
+  const [displayBalance, setDisplayBalance] = useState(bonusBalance);
+
+  useEffect(() => {
+    if (currentBalance !== undefined) {
+      setDisplayBalance(currentBalance);
+    }
+  }, [currentBalance]);
   const stats = [
     {
       title: 'My Campaigns',
@@ -28,7 +38,7 @@ export default function StatsCards({
     },
     {
       title: 'Credit Balance',
-      value: `${bonusBalance.toLocaleString()} pts`,
+      value: displayBalance.toLocaleString(),
       description: 'Credits available',
       icon: Wallet,
     },
@@ -54,17 +64,27 @@ export default function StatsCards({
         <Card key={stat.title}>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-2 bg-muted rounded-full">
+              <div className="rounded-full bg-muted p-2">
                 <stat.icon className="h-6 w-6 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                {isLoading ? (
-                  <Skeleton className="h-7 w-16 mb-1" />
+                <p className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </p>
+                {stat.title === 'Bonus Balance' ? (
+                  isBalanceLoading ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                  )
+                ) : isLoading ? (
+                  <Skeleton className="mb-1 h-7 w-16" />
                 ) : (
                   <div className="text-2xl font-bold">{stat.value}</div>
                 )}
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
               </div>
             </div>
           </CardContent>

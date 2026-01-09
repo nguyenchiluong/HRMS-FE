@@ -1,117 +1,102 @@
-import { useEffect, useState } from "react";
-import { Users } from "lucide-react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import springApi from "@/api/spring";
 import BonusSettingsView from "./BonusSettingsView";
 import BonusSettingsEdit from "./BonusSettingsEdit";
-import { toast } from "sonner"
+import { toast } from "sonner";
 
-const API_URL = "http://localhost:8080/api/credits/settings";
+type BonusSettings = {
+  baseBonusCredits: number;
+  conversionRate: number;
+  date: number;
+};
 
 export default function BonusCreditPage() {
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState({
-    baseBonusCredits: 0,
-    conversionRate: 0,
-    date: 1,
+  const queryClient = useQueryClient();
+
+  const { data: settings = { baseBonusCredits: 0, conversionRate: 0, date: 1 }, isLoading, error: queryError, refetch } = useQuery<BonusSettings>({
+    queryKey: ["bonusSettings"],
+    queryFn: async () => {
+      const { data } = await springApi.get("/api/credits/settings");
+      return {
+        baseBonusCredits: data.baseBonusCredits ?? 0,
+        conversionRate: data.conversionRate ?? 0,
+        date: data.date ?? 1,
+      };
+    },
   });
 
-  useEffect(() => {
-    const fetchBonusSettings = async () => {
-      try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error("Fetch failed");
+  const saveMutation = useMutation({
+    mutationFn: async (values: BonusSettings) => {
+      const payload = {
+        baseBonusCredits: Number(values.baseBonusCredits),
+        conversionRate: Number(values.conversionRate),
+        date: Number(values.date),
+      };
+      const { data } = await springApi.post("/api/credits/settings", payload);
+      return {
+        baseBonusCredits: data.baseBonusCredits ?? 0,
+        conversionRate: data.conversionRate ?? 0,
+        date: data.date ?? data.creditDate ?? 1,
+      };
+    },
+    onSuccess: (newSettings) => {
+      queryClient.setQueryData(["bonusSettings"], newSettings);
+      setIsEditing(false);
+      toast.success("Bonus settings saved successfully");
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || error?.message || "Something went wrong while saving";
+      toast.error(message);
+    },
+  });
 
-        const data = await res.json();
-        setSettings({
-          baseBonusCredits: data.baseBonusCredits ?? 0,
-          conversionRate: data.conversionRate ?? 0,
-          date: data.date ?? 1,
-        });
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBonusSettings();
-  }, []);
-
-  const handleSave = async (values: typeof settings) => {
-    try {
-    const payload = {
-      baseBonusCredits: Number(values.baseBonusCredits),
-      conversionRate: Number(values.conversionRate),
-      date: Number(values.date),
-    };
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+  const handleSave = async (values: BonusSettings): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      saveMutation.mutate(values, {
+        onSuccess: () => resolve(),
+        onError: () => reject(),
+      });
     });
-
-    if (!res.ok) {
-  let message = "Failed to save bonus settings";
-
-  try {
-    const errorData = await res.json();
-
-    if (errorData && typeof errorData === "object") {
-      message = Object.values(errorData).join(", ");
-    }
-  } catch {
-    // fallback if response is not JSON
-    message = await res.text();
-  }
-
-  throw new Error(message);
-}
-
-    const refreshed = await fetch(API_URL);
-    const data = await refreshed.json();
-
-    setSettings({
-      baseBonusCredits: data.baseBonusCredits ?? 0,
-      conversionRate: data.conversionRate ?? 0,
-      date: data.date ?? data.creditDate ?? 1,
-    });
-
-    setIsEditing(false);
-
-    toast.success("Bonus settings saved successfully");
-  } catch (error: any) {
-    console.error(error);
-
-    toast.error(
-      error?.message || "Something went wrong while saving"
-    );
-  }
   };
 
-  if (loading) {
-    return <div className="p-6">Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="p-6 flex justify-center">
+        <div className="w-full max-w-3xl">
+          <div className="flex items-center gap-3 rounded-xl border bg-white p-4 shadow-sm">
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/40 border-t-primary" />
+            <span className="text-sm text-muted-foreground">Loading bonus settings...</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
-      {/* Header */}
-      <div className="flex items-center justify-between bg-white p-4 space-x-2">
-        <div className="flex items-center space-x-2">
-          <Users />
-          <div className="font-bold text-[#253D90] text-xl">
-            Bonus Management
-          </div>
-        </div>
-      </div>
-
-      <div className="min-h-screen p-6 flex justify-center items-start">
+      <div className="p-6 flex justify-center">
         <div className="w-full max-w-3xl">
+          {queryError && (
+            <div className="mb-4 rounded-xl border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+              <div className="flex items-center justify-between">
+                <span>Unable to load bonus settings. Please try again.</span>
+                <button
+                  onClick={() => refetch()}
+                  className="text-xs font-medium text-destructive underline underline-offset-2"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
           {isEditing ? (
             <BonusSettingsEdit
               initialValues={settings}
               onSave={handleSave}
               onCancel={() => setIsEditing(false)}
+              isSaving={saveMutation.isPending}
             />
           ) : (
             <BonusSettingsView
