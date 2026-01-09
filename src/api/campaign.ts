@@ -1,6 +1,7 @@
-import type { Campaign, CampaignFormData } from '@/types/campaign';
+import type { Campaign, CampaignFormData, ActivitySubmissionData, LeaderboardEntry, MyRankInfo} from '@/types/campaign';
 import { uploadFileToS3 } from './storage';
 import springApi from './spring';
+import type { EmployeeActivity } from '@/types/campaign';
 
 // Relative path since baseURL is already defined in base.ts
 const CAMPAIGN_ENDPOINT = '/api/campaigns'; 
@@ -15,8 +16,7 @@ const formatTime = (time?: string) => {
   return time.length === 5 ? `${time}:00` : time;
 };
 
-// Helper: Upload ảnh lên S3 (sử dụng shared utility)
-// This is kept for backward compatibility, but now uses the shared uploadFileToS3 function
+// Helper: Upload ảnh lên S3 
 export const uploadImageToS3 = async (file: File): Promise<string> => {
   return await uploadFileToS3(file);
 };
@@ -33,6 +33,7 @@ const createPayload = (data: Partial<Campaign> | CampaignFormData, imageUrl?: st
     campaignName: data.name, 
     description: data.description,
     campaignType: data.activityType, // Quan trọng: Leader thiếu cái này
+    targetGoal: data.targetGoal,
     
     startDate: data.startDate,
     endDate: data.endDate,
@@ -55,6 +56,7 @@ const transformBackendToFrontend = (data: any): Campaign => ({
   description: data.description,
   startDate: data.startDate,
   endDate: data.endDate,
+  targetGoal: data.targetGoal,
   startTime: data.startTime ? data.startTime.substring(0, 5) : '00:00',
   endTime: data.endTime ? data.endTime.substring(0, 5) : '23:59',
   activityType: (data.campaignType || 'walking').toLowerCase(),
@@ -62,6 +64,9 @@ const transformBackendToFrontend = (data: any): Campaign => ({
   createdAt: data.createdAt,
   imageUrl: data.imageUrl,
   primaryMetric: data.primaryMetric,
+
+  participantCount: data.participantCount || 0,
+  totalDistance: data.totalDistance || 0,
 });
 
 // ============================================================================
@@ -83,6 +88,18 @@ export const getCampaigns = async (search?: string): Promise<Campaign[]> => {
   } catch (error) {
     console.error('Error fetching campaigns:', error);
     return [];
+  }
+};
+
+// Lấy chi tiết Campaign theo ID
+export const getCampaignById = async (id: string): Promise<Campaign> => {
+  try {
+    const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${id}`);
+    // Reuse hàm transform để map dữ liệu cho khớp frontend
+    return transformBackendToFrontend(response.data);
+  } catch (error) {
+    console.error(`Error fetching campaign details for id ${id}:`, error);
+    throw error;
   }
 };
 
@@ -191,4 +208,119 @@ export const getMyCampaigns = async (): Promise<Campaign[]> => {
     return data.map(transformBackendToFrontend);
   }
   return [];
+};
+
+// API: Submit Activity
+export const submitActivity = async (data: ActivitySubmissionData): Promise<any> => {
+  try {
+    // 1. Upload ảnh lên S3
+    const imageUrl = await uploadImageToS3(data.imageFile);
+
+    // 2. Chuẩn bị payload
+    const payload = {
+      activityDate: data.activityDate,
+      proofImage: imageUrl,
+      metrics: JSON.stringify({
+        distance: data.distance
+      }),
+      status: "pending"
+    };
+
+    // Gọi endpoint
+    const response = await springApi.post(`${CAMPAIGN_ENDPOINT}/${data.campaignId}/activities`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting activity:', error);
+    throw error;
+  }
+};
+
+// API: Lấy danh sách hoạt động của chính mình trong một chiến dịch
+export const getMyCampaignActivities = async (campaignId: string): Promise<EmployeeActivity[]> => {
+  const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${campaignId}/activities/me`);
+  return response.data;
+};
+
+
+// DELETE Activity Submission
+export const deleteActivityApi = async (activityId: string | number): Promise<void> => {
+  await springApi.delete(`${CAMPAIGN_ENDPOINT}/activities/${activityId}`);
+};
+
+// UPDATE Activity Submission
+export const updateActivityApi = async (activityId: string | number, data: ActivitySubmissionData): Promise<any> => {
+  try {
+    let imageUrl = "";
+    
+    // Nếu có file ảnh mới thì upload, nếu không thì thôi
+    if (data.imageFile) {
+        imageUrl = await uploadImageToS3(data.imageFile);
+    } 
+    // Backend logic: nếu proofImage gửi lên là rỗng/null thì giữ nguyên ảnh cũ.
+    // Frontend logic: ActivitySubmissionData yêu cầu imageFile, nhưng ở đây ta xử lý linh hoạt.
+
+    const payload = {
+      activityDate: data.activityDate,
+      proofImage: imageUrl, // Gửi link mới (hoặc rỗng nếu không update ảnh)
+      metrics: JSON.stringify({
+        distance: data.distance
+      })
+      // Status backend tự giữ nguyên pending
+    };
+
+    const response = await springApi.put(`${CAMPAIGN_ENDPOINT}/activities/${activityId}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating activity:', error);
+    throw error;
+  }
+};
+
+
+// --- LEADERBOARD APIs ---
+
+// Lấy danh sách Top xếp hạng (VD: Top 50)
+export const getCampaignLeaderboard = async (campaignId: string): Promise<LeaderboardEntry[]> => {
+  try {
+    const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${campaignId}/leaderboard`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    return []; // Trả về mảng rỗng để không crash UI
+  }
+};
+
+// Lấy hạng của chính mình (Chỉ dùng cho Employee)
+export const getMyCampaignRank = async (campaignId: string): Promise<MyRankInfo> => {
+  try {
+    const response = await springApi.get(`${CAMPAIGN_ENDPOINT}/${campaignId}/leaderboard/me`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my rank:', error);
+    throw error;
+  }
+};
+
+
+// API: Rời chiến dịch
+export const leaveCampaignApi = async (campaignId: string): Promise<void> => {
+  try {
+    // Endpoint phải khớp với Backend: /api/campaigns/{id}/leave
+    await springApi.delete(`${CAMPAIGN_ENDPOINT}/${campaignId}/leave`);
+  } catch (error) {
+    console.error('Error leaving campaign:', error);
+    throw error; // Ném lỗi để Hook xử lý hiển thị Toast
+  }
+};
+
+
+// API: Đóng chiến dịch (Admin)
+export const closeCampaignApi = async (id: string): Promise<Campaign> => {
+  try {
+    const response = await springApi.post(`${CAMPAIGN_ENDPOINT}/${id}/close`);
+    return transformBackendToFrontend(response.data);
+  } catch (error) {
+    console.error('Error closing campaign:', error);
+    throw error;
+  }
 };
