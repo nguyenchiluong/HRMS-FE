@@ -1,6 +1,6 @@
-import { MoreVertical } from 'lucide-react';
+import { Loader2, Mail, MoreVertical } from 'lucide-react';
 import React, { useState } from 'react';
-import { Employee } from '../types';
+import { Employee, EmployeeStatus } from '../types';
 import { Badge } from './ui/Badge';
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import ReassignSupervisorsModal from './ReassignSupervisorsModal';
+import { useResendOnboardingEmail } from '../hooks/useResendOnboardingEmail';
 
 interface EmployeeTableProps {
   data: Employee[];
@@ -23,6 +24,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
     null,
   );
   const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
+  const resendOnboardingMutation = useResendOnboardingEmail();
   if (isLoading) {
     return (
       <div className="flex h-64 w-full items-center justify-center rounded-lg border border-gray-200 bg-white p-8">
@@ -124,6 +126,24 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {employee.status === EmployeeStatus.Pending && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            resendOnboardingMutation.mutate(
+                              Number(employee.id),
+                            );
+                          }}
+                          disabled={resendOnboardingMutation.isPending}
+                          className="flex items-center gap-2"
+                        >
+                          {resendOnboardingMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Mail className="h-4 w-4" />
+                          )}
+                          Resend Onboarding Link
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={() => {
                           setSelectedEmployee(employee);
