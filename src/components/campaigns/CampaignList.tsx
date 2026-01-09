@@ -12,12 +12,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"; // <--- Import mới
-import { Edit2, Eye, Trophy, Plus, CheckCircle, Send, Loader2 } from "lucide-react";
+} from "@/components/ui/alert-dialog";
+// IMPORT SELECT COMPONENT & FILTER ICON
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Edit2, Trophy, Plus, CheckCircle, Send, Loader2, Filter } from "lucide-react";
 import { useState } from "react";
 import EditCampaignModal from "./EditCampaignModal";
 import type { Campaign, CampaignListItem } from "@/types/campaign";
-import { usePublishCampaign } from "@/hooks/useCampaigns";
+import { usePublishCampaign, useCloseCampaign } from "@/hooks/useCampaigns"; 
+import { usePendingCampaigns } from "@/hooks/useApprovals"; 
 import toast from "react-hot-toast";
 
 interface CampaignListProps {
@@ -49,7 +58,7 @@ const getPrimaryMetric = (activityType: string) => {
 
 const getStatusVariant = (status: string) => {
   switch (status) {
-    case "active": return "success"; // Hoặc "default" nếu theme chưa có success
+    case "active": return "success"; 
     case "draft": return "secondary";
     case "completed": return "outline";
     default: return "outline";
@@ -58,18 +67,14 @@ const getStatusVariant = (status: string) => {
 
 const getStatusDisplay = (status: string) => {
   switch (status) {
-    case 'active':
-      return 'Active';
-    case 'draft':
-      return 'Draft';
-    case 'completed':
-      return 'Completed';
-    default:
-      return status;
+    case 'active': return 'Active';
+    case 'draft': return 'Draft';
+    case 'completed': return 'Completed';
+    default: return status;
   }
 };
 
-// --- COMPONENT PublishButton (Giao diện Modal xịn xò) ---
+// --- COMPONENT PublishButton ---
 const PublishButton = ({ campaignId }: { campaignId: string }) => {
   const publishMutation = usePublishCampaign();
 
@@ -88,9 +93,9 @@ const PublishButton = ({ campaignId }: { campaignId: string }) => {
         <Button
           variant="default"
           size="sm"
-          className="gap-2 bg-green-600 hover:bg-green-700 text-white" // Style màu xanh lá
+          className="gap-2 bg-green-600 hover:bg-green-700 text-white"
           disabled={publishMutation.isPending}
-          onClick={(e) => e.stopPropagation()} // Chặn click lan ra Card
+          onClick={(e) => e.stopPropagation()}
         >
           {publishMutation.isPending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -124,36 +129,103 @@ const PublishButton = ({ campaignId }: { campaignId: string }) => {
   );
 };
 
+// --- COMPONENT CloseButton (ĐÃ BỎ ICON) ---
+const CloseButton = ({ campaignId, campaignName }: { campaignId: string, campaignName: string }) => {
+  const closeMutation = useCloseCampaign();
+
+  const onConfirmClose = async () => {
+    try {
+      await closeMutation.mutateAsync(campaignId);
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          // Style: Viền đỏ nhạt, chữ đỏ, hover nền đỏ rất nhạt
+          className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+          disabled={closeMutation.isPending}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* 👇 Chỉ hiện Loader khi đang loading, còn bình thường không hiện icon gì cả */}
+          {closeMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+          
+          {/* Text đơn giản */}
+          {closeMutation.isPending ? "Closing..." : "Close Campaign"}
+        </Button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Close Campaign "{campaignName}"?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action will stop all submissions and move the campaign to the archive. 
+            The final leaderboard will be published to all participants.
+            <br/><br/>
+            <strong className="text-red-600">This action cannot be undone.</strong>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={onConfirmClose}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Confirm Close
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
 // --- COMPONENT CHÍNH ---
 export default function CampaignList({ 
   campaigns, 
   onCreateCampaign, 
-  onViewCampaign, 
   onViewFinalRankings, 
   onViewApprovals 
 }: CampaignListProps) {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
+  // 👇 2. THÊM STATE CHO FILTER STATUS
+  const [statusFilter, setStatusFilter] = useState("all");
+  
+  const { data: pendingCampaignsData } = usePendingCampaigns();
+
+  const totalPendingSubmissions = pendingCampaignsData?.reduce(
+    (sum, item) => sum + (item.pendingCount || 0), 
+    0
+  ) || 0;
+
   const enhancedCampaigns: CampaignListItem[] = campaigns.map((campaign, index) => ({
     ...campaign,
     primaryMetric: getPrimaryMetric(campaign.activityType),
-    participants: Math.floor(Math.random() * 50) + 10,
-    totalDistance: Math.floor(Math.random() * 3000) + 500,
-    pendingSubmissions: Math.floor(Math.random() * 10),
+    participants: campaign.participantCount || 0,
+    totalDistance: Number((campaign.totalDistance || 0).toFixed(1)),
+    pendingSubmissions: 0, 
     image: campaign.imageUrl || MOCK_IMAGES[index % MOCK_IMAGES.length]
   }));
 
-  const filteredCampaigns = enhancedCampaigns.filter(
-    (campaign) =>
+  // 👇 3. CẬP NHẬT LOGIC FILTER: KẾT HỢP SEARCH + STATUS
+  const filteredCampaigns = enhancedCampaigns.filter((campaign) => {
+    // Logic tìm kiếm text
+    const matchesSearch = 
       campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Logic lọc status
+    const matchesStatus = statusFilter === "all" || campaign.status.toLowerCase() === statusFilter.toLowerCase();
 
-  const totalPendingSubmissions = enhancedCampaigns.reduce(
-    (sum, campaign) => sum + (campaign.pendingSubmissions || 0),
-    0,
-  );
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <>
@@ -178,10 +250,11 @@ export default function CampaignList({
                 <CheckCircle className="h-4 w-4" />
                 View Approvals
               </Button>
+              
               {totalPendingSubmissions > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
+                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs animate-in zoom-in"
                 >
                   {totalPendingSubmissions}
                 </Badge>
@@ -194,15 +267,33 @@ export default function CampaignList({
           </div>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex gap-4">
-          <Input
-            placeholder="Search campaigns..."
-            className="flex-1"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button variant="outline">Filter</Button>
+        {/* 👇 4. THANH TÌM KIẾM VÀ FILTER */}
+        <div className="flex gap-4 items-center">
+          {/* Input Search */}
+          <div className="flex-1 relative">
+             <Input
+                placeholder="Search campaigns..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
+          </div>
+
+          {/* Dropdown Filter Status */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[200px] bg-white">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                 <Filter className="w-4 h-4" />
+                 <SelectValue placeholder="Filter by Status" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Campaign Status</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Campaign Cards */}
@@ -278,13 +369,20 @@ export default function CampaignList({
                     </div>
                   </div>
 
-                  {/* NÚT BẤM */}
+                  {/* NÚT BẤM (BUTTONS) */}
                   <div className="flex gap-2 mt-4 flex-wrap">
-                    {/* Nút Publish hiện đại - Chỉ hiện khi Draft */}
+                    
+                    {/* 1. Nếu là DRAFT -> Hiện nút Publish */}
                     {campaign.status === 'draft' && (
                       <PublishButton campaignId={campaign.id} />
                     )}
 
+                    {/* 2. Nếu là ACTIVE -> Hiện nút Close (Không Icon) */}
+                    {campaign.status === 'active' && (
+                      <CloseButton campaignId={campaign.id} campaignName={campaign.name} />
+                    )}
+
+                    {/* Nút Edit */}
                     {campaign.status !== "completed" && (
                       <Button
                         variant="outline"
@@ -297,27 +395,21 @@ export default function CampaignList({
                       </Button>
                     )}
 
+                    {/* Nút View Leaderboard */}
                     <Button
-                      variant="outline"
+                      variant={campaign.status === 'completed' ? "default" : "outline"}
                       size="sm"
-                      className="gap-2"
-                      onClick={() => onViewCampaign(campaign)}
+                      className={`gap-2 ${
+                        campaign.status === 'completed' 
+                          ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200' 
+                          : 'border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800'
+                      }`}
+                      onClick={() => onViewFinalRankings(campaign)} 
                     >
-                      <Eye className="h-4 w-4" />
-                      View
+                      <Trophy className="h-4 w-4" />
+                      {campaign.status === 'completed' ? "View Final Leaderboard" : "View Leaderboard"}
                     </Button>
 
-                    {campaign.status === "completed" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => onViewFinalRankings(campaign)}
-                      >
-                        <Trophy className="h-4 w-4" />
-                        Results
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -330,7 +422,7 @@ export default function CampaignList({
                 <div className="flex flex-col items-center justify-center py-12">
                     <p className="text-lg font-medium text-foreground">No campaigns found</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                        {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first campaign"}
+                        {searchTerm || statusFilter !== "all" ? "Try adjusting your search terms or filters" : "Get started by creating your first campaign"}
                     </p>
                 </div>
             </Card>

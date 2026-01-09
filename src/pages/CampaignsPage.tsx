@@ -3,21 +3,31 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Campaign } from '@/types/campaign';
+import LeaderboardView from '@/components/campaigns/LeaderboardView';
+import { useState } from 'react';
 
 export default function CampaignsPage() {
   const navigate = useNavigate();
   const { data: campaigns, isLoading, error } = useCampaigns();
 
+  const [leaderboardCampaign, setLeaderboardCampaign] = useState<Campaign | null>(null);
+
   const handleCreateCampaign = () => {
     navigate('/admin/campaigns/new');
   };
 
-  const handleViewCampaign = (campaign: any) => {
+  const handleViewCampaign = (campaign: Campaign) => {
     navigate(`/admin/campaigns/${campaign.id}`);
   };
 
-  const handleViewFinalRankings = (campaign: any) => {
-    navigate(`/admin/campaigns/${campaign.id}/results`);
+  const handleViewFinalRankings = (campaign: Campaign) => {
+    navigate(`/admin/campaigns/${campaign.id}/leaderboard`);
+  };
+
+  const handleViewLeaderboard = (campaign: Campaign) => {
+    setLeaderboardCampaign(campaign);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleViewApprovals = () => {
@@ -40,12 +50,21 @@ export default function CampaignsPage() {
             <p className="text-lg font-medium text-destructive">
               Failed to load campaigns
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please try again later
-            </p>
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (leaderboardCampaign) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <LeaderboardView 
+          campaign={leaderboardCampaign}
+          onBack={() => setLeaderboardCampaign(null)} // Nút back sẽ set null để quay lại list
+          isAdminView={true} // 👈 Quan trọng: Bật chế độ Admin để ẩn phần "Your Rank"
+        />
+      </div>
     );
   }
 
@@ -55,7 +74,7 @@ export default function CampaignsPage() {
         campaigns={campaigns || []}
         onCreateCampaign={handleCreateCampaign}
         onViewCampaign={handleViewCampaign}
-        onViewFinalRankings={handleViewFinalRankings}
+        onViewFinalRankings={handleViewLeaderboard}
         onViewApprovals={handleViewApprovals}
       />
     </div>

@@ -1,6 +1,10 @@
-import { createCampaign, getCampaigns, updateCampaign, publishCampaign, getActiveCampaigns, registerForCampaign, getMyCampaigns } from '@/api/campaign';
-import type { Campaign, CampaignFormData } from '@/types/campaign';
+import { createCampaign, getCampaigns, updateCampaign, publishCampaign, 
+getActiveCampaigns, registerForCampaign, getMyCampaigns, submitActivity, 
+getMyCampaignActivities, getCampaignById, deleteActivityApi, updateActivityApi, 
+getCampaignLeaderboard, getMyCampaignRank, leaveCampaignApi, closeCampaignApi} from '@/api/campaign';
+import type { Campaign, CampaignFormData, ActivitySubmissionData } from '@/types/campaign';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from "sonner";
 
 export const useCampaigns = () => {
   return useQuery<Campaign[]>({
@@ -16,7 +20,11 @@ export const useCreateCampaign = () => {
     mutationFn: (newCampaign: CampaignFormData) => createCampaign(newCampaign),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      toast.success("Campaign created successfully!"); 
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data || "Failed to create campaign");
+    }
   });
 };
 
@@ -27,17 +35,17 @@ export const useCreateCampaign = () => {
 export const useUpdateCampaign = () => {
   const queryClient = useQueryClient();
   
-  
   return useMutation({
-    // Định nghĩa lại kiểu dữ liệu đầu vào:
-    // Gồm 3 phần: id, data (thông tin text), và imageFile (tùy chọn)
     mutationFn: ({ id, data, imageFile }: { id: string; data: Partial<Campaign>; imageFile?: File }) => {
-      // Gọi API updateCampaign với đủ 3 tham số
       return updateCampaign(id, data, imageFile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      toast.success("Campaign updated successfully!");
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data || "Failed to update campaign");
+    }
   });
 };
 
@@ -47,10 +55,12 @@ export const usePublishCampaign = () => {
   return useMutation({
     mutationFn: (id: string) => publishCampaign(id),
     onSuccess: () => {
-      // Sau khi publish thành công -> Refresh lại danh sách để thấy trạng thái mới (Active)
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      // Có thể thêm toast.success("Campaign published!") ở UI
+      toast.success("Campaign published successfully!");
     },
+    onError: () => {
+      toast.error("Failed to publish campaign");
+    }
   });
 };
 
@@ -78,11 +88,135 @@ export const useRegisterCampaign = () => {
   return useMutation({
     mutationFn: (campaignId: string) => registerForCampaign(campaignId),
     onSuccess: () => {
-      // Invalidate queries to refresh the list (e.g., move from "Can Join" to "My Active")
       queryClient.invalidateQueries({ queryKey: ['active-campaigns'] });
-      // If you have a query for "my-registered-campaigns", invalidate that too
       queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+      toast.success("Registered successfully!");
     },
+    onError: (err: any) => {
+      toast.error(err?.response?.data || "Failed to register");
+    }
   });
 };
 
+// Hook: Submit Activity
+export const useSubmitActivity = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: ActivitySubmissionData) => submitActivity(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+      toast.success("Activity submitted successfully!");
+    },
+    onError: () => {
+      toast.error("Failed to submit activity");
+    }
+  });
+};
+
+// Hook: Lấy danh sách hoạt động của chính mình trong một chiến dịch
+export const useMyCampaignActivities = (campaignId: string) => {
+  return useQuery({
+    queryKey: ['campaign-activities', campaignId], // Key định danh cache
+    queryFn: () => getMyCampaignActivities(campaignId), 
+    enabled: !!campaignId, // Chỉ chạy khi có campaignId
+  });
+};
+
+// Hook: Lấy chi tiết một chiến dịch theo ID
+export const useCampaignDetail = (id: string) => {
+  return useQuery({
+    queryKey: ['campaign', id],
+    queryFn: () => getCampaignById(id),
+    enabled: !!id, // Chỉ chạy khi có id
+  });
+};
+
+// Hook: Delete Activity
+export const useDeleteActivity = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (activityId: string | number) => deleteActivityApi(activityId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaign-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+      toast.success("Activity deleted.");
+    },
+    onError: () => toast.error("Failed to delete activity"),
+  });
+};
+
+// Hook: Update Activity
+export const useUpdateActivity = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string | number; data: ActivitySubmissionData }) => 
+      updateActivityApi(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaign-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+      toast.success("Activity updated.");
+    },
+    onError: () => toast.error("Failed to update activity"),
+  });
+};
+
+// Hook: Lấy Leaderboard chung
+export const useCampaignLeaderboard = (campaignId: string) => {
+  return useQuery({
+    queryKey: ['campaign-leaderboard', campaignId],
+    queryFn: () => getCampaignLeaderboard(campaignId),
+    enabled: !!campaignId,
+    staleTime: 1000 * 60, // Cache 1 phút vì leaderboard thay đổi liên tục
+  });
+};
+
+// Hook: Lấy Rank của tôi (Chỉ chạy khi không phải chế độ Admin)
+export const useMyRank = (campaignId: string, isEmployeeView: boolean = true) => {
+  return useQuery({
+    queryKey: ['my-rank', campaignId],
+    queryFn: () => getMyCampaignRank(campaignId),
+    enabled: !!campaignId && isEmployeeView, 
+  });
+};
+
+// Hook: Rời chiến dịch
+export const useLeaveCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (campaignId: string) => leaveCampaignApi(campaignId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['active-campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-leaderboard'] });
+      toast.success("You have left the campaign.");
+    },
+    onError: (err: any) => toast.error(err?.response?.data || "Failed to leave campaign"),
+  });
+};
+
+
+
+// Hook: Close Campaign (Admin)
+export const useCloseCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => closeCampaignApi(id),
+    onSuccess: () => {
+      // Refresh tất cả các list liên quan
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });        // Admin list
+      queryClient.invalidateQueries({ queryKey: ['active-campaigns'] }); // Employee Active
+      queryClient.invalidateQueries({ queryKey: ['my-campaigns'] });     // Employee My/Past
+      
+      // Hiện thông báo
+      toast.success("Campaign closed successfully. Final results published.");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data || "Failed to close campaign.");
+    }
+  });
+};
