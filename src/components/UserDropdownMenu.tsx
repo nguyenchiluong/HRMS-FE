@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { useLogout } from '@/feature/shared/auth/hooks/useLogout';
-import { ChevronDown, LogOut, Settings, User } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, User, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function UserDropdownMenu() {
@@ -47,8 +47,8 @@ export default function UserDropdownMenu() {
               {user.position && user.jobLevel
                 ? `${user.position} - ${user.jobLevel}`
                 : user.roles[0] === 'USER'
-                ? 'EMPLOYEE'
-                : user.roles[0]}
+                  ? 'EMPLOYEE'
+                  : user.roles[0]}
             </p>
           </div>
           <ChevronDown className="hidden h-4 w-4 text-gray-500 sm:block" />
@@ -78,6 +78,13 @@ export default function UserDropdownMenu() {
         >
           <Settings className="mr-2 h-4 w-4" />
           Account Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate(user.roles.includes('ADMIN') ? '/admin/bonus' : '/employee/credits')}
+          className="cursor-pointer text-xs"
+        >
+          <Wallet className="mr-2 h-4 w-4" />
+          {user.roles.includes('ADMIN') ? 'Credit Settings' : 'My Credits'}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

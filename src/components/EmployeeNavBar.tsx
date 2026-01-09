@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock,
   Home,
+  Wallet,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUnreadCount } from '@/feature/shared/notifications/hooks/useNotifications';
@@ -32,6 +33,7 @@ export default function EmployeeNavBar() {
       icon: CheckCircle2,
       requiredRole: 'MANAGER' as const,
     },
+    { path: '/employee/credits', label: 'My Credits', icon: Wallet },
   ];
 
   // Filter nav items based on user role
