@@ -47,8 +47,8 @@ export default function UserDropdownMenu() {
               {user.position && user.jobLevel
                 ? `${user.position} - ${user.jobLevel}`
                 : user.roles[0] === 'USER'
-                ? 'EMPLOYEE'
-                : user.roles[0]}
+                  ? 'EMPLOYEE'
+                  : user.roles[0]}
             </p>
           </div>
           <ChevronDown className="hidden h-4 w-4 text-gray-500 sm:block" />
