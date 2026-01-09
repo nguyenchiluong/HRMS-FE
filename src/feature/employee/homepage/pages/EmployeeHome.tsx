@@ -25,12 +25,11 @@ export default function EmployeeHome() {
     <div className="space-y-8 px-20 py-10">
       <WelcomeSection userName={user?.name} />
       <StatsCards
-        activeCampaigns={activeCampaigns.length}
         myCampaigns={myCampaigns.length}
         bonusBalance={bonusData?.currentBalance ?? 0}
         pendingTimesheets={dashboardStats?.pendingTimesheets ?? 0}
         leaveBalance={dashboardStats?.leaveBalance ?? 0}
-        totalHoursThisMonth={dashboardStats?.totalHoursThisMonth ?? 0}
+        // totalHoursThisMonth={dashboardStats?.totalHoursThisMonth ?? 0} <-- Đã xóa dòng này
         isLoading={isLoadingStatsCards}
       />
       <QuickActions />
