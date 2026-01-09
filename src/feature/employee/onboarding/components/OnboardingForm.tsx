@@ -29,7 +29,24 @@ const validationSchema = Yup.object().shape({
   socialInsuranceNumber: Yup.string().required('Social insurance is required'),
   taxId: Yup.string().required('Tax ID is required'),
   bankName: Yup.string().required('Bank name is required'),
-  accountNumber: Yup.string().required('Account number is required'),
+  accountNumber: Yup.string()
+    .required('Account number is required')
+    .matches(/^\d+$/, 'Account number must contain only digits')
+    .min(8, 'Account number must be at least 8 digits')
+    .max(20, 'Account number must not exceed 20 digits'),
+  accountName: Yup.string().required('Account name is required'),
+  swiftCode: Yup.string()
+    .max(11, 'SWIFT code must not exceed 11 characters')
+    .matches(
+      /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/,
+      'Invalid SWIFT code format (e.g., CHASUS33)',
+    )
+    .nullable()
+    .transform((value) => (value === '' ? null : value)),
+  branchCode: Yup.string()
+    .max(20, 'Branch code must not exceed 20 characters')
+    .nullable()
+    .transform((value) => (value === '' ? null : value)),
 });
 
 const defaultValues: OnboardingFormValues = {
@@ -48,6 +65,8 @@ const defaultValues: OnboardingFormValues = {
   bankName: '',
   accountNumber: '',
   accountName: '',
+  swiftCode: '',
+  branchCode: '',
   educations: [],
   attachments: [],
 };
@@ -65,13 +84,22 @@ const mapOnboardingInfoToFormValues = (
   permanentAddress: info.permanentAddress ?? '',
   currentAddress: info.currentAddress ?? '',
   phone: info.phone ?? '',
-  identificationNumber: info.nationalIdNumber ?? '',
+  identificationNumber: info.nationalId?.number ?? '',
   socialInsuranceNumber: info.socialInsuranceNumber ?? '',
   taxId: info.taxId ?? '',
-  bankName: '',
-  accountNumber: '',
-  accountName: '',
-  educations: [],
+  bankName: info.bankAccount?.bankName ?? '',
+  accountNumber: info.bankAccount?.accountNumber ?? '',
+  accountName: info.bankAccount?.accountName ?? '',
+  swiftCode: info.bankAccount?.swiftCode ?? '',
+  branchCode: info.bankAccount?.branchCode ?? '',
+  educations:
+    info.education?.map((edu) => ({
+      degree: edu.degree ?? '',
+      fieldOfStudy: edu.fieldOfStudy ?? '',
+      institution: edu.institution ?? '',
+      startYear: edu.startYear?.toString() ?? '',
+      endYear: edu.endYear?.toString() ?? '',
+    })) ?? [],
   attachments: [],
 });
 
@@ -215,11 +243,30 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
               required
             />
             <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
-              <FormRow label="Account Number" name="accountNumber" required />
+              <FormRow
+                label="Account Number"
+                name="accountNumber"
+                placeholder="Enter account number (digits only)"
+                required
+              />
               <FormRow
                 label="Account Holder Name"
                 name="accountName"
+                placeholder="Name as it appears on the account"
                 uppercase
+                required
+              />
+            </div>
+            <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
+              <FormRow
+                label="SWIFT Code"
+                name="swiftCode"
+                placeholder="e.g., CHASUS33 (optional)"
+              />
+              <FormRow
+                label="Branch Code"
+                name="branchCode"
+                placeholder="Enter branch code (optional)"
               />
             </div>
           </Section>
@@ -275,14 +322,34 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
                           label="Institution"
                           name={`educations.${index}.institution`}
                         />
+                        <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
+                          <FormRow
+                            label="Start Year"
+                            name={`educations.${index}.startYear`}
+                            type="number"
+                            placeholder="e.g., 2018"
+                          />
+                          <FormRow
+                            label="End Year"
+                            name={`educations.${index}.endYear`}
+                            type="number"
+                            placeholder="e.g., 2022 (optional)"
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
                   <button
                     type="button"
-                    onClick={() =>
-                      push({ degree: '', fieldOfStudy: '', institution: '' })
-                    }
+                  onClick={() =>
+                    push({
+                      degree: '',
+                      fieldOfStudy: '',
+                      institution: '',
+                      startYear: '',
+                      endYear: '',
+                    })
+                  }
                     className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 py-3 text-sm font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-white hover:text-slate-700"
                   >
                     <Plus className="h-4 w-4" />
@@ -294,12 +361,12 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
           </div>
 
           {/* Attachments */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
+          {/* <div className="rounded-xl border border-slate-200 bg-white p-6">
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
               Documents
             </h3>
             <FileUpload />
-          </div>
+          </div> */}
 
           {/* Actions */}
           <div className="flex justify-center gap-4 pt-4">

@@ -1,4 +1,10 @@
 import { Card } from '@/components/ui/card';
+import {
+  addMonths,
+  differenceInDays,
+  differenceInMonths,
+  differenceInYears,
+} from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { useCurrentEmployee } from '../../hooks/useCurrentEmployee';
 import {
@@ -98,38 +104,38 @@ export default function JobDetails() {
     return type?.name || 'N/A';
   };
 
-  // Calculate length of service
+  // Calculate length of service (years, months, and days of service)
   const calculateServiceLength = (startDate?: string | null): string => {
     if (!startDate) return 'N/A';
-
-    try {
-      const start = new Date(startDate);
-      const now = new Date();
-
-      let years = now.getFullYear() - start.getFullYear();
-      let months = now.getMonth() - start.getMonth();
-      let days = now.getDate() - start.getDate();
-
-      if (days < 0) {
-        months--;
-        const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-        days += lastMonth.getDate();
-      }
-
-      if (months < 0) {
-        years--;
-        months += 12;
-      }
-
-      const parts = [];
-      if (years > 0) parts.push(`${years} year(s)`);
-      if (months > 0) parts.push(`${months} month(s)`);
-      if (days > 0) parts.push(`${days} day(s)`);
-
-      return parts.length > 0 ? parts.join(', ') : '0 days';
-    } catch {
-      return 'N/A';
+    
+    const start = new Date(startDate);
+    const now = new Date();
+    
+    // Check if start date is in the future
+    if (start > now) return 'N/A';
+    
+    const totalYears = differenceInYears(now, start);
+    const totalMonths = differenceInMonths(now, start);
+    
+    // Calculate remaining months after years
+    const months = totalMonths - totalYears * 12;
+    
+    // Calculate remaining days after months
+    // Create a date that is totalMonths from start
+    const dateAfterMonths = addMonths(start, totalMonths);
+    const days = differenceInDays(now, dateAfterMonths);
+    
+    const parts: string[] = [];
+    // Always show years and months, even if 0
+    parts.push(`${totalYears} ${totalYears === 1 ? 'year' : 'years'}`);
+    parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
+    
+    // Only show days if greater than 0
+    if (days > 0) {
+      parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
     }
+    
+    return parts.join(', ');
   };
 
   const jobDetailsData = [

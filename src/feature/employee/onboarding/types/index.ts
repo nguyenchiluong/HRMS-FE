@@ -7,46 +7,64 @@ export interface JobDetails {
   onboardDate: string;
 }
 
-// Response from getOnboardingInfo endpoint (matches EmployeeDto from backend)
+// National ID structure
+export interface NationalId {
+  country: string | null;
+  number: string | null;
+  issuedDate: string | null;
+  expirationDate: string | null;
+  issuedBy: string | null;
+}
+
+// Education entry from backend response
+export interface EducationData {
+  degree: string;
+  fieldOfStudy: string | null;
+  country: string | null;
+  institution: string | null;
+  startYear: number | null;
+  endYear: number | null;
+  gpa: number | null;
+}
+
+// Bank account data from backend response
+export interface BankAccountData {
+  bankName: string;
+  accountNumber: string;
+  accountName: string | null;
+  swiftCode: string | null;
+  branchCode: string | null;
+}
+
+// Response from getOnboardingInfo endpoint (OnboardingInfoDto from backend)
 export interface OnboardingInfo {
-  id: number;
-  fullName: string;
-  firstName: string | null;
-  lastName: string | null;
+  firstName: string;
+  lastName: string;
   preferredName: string | null;
-  email: string;
-  personalEmail: string | null;
-  phone: string | null;
-  phone2: string | null;
-  sex: string | null;
-  dateOfBirth: string | null;
-  maritalStatus: string | null;
+  sex: string;
+  dateOfBirth: string;
+  maritalStatus: string;
   pronoun: string | null;
-  permanentAddress: string | null;
-  currentAddress: string | null;
-  nationalIdCountry: string | null;
-  nationalIdNumber: string | null;
-  nationalIdIssuedDate: string | null;
-  nationalIdExpirationDate: string | null;
-  nationalIdIssuedBy: string | null;
-  socialInsuranceNumber: string | null;
-  taxId: string | null;
-  startDate: string | null;
-  positionTitle: string | null;
-  departmentName: string | null;
-  jobLevel: string | null;
-  employeeType: string | null;
-  timeType: string | null;
-  status: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
+  personalEmail: string;
+  phone: string;
+  phone2: string | null;
+  permanentAddress: string;
+  currentAddress: string;
+  nationalId: NationalId | null;
+  socialInsuranceNumber: string;
+  taxId: string;
+  education: EducationData[] | null;
+  bankAccount: BankAccountData | null;
+  comment: string | null;
 }
 
 // Education entry for the API payload
 export interface EducationEntry {
   degree: string;
   fieldOfStudy: string;
-  institution: string;
+  institution: string | null;
+  startYear: number | null;
+  endYear: number | null;
 }
 
 // Bank account for the API payload
@@ -54,24 +72,30 @@ export interface BankAccount {
   accountNumber: string;
   bankName: string;
   accountName: string;
+  swiftCode?: string | null;
+  branchCode?: string | null;
 }
 
 // API payload for onboarding
 export interface OnboardingPayload {
   firstName: string;
   lastName: string;
-  personalEmail: string;
-  phone: string;
+  preferredName?: string | null;
   sex: string;
   dateOfBirth: string;
   maritalStatus: string;
+  pronoun?: string | null;
+  personalEmail: string;
+  phone: string;
+  phone2?: string | null;
   permanentAddress: string;
   currentAddress: string;
-  identificationNumber: string;
+  nationalId: NationalId | null;
   socialInsuranceNumber: string;
   taxId: string;
-  educations: EducationEntry[];
+  education: EducationEntry[];
   bankAccount: BankAccount;
+  comment?: string | null;
 }
 
 export interface OnboardingFormValues {
@@ -95,12 +119,16 @@ export interface OnboardingFormValues {
   bankName: string;
   accountNumber: string;
   accountName: string;
+  swiftCode: string;
+  branchCode: string;
 
   // Education (optional, simplified)
   educations: {
     degree: string;
     fieldOfStudy: string;
     institution: string;
+    startYear: string;
+    endYear: string;
   }[];
 
   // Attachments
@@ -121,20 +149,30 @@ export const transformFormToPayload = (
     maritalStatus: values.maritalStatus,
     permanentAddress: values.permanentAddress,
     currentAddress: values.currentAddress,
-    identificationNumber: values.identificationNumber,
+    nationalId: {
+      country: null,
+      number: values.identificationNumber || null,
+      issuedDate: null,
+      expirationDate: null,
+      issuedBy: null,
+    },
     socialInsuranceNumber: values.socialInsuranceNumber,
     taxId: values.taxId,
-    educations: values.educations
+    education: values.educations
       .filter((edu) => edu.degree && edu.institution)
       .map((edu) => ({
         degree: edu.degree,
         fieldOfStudy: edu.fieldOfStudy,
-        institution: edu.institution,
+        institution: edu.institution || null,
+        startYear: edu.startYear ? parseInt(edu.startYear, 10) : null,
+        endYear: edu.endYear ? parseInt(edu.endYear, 10) : null,
       })),
     bankAccount: {
       accountNumber: values.accountNumber,
       bankName: values.bankName,
       accountName: values.accountName,
+      swiftCode: values.swiftCode || null,
+      branchCode: values.branchCode || null,
     },
   };
 };

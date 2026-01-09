@@ -12,7 +12,7 @@ import { Field, useField } from 'formik';
 import { Calendar } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
-type FieldType = 'text' | 'select' | 'date';
+type FieldType = 'text' | 'select' | 'date' | 'number';
 
 interface FormRowProps {
   label: string;
@@ -39,9 +39,13 @@ export const FormRow: React.FC<FormRowProps> = ({
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const selectedDate = useMemo(() => {
-    if (!field.value) return undefined;
-    return parseISO(field.value);
-  }, [field.value]);
+    if (type !== 'date' || !field.value) return undefined;
+    // Only parse ISO date strings for date fields
+    if (typeof field.value === 'string') {
+      return parseISO(field.value);
+    }
+    return undefined;
+  }, [field.value, type]);
 
   const handleSelectDate = (date: Date | undefined) => {
     if (!date) return;
@@ -123,7 +127,7 @@ export const FormRow: React.FC<FormRowProps> = ({
         </div>
       ) : (
         <Field
-          type="text"
+          type={type === 'number' ? 'number' : 'text'}
           name={name}
           id={name}
           placeholder={placeholder}

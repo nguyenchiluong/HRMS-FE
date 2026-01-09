@@ -104,75 +104,63 @@ export const deleteMyEducation = async (id: number): Promise<void> => {
 // Bank Account API
 
 /**
- * Gets all bank accounts for the authenticated user
- * @returns Promise with array of bank account records
+ * Gets the bank account for the authenticated user (single account per employee)
+ * API returns a list, but we only need the first item
+ * @returns Promise with bank account record or null if not found
  */
-export const getMyBankAccounts = async (): Promise<BankAccountRecordDto[]> => {
-  const response = await dotnetApi.get<BankAccountRecordDto[]>('/api/bankaccount/me');
-  return response.data;
+export const getMyBankAccount = async (): Promise<BankAccountRecordDto | null> => {
+  try {
+    const response = await dotnetApi.get<BankAccountRecordDto[]>('/api/bankaccount/me');
+    // Return the first item from the list, or null if list is empty
+    return response.data && response.data.length > 0 ? response.data[0] : null;
+  } catch (error: any) {
+    // Return null if account doesn't exist (404) or list is empty
+    if (error?.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 };
 
 /**
- * Gets a specific bank account by account number and bank name
- * @param accountNumber The bank account number
- * @param bankName The bank name
- * @returns Promise with bank account record
- */
-export const getMyBankAccount = async (
-  accountNumber: string,
-  bankName: string
-): Promise<BankAccountRecordDto> => {
-  const response = await dotnetApi.get<BankAccountRecordDto>(
-    `/api/bankaccount/me/${encodeURIComponent(accountNumber)}/${encodeURIComponent(bankName)}`
-  );
-  return response.data;
-};
-
-/**
- * Creates a new bank account
+ * Creates a new bank account for the authenticated user
  * @param data Bank account data to create
  * @returns Promise with created bank account record
  */
 export const createMyBankAccount = async (
   data: CreateBankAccountDto
 ): Promise<BankAccountRecordDto> => {
-  const response = await dotnetApi.post<BankAccountRecordDto>('/api/bankaccount/me', data);
-  return response.data;
-};
-
-/**
- * Updates an existing bank account
- * Note: Changing accountNumber or bankName will delete the old record and create a new one
- * @param accountNumber The current account number
- * @param bankName The current bank name
- * @param data Bank account data to update
- * @returns Promise with updated bank account record
- */
-export const updateMyBankAccount = async (
-  accountNumber: string,
-  bankName: string,
-  data: UpdateBankAccountDto
-): Promise<BankAccountRecordDto> => {
-  const response = await dotnetApi.put<BankAccountRecordDto>(
-    `/api/bankaccount/me/${encodeURIComponent(accountNumber)}/${encodeURIComponent(bankName)}`,
+  const response = await dotnetApi.post<BankAccountRecordDto>(
+    '/api/bankaccount/me',
     data
   );
   return response.data;
 };
 
 /**
- * Deletes a bank account
- * @param accountNumber The account number to delete
- * @param bankName The bank name to delete
+ * Updates the bank account for the authenticated user
+ * @param id The bank account ID (used as path parameter)
+ * @param data Bank account data to update
+ * @returns Promise with updated bank account record
+ */
+export const updateMyBankAccount = async (
+  id: number,
+  data: UpdateBankAccountDto
+): Promise<BankAccountRecordDto> => {
+  const response = await dotnetApi.put<BankAccountRecordDto>(
+    `/api/bankaccount/me/${id}`,
+    data
+  );
+  return response.data;
+};
+
+/**
+ * Deletes the bank account for the authenticated user
+ * @param id The bank account ID (used as path parameter)
  * @returns Promise<void>
  */
-export const deleteMyBankAccount = async (
-  accountNumber: string,
-  bankName: string
-): Promise<void> => {
-  await dotnetApi.delete(
-    `/api/bankaccount/me/${encodeURIComponent(accountNumber)}/${encodeURIComponent(bankName)}`
-  );
+export const deleteMyBankAccount = async (id: number): Promise<void> => {
+  await dotnetApi.delete(`/api/bankaccount/me/${id}`);
 };
 
 // Lookup APIs for reference data

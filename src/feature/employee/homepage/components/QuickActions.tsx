@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, FileText, MessageSquare } from 'lucide-react';
+import { Calendar, Coins, FileText, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface QuickAction {
@@ -38,6 +38,13 @@ const quickActions: QuickAction[] = [
     icon: MessageSquare,
     path: '/employee/support',
     color: 'bg-orange-100 text-orange-600',
+  },
+  {
+    title: 'My Credits',
+    description: 'View your bonus credits',
+    icon: Coins,
+    path: '/employee/credits',
+    color: 'bg-yellow-100 text-yellow-600',
   },
 ];
 
