@@ -22,7 +22,7 @@ export function BalanceSummaryCard({ balance, lastUpdated }: BalanceSummaryCardP
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">
-            {balance != null ? balance.toLocaleString() : "—"} pts
+            {balance != null ? balance.toLocaleString() : "—"}
           </div>
           {lastUpdated && (
             <div className="text-xs text-muted-foreground mt-2">
