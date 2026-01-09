@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress"; // 👈 Nhớ import Progress
 import { useCampaignLeaderboard, useMyRank } from "@/hooks/useCampaigns";
 import { Campaign } from "@/types/campaign";
 import { ArrowLeft, TrendingUp, Trophy, Zap, Medal, Crown, Building2, IdCard, Target, Flag, Users } from "lucide-react";
