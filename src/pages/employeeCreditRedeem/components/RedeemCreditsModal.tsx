@@ -18,6 +18,7 @@ interface RedeemConfirmModalProps {
     payoutAmount?: number;
     payoutVND?: number;
     bankAccount?: BankAccountRecord;
+    note?: string;
     isLoading: boolean;
     onConfirm: () => void;
 }
@@ -29,6 +30,7 @@ export function RedeemCreditsModal({
     amount,
     payoutVND,
     bankAccount,
+    note,
     isLoading,
     onConfirm,
 }: RedeemConfirmModalProps) {
@@ -63,9 +65,19 @@ export function RedeemCreditsModal({
                                     <p>{bankAccount.accountName}</p>
                                 </div>
                             )}
+                            {note && (
+                                <div className="border-t pt-3 text-sm">
+                                    <p className="font-medium text-foreground">Note</p>
+                                    <p className="text-muted-foreground">{note}</p>
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>
+
+                <AlertDialogDescription className="text-center text-sm">
+                    This action cannot be undone.
+                </AlertDialogDescription>
 
                 <AlertDialogFooter className="gap-2">
                     <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>

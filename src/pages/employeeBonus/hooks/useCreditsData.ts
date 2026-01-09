@@ -10,7 +10,7 @@ import {
 import { fetchCredits } from "../api/credits";
 import { toDateString } from "../utils/dateFormatters";
 
-export function useCreditsData() {
+export function useCreditsData(availableTypes?: TransactionType[]) {
   const today = new Date();
   const queryClient = useQueryClient();
 
@@ -23,6 +23,9 @@ export function useCreditsData() {
     "DEDUCT",
   ];
 
+  // Use availableTypes if provided, otherwise use all types as default
+  const defaultTypes = availableTypes || allTypes;
+
   // State
   const [selected, setSelected] = useState<BalanceHistoryItem | null>(null);
   const [from, setFrom] = useState(toDateString(subDays(today, 30)));
@@ -30,7 +33,7 @@ export function useCreditsData() {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [jumpPage, setJumpPage] = useState<string>("");
-  const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>(allTypes);
+  const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
 
   const isInvalidRange = from > to;
 
@@ -43,19 +46,21 @@ export function useCreditsData() {
   const requestBody = useMemo<ViewCreditsRequest>(
     () => ({
       dateRange: { from, to },
-      types: selectedTypes,
+      types: selectedTypes.length === 0 ? defaultTypes : selectedTypes,
       sort: { field: "createdAt", direction: "DESC" },
       page,
       size: pageSize,
     }),
-    [from, to, selectedTypes, page, pageSize]
+    [from, to, selectedTypes, page, pageSize, defaultTypes]
   );
 
   // Fetch data
-  const { data, isLoading, isFetching, error } = useQuery<ViewCreditsResponse>({
+  const { data, isLoading, isFetching, error, refetch } = useQuery<ViewCreditsResponse>({
     queryKey: ["credits", requestBody],
     queryFn: () => fetchCredits(requestBody),
     enabled: !isInvalidRange,
+    staleTime: 30000,
+    gcTime: 30000,
   });
 
   // Keep previous data while fetching
@@ -131,5 +136,6 @@ export function useCreditsData() {
     setSelected,
     setSelectedTypes,
     handleJump,
+    refetchBalance: () => refetch({ cancelRefetch: true }),
   };
 }

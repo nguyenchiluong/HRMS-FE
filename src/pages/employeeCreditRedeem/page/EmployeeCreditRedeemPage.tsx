@@ -3,14 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { BalanceSummaryCard } from "../../employeeBonus/components/BalanceSummaryCard";
+import { EmployeeTabsNavigation } from "../../sharedBonusComponents/EmployeeTabsNavigation";
 import { RedeemCreditsModal } from "../components/RedeemCreditsModal";
 import { useRedeemRequest } from "../hooks/useRedeemables";
 import { useRedeemBalance } from "../hooks/useRedeemBalance";
 import { useBonusSettings } from "../hooks/useBonusSettings";
 import { useBankAccount } from "../hooks/useBankAccount";
+import { useEffect } from "react";
 
 export default function EmployeeCreditRedeemPage() {
     const { balance, isFetching: isBalanceFetching, refetch: refetchBalance } = useRedeemBalance();
@@ -19,8 +23,34 @@ export default function EmployeeCreditRedeemPage() {
     const { bankAccount } = useBankAccount();
 
     const [amount, setAmount] = useState<string>("");
+    const [note, setNote] = useState<string>("");
     const [formError, setFormError] = useState<string>("");
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [isSpinning, setIsSpinning] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+    const handleRefresh = () => {
+        setIsSpinning(true);
+        refetchBalance();
+        setTimeout(() => {
+            setIsSpinning(false);
+            setLastUpdated(new Date());
+            toast.success("Credits refreshed", {
+                description: "Your balance has been updated successfully.",
+            });
+        }, 800);
+    };
+
+    // Refresh balance on page load and when confirmation dialog opens
+    useEffect(() => {
+        refetchBalance();
+    }, [refetchBalance]);
+
+    useEffect(() => {
+        if (confirmOpen) {
+            refetchBalance();
+        }
+    }, [confirmOpen, refetchBalance]);
 
     const payoutAmount = useMemo(() => {
         return Math.max(0, Number(amount) || 0);
@@ -48,25 +78,29 @@ export default function EmployeeCreditRedeemPage() {
         const amt = Number(amount);
         submitRedeem({
             points: amt,
+            note: note.trim() || undefined,
         });
         setConfirmOpen(false);
     };
 
     return (
-        <div className="space-y-6">
+        <div className="mt-8 px-6 md:px-8 space-y-6 min-h-screen">
+            {/* Navigation Tabs */}
+            <EmployeeTabsNavigation />
+
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <BalanceSummaryCard balance={balance} />
+                <BalanceSummaryCard balance={balance} lastUpdated={lastUpdated} />
                 <Card className="w-full md:max-w-2xl">
-                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                    <CardHeader>
                         <div className="space-y-1">
-                            <CardTitle>Withdraw credits</CardTitle>
+                            <CardTitle>Withdraw Credits</CardTitle>
                             <CardDescription>
                                 Instantly convert your bonus credits to cash and send to your account.
                             </CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <RefreshCcw className={`h-4 w-4 ${isBalanceFetching ? "animate-spin" : ""}`} />
+                        <RefreshCcw className={(isBalanceFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
                         <span>Balance refreshes automatically when you open the confirmation dialog.</span>
                     </CardContent>
                 </Card>
@@ -103,6 +137,20 @@ export default function EmployeeCreditRedeemPage() {
                         )}
                     </div>
 
+                    <div className="space-y-2">
+                        <Label htmlFor="note">Note (optional)</Label>
+                        <Textarea
+                            id="note"
+                            placeholder="Add a note for this withdrawal..."
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            disabled={isSubmitting}
+                            rows={3}
+                            maxLength={500}
+                        />
+                        <p className="text-xs text-muted-foreground">{note.length}/500 characters</p>
+                    </div>
+
                     {formError && <div className="text-sm text-red-600">{formError}</div>}
 
                     <div className="flex flex-col gap-2 rounded-md border bg-muted/60 p-3 text-sm">
@@ -129,9 +177,9 @@ export default function EmployeeCreditRedeemPage() {
                     </div>
 
                     <div className="flex justify-end gap-3">
-                        <Button variant="outline" onClick={() => refetchBalance()} disabled={isBalanceFetching} className="gap-2">
-                            <RefreshCcw className={`h-4 w-4 ${isBalanceFetching ? "animate-spin" : ""}`} />
-                            Refresh balance
+                        <Button variant="outline" onClick={handleRefresh} disabled={isBalanceFetching || isSpinning} className="gap-2">
+                            <RefreshCcw className={(isBalanceFetching || isSpinning) ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                            Refresh credits
                         </Button>
                         <Button onClick={handleSubmit} disabled={isSubmitting}>
                             {isSubmitting ? "Processing..." : "Withdraw now"}
@@ -147,6 +195,7 @@ export default function EmployeeCreditRedeemPage() {
                 payoutAmount={payoutAmount}
                 payoutVND={payoutVND}
                 bankAccount={bankAccount}
+                note={note}
                 isLoading={isSubmitting}
                 onConfirm={handleConfirm}
             />

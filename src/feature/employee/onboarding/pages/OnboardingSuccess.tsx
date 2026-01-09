@@ -42,7 +42,7 @@ export default function OnboardingSuccess() {
         </h1>
 
         <p className="mb-6 text-lg text-slate-600">
-          Thank you, <span className="font-semibold">{onboardingInfo.fullName}</span>! 
+          Thank you, <span className="font-semibold">{`${onboardingInfo.firstName} ${onboardingInfo.lastName}`}</span>! 
           Your information has been submitted successfully. Our HR team will review
           your details and reach out if anything else is needed.
         </p>
@@ -61,9 +61,6 @@ export default function OnboardingSuccess() {
             <li className="flex items-start gap-2">
               <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#253D90]" />
               Prepare for your first day
-              {onboardingInfo.startDate && (
-                <span className="font-medium"> on {onboardingInfo.startDate}</span>
-              )}
             </li>
           </ul>
         </div>
