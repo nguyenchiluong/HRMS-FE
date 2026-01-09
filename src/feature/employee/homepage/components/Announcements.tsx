@@ -5,64 +5,61 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import type { Campaign } from '@/types/campaign';
+import { Link } from 'react-router-dom';
 
-interface Announcement {
-  id: number;
-  title: string;
-  date: string;
-  preview: string;
+interface MyCampaignsProps {
+  campaigns?: Campaign[];
+  isLoading?: boolean;
 }
 
-interface AnnouncementsProps {
-  announcements?: Announcement[];
-}
-
-export default function Announcements({
-  announcements = [
-    {
-      id: 1,
-      title: 'Holiday Schedule 2025',
-      date: 'Dec 20, 2024',
-      preview: 'Please review the updated holiday schedule for 2025...',
-    },
-    {
-      id: 2,
-      title: 'Annual Performance Review',
-      date: 'Dec 18, 2024',
-      preview: 'Performance review period starts January 15th...',
-    },
-    {
-      id: 3,
-      title: 'New Health Benefits',
-      date: 'Dec 15, 2024',
-      preview: 'We are excited to announce new health benefits...',
-    },
-  ],
-}: AnnouncementsProps) {
+export default function MyCampaigns({
+  campaigns = [],
+  isLoading = false,
+}: MyCampaignsProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Announcements</CardTitle>
-        <CardDescription>Latest company updates</CardDescription>
+        <CardTitle>My Campaigns</CardTitle>
+        <CardDescription>Campaigns you've joined</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {announcements.map((announcement) => (
-            <div
-              key={announcement.id}
-              className="cursor-pointer rounded-lg border p-3 transition-colors hover:bg-muted/50"
-            >
-              <div className="flex items-center justify-between">
-                <p className="font-medium">{announcement.title}</p>
-                <span className="text-xs text-muted-foreground">
-                  {announcement.date}
-                </span>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading your campaigns...</p>
+          ) : campaigns.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              You haven't joined any campaigns yet.{' '}
+              <Link to="/employee/campaigns" className="text-primary hover:underline">
+                Browse campaigns
+              </Link>
+            </p>
+          ) : (
+            campaigns.slice(0, 3).map((campaign) => (
+              <div
+                key={campaign.id}
+                className="cursor-pointer rounded-lg border p-3 transition-colors hover:bg-muted/50"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">{campaign.name}</p>
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs ${
+                      campaign.status === 'active'
+                        ? 'bg-green-100 text-green-700'
+                        : campaign.status === 'completed'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {campaign.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {campaign.activityType} • Ends: {new Date(campaign.endDate).toLocaleDateString()}
+                </p>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {announcement.preview}
-              </p>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </CardContent>
     </Card>
