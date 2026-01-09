@@ -102,6 +102,10 @@ const ApproveTimeOff = lazy(
   () => import('@/feature/employee/approve-requests/pages/ApproveTimeOff'),
 );
 
+const TeamMembers = lazy(
+  () => import('@/feature/employee/team-management/pages/TeamMembersPage'),
+);
+
 const EmployeeOnboarding = lazy(
   () => import('@/feature/employee/onboarding/pages/EmployeeOnboarding'),
 );
@@ -209,6 +213,14 @@ const routes: RouteObject[] = [
                   { path: 'time-off', element: <ApproveTimeOff /> },
                 ],
               },
+            ],
+          },
+          // Team Members Route (Manager only)
+          {
+            path: 'team',
+            element: <RoleProtectedRoute requiredRole="MANAGER" />,
+            children: [
+              { index: true, element: <TeamMembers /> },
             ],
           },
           {
