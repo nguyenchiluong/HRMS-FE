@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Activity, Award, Calendar, Clock, Wallet } from 'lucide-react';
+import { useCreditsData } from '@/pages/employeeBonus/hooks/useCreditsData';
+import { useEffect, useState } from 'react';
 
 interface StatsCardsProps {
   activeCampaigns?: number;
@@ -21,6 +23,15 @@ export default function StatsCards({
   totalHoursThisMonth = 0,
   isLoading = false,
 }: StatsCardsProps) {
+  const { currentBalance, isLoading: isBalanceLoading } = useCreditsData([]);
+  const [displayBalance, setDisplayBalance] = useState(bonusBalance);
+
+  useEffect(() => {
+    if (currentBalance !== undefined) {
+      setDisplayBalance(currentBalance);
+    }
+  }, [currentBalance]);
+
   const stats = [
     {
       title: 'Active Campaigns',
@@ -36,7 +47,7 @@ export default function StatsCards({
     },
     {
       title: 'Bonus Balance',
-      value: `${bonusBalance.toLocaleString()} pts`,
+      value: displayBalance.toLocaleString(),
       description: 'Credits available',
       icon: Wallet,
     },
@@ -69,7 +80,13 @@ export default function StatsCards({
             <stat.icon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {stat.title === 'Bonus Balance' ? (
+              isBalanceLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="text-2xl font-bold">{stat.value}</div>
+              )
+            ) : isLoading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
               <div className="text-2xl font-bold">{stat.value}</div>
