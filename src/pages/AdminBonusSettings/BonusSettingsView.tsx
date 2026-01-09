@@ -30,7 +30,7 @@ export default function BonusSettingsView({ settings, onEdit }: Props) {
 
         <InfoBlock
           label="Conversion Rate"
-          value={`1 Credits = ${formatNumber(settings.conversionRate)} VND`}
+          value={`1 Credit = ${formatNumber(settings.conversionRate)} VND`}
           helper="Defines the monetary value of a single bonus credit in VND."
         />
 
@@ -58,11 +58,6 @@ export default function BonusSettingsView({ settings, onEdit }: Props) {
         <div className="flex justify-end">
           <Button onClick={onEdit}>Update Settings</Button>
         </div>
-
-        {/* Trust / Metadata (optional, future-ready) */}
-        <p className="text-xs text-muted-foreground text-right">
-          Last updated just now
-        </p>
       </CardContent>
     </Card>
   );
@@ -85,12 +80,15 @@ function InfoBlock({
       </p>
       {helper && (
         <p className="text-xs text-muted-foreground mt-1">
-            {helper}
+          {helper}
         </p>
       )}
     </div>
   );
 }
 function formatNumber(value: number) {
-    return value.toLocaleString();
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
 }
