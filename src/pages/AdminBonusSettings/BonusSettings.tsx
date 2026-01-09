@@ -63,7 +63,7 @@ export default function BonusCreditPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 flex justify-center overflow-hidden">
+      <div className="p-6 flex justify-center">
         <div className="w-full max-w-3xl">
           <div className="flex items-center gap-3 rounded-xl border bg-white p-4 shadow-sm">
             <span className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/40 border-t-primary" />
@@ -76,7 +76,7 @@ export default function BonusCreditPage() {
 
   return (
     <>
-      <div className="p-6 flex justify-center overflow-hidden">
+      <div className="p-6 flex justify-center">
         <div className="w-full max-w-3xl">
           {queryError && (
             <div className="mb-4 rounded-xl border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
@@ -89,8 +89,7 @@ export default function BonusCreditPage() {
                   Retry
                 </button>
               </div>
-            </div
-            >
+            </div>
           )}
           {isEditing ? (
             <BonusSettingsEdit
