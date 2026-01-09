@@ -38,7 +38,7 @@ export default function MyCampaigns({
             campaigns.slice(0, 3).map((campaign) => (
               <div
                 key={campaign.id}
-                className="cursor-pointer rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                className="rounded-lg border p-3 transition-colors hover:bg-muted/50"
               >
                 <div className="flex items-center justify-between">
                   <p className="font-medium">{campaign.name}</p>
