@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import UnsavedChangesWarning from '@/components/UnsavedChangesWarning';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { FormikProps } from 'formik';
+import type { FormikHelpers, FormikProps } from 'formik';
 import { ErrorMessage, Field, Form, Formik, useField } from 'formik';
 import {
   ArrowLeft,
@@ -316,7 +316,10 @@ export default function EditIDsContent() {
 
   const isLoading = isLoadingEmployee || isLoadingRequestTypes;
 
-  const handleSubmit = async (values: FormValues) => {
+  const handleSubmit = async (
+    values: FormValues,
+    formikHelpers: FormikHelpers<FormValues>,
+  ) => {
     if (!profileIdChangeRequestTypeId) {
       toast.error('Unable to find request type. Please try again.');
       return;
@@ -406,6 +409,9 @@ export default function EditIDsContent() {
         payload: payload as any,
         attachments: attachmentUrls,
       });
+
+      // Reset form to clear dirty state before navigation
+      formikHelpers.resetForm();
 
       // Success handled by mutation hook
       navigate(-1);
