@@ -15,18 +15,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { cn } from '@/lib/utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Formik, Form, Field, FieldProps } from 'formik';
 import { format } from 'date-fns';
-import { ArrowLeft, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Loader2, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
+import { useState, useRef } from 'react';
 import { updateCurrentEmployee } from '../../api';
 import { useCurrentEmployee } from '../../hooks/useCurrentEmployee';
 import { UpdateProfileDto } from '../../types';
+import { useUploadFile } from '@/hooks/useFileUpload';
 
 interface PersonalDetailsForm {
   fullName: string;
@@ -69,6 +72,10 @@ export default function EditPersonalDetails() {
   const queryClient = useQueryClient();
   const updateUserName = useAuthStore((state) => state.updateUserName);
   const { data: employee, isLoading: isLoadingEmployee } = useCurrentEmployee();
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadFileMutation = useUploadFile();
 
   // Mutation for updating profile
   const updateMutation = useMutation({
@@ -143,7 +150,45 @@ export default function EditPersonalDetails() {
     };
   };
 
-  const handleSubmit = (values: PersonalDetailsForm) => {
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setAvatarFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (values: PersonalDetailsForm) => {
+    let avatarUrl: string | undefined = undefined;
+
+    // Upload avatar if a new file is selected
+    if (avatarFile) {
+      try {
+        avatarUrl = await uploadFileMutation.mutateAsync(avatarFile);
+      } catch (error) {
+        // Error is already handled by the hook with toast notification
+        return;
+      }
+    }
+
     const updateData: UpdateProfileDto = {
       preferredName: values.preferredName || undefined,
       sex: values.sex || undefined,
@@ -155,6 +200,7 @@ export default function EditPersonalDetails() {
       phone2: values.phoneNumber2 || undefined,
       permanentAddress: values.permanentAddress || undefined,
       currentAddress: values.currentAddress || undefined,
+      ...(avatarUrl && { avatar: avatarUrl }),
     };
 
     updateMutation.mutate(updateData);
@@ -286,11 +332,66 @@ export default function EditPersonalDetails() {
         onSubmit={handleSubmit}
         enableReinitialize
       >
-        {({ errors: formikErrors, touched, setFieldValue, isSubmitting, dirty }) => (
-          <>
-            <Form className="flex h-full min-h-0 flex-col">
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
-              {formFields.map((field) => (
+        {({ errors: formikErrors, touched, setFieldValue, isSubmitting, dirty }) => {
+          const currentAvatarUrl = avatarPreview || employee?.avatar || null;
+          const hasAvatarChanges = avatarFile !== null;
+          const isFormDirty = dirty || hasAvatarChanges;
+          const isUploadingAvatar = uploadFileMutation.isPending;
+
+          return (
+            <>
+              <Form className="flex h-full min-h-0 flex-col">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+                {/* Profile Picture Section */}
+                <div className="font-regular flex flex-col gap-2 border-b border-gray-100 pb-4 md:flex-row md:items-start">
+                  <Label className="font-regular w-full text-sm text-gray-700 md:w-56 md:flex-shrink-0">
+                    Profile Picture
+                  </Label>
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Avatar className="h-24 w-24">
+                          {currentAvatarUrl ? (
+                            <AvatarImage src={currentAvatarUrl} alt="Profile" />
+                          ) : (
+                            <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                              {employee?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        {isUploadingAvatar && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                            <Loader2 className="h-6 w-6 animate-spin text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingAvatar}
+                        >
+                          <Camera className="mr-2 h-4 w-4" />
+                          {currentAvatarUrl ? 'Change' : 'Upload'}
+                        </Button>
+                        <p className="text-xs text-gray-500">
+                          JPG, PNG or WEBP. Max size 5MB
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                  </div>
+                </div>
+
+                {formFields.map((field) => (
                 <div
                   key={field.key}
                   className="font-regular flex flex-col gap-2 border-b border-gray-100 pb-4 last:border-0 md:flex-row md:items-start"
@@ -409,12 +510,12 @@ export default function EditPersonalDetails() {
             <div className="mt-6 flex shrink-0 justify-end border-t border-gray-100 bg-white pt-6">
               <Button
                 type="submit"
-                disabled={isSubmitting || updateMutation.isPending || !dirty}
+                disabled={isSubmitting || updateMutation.isPending || isUploadingAvatar || !isFormDirty}
               >
-                {isSubmitting || updateMutation.isPending ? (
+                {isSubmitting || updateMutation.isPending || isUploadingAvatar ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
+                    {isUploadingAvatar ? 'Uploading...' : 'Updating...'}
                   </>
                 ) : (
                   'Update Changes'
@@ -423,7 +524,8 @@ export default function EditPersonalDetails() {
             </div>
           </Form>
           </>
-        )}
+        );
+        }}
       </Formik>
     </Card>
   );

@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Edit, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentEmployee } from '../../hooks/useCurrentEmployee';
@@ -103,6 +104,24 @@ export default function PersonalDetails() {
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto">
+        {/* Profile Picture Section */}
+        <div className="flex flex-col gap-2 border-b border-gray-100 pb-4 md:flex-row md:items-start">
+          <div className="font-regular w-full text-sm text-gray-700 md:w-56 md:flex-shrink-0">
+            Profile Picture
+          </div>
+          <div className="flex-1">
+            <Avatar className="h-24 w-24">
+              {employee.avatar ? (
+                <AvatarImage src={employee.avatar} alt="Profile" />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                  {employee.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              )}
+            </Avatar>
+          </div>
+        </div>
+
         {personalData.map((item, index) => (
           <div
             key={index}
