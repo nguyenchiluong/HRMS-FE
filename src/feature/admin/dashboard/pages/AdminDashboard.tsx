@@ -6,7 +6,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import {
   useAdminDashboardData,
