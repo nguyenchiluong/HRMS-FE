@@ -27,7 +27,6 @@ import EditCampaignModal from "./EditCampaignModal";
 import type { Campaign, CampaignListItem } from "@/types/campaign";
 import { usePublishCampaign, useCloseCampaign } from "@/hooks/useCampaigns"; 
 import { usePendingCampaigns } from "@/hooks/useApprovals"; 
-import toast from "react-hot-toast";
 
 interface CampaignListProps {
   campaigns: Campaign[];
@@ -81,9 +80,7 @@ const PublishButton = ({ campaignId }: { campaignId: string }) => {
   const onConfirmPublish = async () => {
     try {
       await publishMutation.mutateAsync(campaignId);
-      toast.success("Campaign published successfully! 🚀");
     } catch (error) {
-      toast.error("Failed to publish campaign");
     }
   };
 

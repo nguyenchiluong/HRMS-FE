@@ -9,6 +9,7 @@ function App() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Toaster position="top-right" richColors />
+      <ToastProvider />
       <RouterProvider router={Router} />
     </Suspense>
   );

@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect, useRef } from "react";
 import { useUpdateActivity } from "@/hooks/useCampaigns";
-import toast from "react-hot-toast";
 import { Calendar, Loader2, MapPin, X } from "lucide-react";
 import type { EmployeeActivity } from "@/types/campaign";
 import { useFormik } from "formik";
@@ -76,12 +75,8 @@ export default function EditActivityModal({ activity, campaign, onClose }: EditA
             imageFile: values.imageFile || undefined 
           } as any 
         });
-        
-        toast.success("Submission updated successfully!");
         onClose();
       } catch (error: any) {
-        const msg = error?.response?.data || "Failed to update submission";
-        toast.error(msg);
       }
     },
   });

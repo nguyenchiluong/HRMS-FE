@@ -13,7 +13,6 @@ import { useSubmitActivity } from "@/hooks/useCampaigns";
 import { useFormik } from "formik";
 import { Calendar, Loader2, MapPin, Upload, X } from "lucide-react"; // ❌ Đã xóa Clock icon
 import { useRef, useState } from "react";
-import toast from "react-hot-toast";
 import * as Yup from "yup";
 
 interface SubmitActivityDialogProps {
@@ -73,12 +72,8 @@ export default function SubmitActivityDialog({
           distance: Number(values.distance),
           imageFile: values.imageFile,
         });
-
-        toast.success("Activity submitted successfully! Pending approval.");
         handleClose();
       } catch (error: any) {
-        const msg = error?.response?.data || "Failed to submit activity.";
-        toast.error(msg);
       }
     },
   });
