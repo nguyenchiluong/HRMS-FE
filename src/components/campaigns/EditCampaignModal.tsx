@@ -83,11 +83,9 @@ export default function EditCampaignModal({ campaign, onClose }: EditCampaignMod
         imageFile: imageFile || undefined
       });
       
-      toast.success("Campaign updated successfully");
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update campaign");
     }
   };
 

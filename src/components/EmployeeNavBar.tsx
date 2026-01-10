@@ -7,6 +7,7 @@ import {
   Home,
   Users,
   Wallet,
+  Trophy,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUnreadCount } from '@/feature/shared/notifications/hooks/useNotifications';
@@ -28,6 +29,7 @@ export default function EmployeeNavBar() {
   const allNavItems = [
     { path: '/employee/dashboard', label: 'Dashboard', icon: Home },
     { path: '/employee/time', label: 'Time Management', icon: Clock },
+    { path: '/employee/campaigns', label: 'Campaigns', icon: Trophy },
     {
       path: '/employee/approve-requests',
       label: 'Time Requests',

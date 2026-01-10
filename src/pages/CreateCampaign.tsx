@@ -23,7 +23,6 @@ import {
   Target, // 👈 Import icon Target
 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const ACTIVITY_TYPES = [
@@ -72,19 +71,11 @@ export default function CreateCampaign() {
     onSubmit: async (values) => {
       try {
         await createMutation.mutateAsync(values);
-        toast.success('Campaign created successfully!', {
-          duration: 3000,
-          position: 'top-right',
-        });
 
         setTimeout(() => {
           navigate('/admin/campaigns');
         }, 1000);
       } catch (error) {
-        console.error('Failed to create campaign:', error);
-        toast.error('Failed to create campaign. Please try again.', {
-          duration: 5000,
-        });
       }
     },
   });
