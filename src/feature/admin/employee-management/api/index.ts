@@ -200,3 +200,17 @@ export const reassignSupervisors = async (
   await dotnetApi.put(`/api/Employees/${employeeId}/supervisors`, data);
 };
 
+/**
+ * Resend onboarding email to an employee
+ * @param employeeId Employee ID
+ * @returns Promise with success message
+ */
+export const resendOnboardingEmail = async (
+  employeeId: number,
+): Promise<{ message: string }> => {
+  const response = await dotnetApi.post<{ message: string }>(
+    `/api/employees/${employeeId}/resend-onboarding-email`,
+  );
+  return response.data;
+};
+

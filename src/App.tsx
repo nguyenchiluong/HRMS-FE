@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import LoadingScreen from './components/LoadingScreen';
 import { Router } from './routes';
 import { Toaster } from "sonner";
+import ToastProvider from './components/ToastProvider';
 
 function App() {
   return (

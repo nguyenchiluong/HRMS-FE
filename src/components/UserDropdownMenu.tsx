@@ -5,17 +5,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/feature/shared/auth/store/useAuthStore';
 import { useLogout } from '@/feature/shared/auth/hooks/useLogout';
-import { ChevronDown, LogOut, Settings, User } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ChevronDown, LogOut, Settings, User, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type { EmployeeDto } from '@/feature/employee/profile-management/types';
 
 export default function UserDropdownMenu() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { mutate: logout } = useLogout();
+  const queryClient = useQueryClient();
 
   if (!user) return null;
+
+  // Get employee data from React Query cache if available
+  const employee = queryClient.getQueryData<EmployeeDto>(['currentEmployee']);
 
   // Determine settings route based on user role
   const settingsRoute = user.roles.includes('ADMIN')
@@ -28,14 +35,23 @@ export default function UserDropdownMenu() {
     user.name?.charAt(0).toUpperCase() ||
     user.email?.charAt(0).toUpperCase() ||
     'U';
+  
+  // Get avatar URL from employee data, fallback to null
+  const avatarUrl = employee?.avatar || null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100 focus:outline-none">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
-            {displayInitial}
-          </div>
+          <Avatar className="h-9 w-9">
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={displayName} />
+            ) : (
+              <AvatarFallback className="bg-primary text-sm font-medium text-primary-foreground">
+                {displayInitial}
+              </AvatarFallback>
+            )}
+          </Avatar>
           <div className="hidden max-w-[140px] text-right sm:block">
             <p
               className="truncate text-xs font-medium"
@@ -47,8 +63,8 @@ export default function UserDropdownMenu() {
               {user.position && user.jobLevel
                 ? `${user.position} - ${user.jobLevel}`
                 : user.roles[0] === 'USER'
-                ? 'EMPLOYEE'
-                : user.roles[0]}
+                  ? 'EMPLOYEE'
+                  : user.roles[0]}
             </p>
           </div>
           <ChevronDown className="hidden h-4 w-4 text-gray-500 sm:block" />
@@ -78,6 +94,13 @@ export default function UserDropdownMenu() {
         >
           <Settings className="mr-2 h-4 w-4" />
           Account Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate(user.roles.includes('ADMIN') ? '/admin/bonus' : '/employee/credits')}
+          className="cursor-pointer text-xs"
+        >
+          <Wallet className="mr-2 h-4 w-4" />
+          {user.roles.includes('ADMIN') ? 'Credit Settings' : 'My Credits'}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

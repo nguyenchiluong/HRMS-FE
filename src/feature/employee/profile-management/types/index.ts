@@ -33,6 +33,7 @@ export interface EmployeeDto {
   nationalIdIssuedBy?: string | null;
   socialInsuranceNumber?: string | null;
   taxId?: string | null;
+  avatar?: string | null;
   startDate?: string | null;
   positionId?: number | null;
   departmentId?: number | null;
@@ -62,6 +63,7 @@ export interface UpdateProfileDto {
   nationalId?: NationalIdDto | null;
   socialInsuranceNumber?: string | null;
   taxId?: string | null;
+  avatar?: string | null;
 }
 
 export interface EmployeeProfileResponse {

@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   Clock,
   Home,
+  Users,
+  Wallet,
   Trophy,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -34,6 +36,13 @@ export default function EmployeeNavBar() {
       icon: CheckCircle2,
       requiredRole: 'MANAGER' as const,
     },
+    {
+      path: '/employee/team',
+      label: 'My Team',
+      icon: Users,
+      requiredRole: 'MANAGER' as const,
+    },
+    { path: '/employee/credits', label: 'My Credits', icon: Wallet },
   ];
 
   // Filter nav items based on user role
